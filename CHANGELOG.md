@@ -7,6 +7,9 @@ và dự án này tuân thủ theo [Semantic Versioning](https://semver.org/spec
 
 ## [Unreleased]
 ### Added
+- Foundation Maven/JDK 17, JavaFX/FXML placeholder và cấu hình JDBC MySQL bên ngoài source.
+- Backend US-012: BCrypt, transaction khóa dòng, khóa tạm theo SRS BR-18 và SessionContext.
+- Schema/seed bảng users, test xác thực và kiểm thử tích hợp MySQL 8.x.
 - Khởi tạo cấu trúc thư mục dự án chuẩn.
 - Thêm cấu trúc mã nguồn `src/main/java` với các gói `models`, `views`, `controllers`, `services`.
 - Thêm thư mục `database/` chứa `schema.sql` và `seed.sql`.

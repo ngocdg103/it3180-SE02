@@ -1,5 +1,10 @@
 # Iteration 01 — Dev-1 requirement review
 
+> Historical initial review, before the user supplied the local project_rules
+> checkout. SRS availability and the tentative multi-role schema below are
+> superseded by [the rules review](dev-1-rules-review-report.md) and the implemented
+> [API](auth-api-proposal.md). Do not use the initial proposal as the current schema.
+
 ## Existing repository
 
 Baseline: `5a11f321f0d440dc3c7db6983b4150261847d5bf` on `main`.

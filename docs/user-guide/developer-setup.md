@@ -48,12 +48,47 @@ Supported environment overrides:
 Environment-only configuration is supported. Empty required values fail rather
 than silently falling back. Configuration values are not printed by the app.
 
-## Database initialization status
+## Database initialization
 
-`database/schema.sql` and `database/seed.sql` are still the original placeholders.
-Do not treat them as an operational authentication database. Account/role tables,
-BCrypt seed and MySQL login verification await the missing SRS and lock rule
-clarification. No database credentials or instance were supplied for this run.
+Create an empty MySQL 8.x database, then select it in the mysql client:
+
+```sql
+CREATE DATABASE bluemoon_db CHARACTER SET utf8mb4;
+USE bluemoon_db;
+SOURCE database/schema.sql;
+SOURCE database/seed.sql;
+```
+
+The schema adds only `users` (EP-06), not household/apartment tables. It contains
+one role enum and an extra UTC `locked_until` timestamp to persist the timed lock
+across clients/restarts. No separate account_roles or permissions schema is added.
+The inherited database collation controls username comparison/case sensitivity.
+Use MySQL 8.0.16+ for enforced CHECK constraints (verified here on 8.4.13).
+
+Seed is for local/QA only. It creates the **public SRS fixture** `admin` /
+`admin@123`, display name Admin, role ADMIN. SQL contains only its BCrypt cost-12
+hash. Do not provision this public fixture in production. Rerunning the seed
+does not change existing passwords, roles or lock state. No real database
+credentials are committed. Account creation/password changes are outside US-012.
+
+See [the implemented API](../design/auth-api-proposal.md) to call login/logout
+from Dev-2's controller. The placeholder does not authenticate by itself.
+
+## MySQL integration tests
+
+Prepare an **isolated** database whose name ends in `_test`, configure its
+credentials via the variables/file above, then run:
+
+```powershell
+$env:BLUEMOON_MYSQL_TEST = '1'
+mvn -Pmysql-it verify
+```
+
+The suite verifies MySQL 8.x, loads schema/seed and creates/removes uniquely named
+test users. It also authenticates the public admin seed, resetting its login
+state on success; never point it at a shared developer/production database.
+Default `mvn clean verify` does not need MySQL or a desktop. See
+[test evidence](../test/README.md) for the exact combined verification command.
 
 ## Local verification tools
 

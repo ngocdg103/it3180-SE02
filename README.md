@@ -49,8 +49,11 @@ Source mới theo Maven nằm trong `src/main/java/com/bluemoon/`;
 FXML nằm trong `src/main/resources/com/bluemoon/views/`;
 test nằm trong `src/test/java/com/bluemoon/`.
 
-Schema/seed hiện còn là placeholder; backend US-012 chờ SRS và xác nhận quy tắc khóa.
+Backend US-012 sử dụng bảng `users`, BCrypt và `SessionContext` theo SRS EP-06.
+Login UI do Dev-2 phụ trách; app hiện hiển thị màn hình Foundation.
+Khởi tạo database MySQL 8.x riêng, chọn database rồi chạy `database/schema.sql`
+và `database/seed.sql`. Seed chỉ dùng cho local/QA (tài khoản mẫu trong SRS).
 Xem [hướng dẫn setup](docs/user-guide/developer-setup.md),
 [đối chiếu yêu cầu](docs/design/iteration-01-review.md) và
-[đề xuất API cho Dev-2](docs/design/auth-api-proposal.md).
+[hợp đồng API cho Dev-2](docs/design/auth-api-proposal.md).
 

@@ -1,7 +1,7 @@
 # BlueMoon Database Configuration Template
 # Copy this file to config/db.properties and fill in your actual credentials.
 
-db.driver=com.mysql.cj.jdbc.Driver
+# MySQL Connector/J is discovered automatically by JDBC.
 db.url=
 db.username=
 db.password=

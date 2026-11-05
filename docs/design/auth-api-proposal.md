@@ -1,42 +1,66 @@
-# US-012 — API proposal for Dev-2
+# US-012 — implemented API for Dev-2
 
-Status: **proposal, not implemented or agreed with Dev-2**. Full SRS is missing.
-The signature `AuthResult login(String username, String password)` is required
-by the handoff. WBS additionally lists `logout` and `currentUser`.
-
-Proposed package: `com.bluemoon.services`.
+Status: implemented and tested against EP-06 from project_rules commit `64605dd`.
+Dev-2/Lead Dev still need to review the public API before integrating their UI.
 
 ```java
-// Proposed composition at application/controller setup:
+import com.bluemoon.config.DatabaseConfig;
+import com.bluemoon.config.DatabaseConnection;
+import com.bluemoon.dao.AccountDAO;
+import com.bluemoon.models.Account;
+import com.bluemoon.services.AuthService;
+import com.bluemoon.services.SessionContext;
+
 var connections = new DatabaseConnection(DatabaseConfig.load());
 var auth = new AuthService(new AccountDAO(connections));
-
-AuthResult result = auth.login(username, password);
+// Inject this shared auth instance into LoginController.
+var result = auth.login(username, password);
+boolean success = result.isSuccess();
+var status = result.status();
+String message = result.message();
+java.util.Optional<Account> account = result.account();
+java.util.Optional<Account> session = auth.currentUser();
 auth.logout();
-Optional<Account> account = auth.currentUser();
 ```
 
-Proposed result API:
+`DatabaseConfig.load()` throws IOException for missing/invalid configuration.
+Handle this at composition/setup with a generic system error; never display raw
+exceptions, database URLs or credentials. SQL errors during login map to
+`SYSTEM_ERROR`; no checked exception escapes `login`.
 
-```java
-AuthStatus status();
-boolean isSuccess();
-String message();
-Optional<Account> account();
-```
+`Account` is an immutable record exposing `userId()`, `username()`, `hoTen()`
+and `role()` (a single `ADMIN`, `ACCOUNTANT` or `RESIDENT`). No password data
+is included. `SessionContext.getCurrentUser()` returns Optional<Account>;
+`getCurrentRole()` returns Role and throws IllegalStateException if logged out.
+The global session is shared across AuthService instances (EP-06 BR-20).
 
-Proposed statuses: `SUCCESS`, `VALIDATION_ERROR`, `INVALID_CREDENTIALS`,
-`ACCOUNT_LOCKED`, `SYSTEM_ERROR`. A disabled status depends on the SRS.
-`Account` exposes account ID, username and assigned roles, never credential hash.
-Failure results do not contain an account. Incorrect credentials always use
-`Tài khoản hoặc mật khẩu không chính xác`, regardless of account existence.
-System errors must not expose SQL, database credentials, or stack traces to UI.
+| AuthStatus | Behavior |
+| --- | --- |
+| SUCCESS | Account included; session published after DB commit |
+| VALIDATION_ERROR | Missing username/password, username outside ASCII alphanumeric 4–50, or password shorter than 6 |
+| INVALID_CREDENTIALS | Unknown user or wrong password: `Tài khoản hoặc mật khẩu không chính xác!` |
+| ACCOUNT_LOCKED | `Tài khoản của bạn đã bị tạm khóa!`; no account/session |
+| SYSTEM_ERROR | Generic system message; no account/session or exception details |
 
-Dev-2 should run the blocking JDBC/BCrypt call on a background `Task`, update
-controls on the JavaFX application thread, and enter authenticated views only
-after `isSuccess()`. Do not log passwords or bind persistence objects to views.
+Missing input uses the exact AC-03 message:
+`Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!`.
+No username or password is silently trimmed. SQL comparison uses the selected
+MySQL database/table collation; case sensitivity is not additionally invented.
 
-Before implementation: Lead Dev supplies SRS / confirms provisional source and
-lock rules; Dev-2 agrees result API and session lifecycle; Dev-3 agrees schema
-names and any future account/household relationship. No message has been sent
-to other team members from this session.
+SRS BR-18 is the primary requirement: the sixth consecutive wrong password locks
+for 5 minutes. Attempts during lock do not extend its deadline. At expiry the
+next attempt starts with zero failures; success resets the counter. The
+triggering sixth failure returns ACCOUNT_LOCKED. LOCKED with no deadline remains
+locked for administrative intervention; no account administration UI is added.
+The wording discrepancy with WBS DEC-14 remains recorded for Lead Dev review.
+
+Use a background JavaFX Task for blocking JDBC/BCrypt, and update controls on
+the JavaFX application thread. Only enter the Dashboard after isSuccess().
+Use account.hoTen() for the greeting. On logout, Dev-2 clears password controls
+and navigates back to LoginView; the service clears the session only. A new login
+attempt clears any previous identity, including failed attempts/system errors.
+
+Do not log passwords or bind StoredAccount (DAO-only credentials) to UI.
+Session operations are serialized across service instances. Permission guards
+and role management are US-018 work, not implemented by this delivery.
+No outbound message has been sent to team members.

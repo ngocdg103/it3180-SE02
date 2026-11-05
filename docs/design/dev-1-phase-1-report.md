@@ -1,5 +1,9 @@
 # Dev-1 — Phase 1 report
 
+> Historical Foundation-only report. The project_rules checkout was provided
+> afterward; see [the current rules review report](dev-1-rules-review-report.md)
+> for implemented authentication, live MySQL checks and remaining review items.
+
 ## 1. Completed
 
 Reviewed the repository and four supplied workbooks, including sheet
