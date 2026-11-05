@@ -2,6 +2,7 @@ package com.bluemoon.services;
 
 import com.bluemoon.models.Account;
 import java.util.Optional;
+import java.util.Objects;
 
 /** Immutable UI result. The public API cannot carry credential hashes. */
 public final class AuthResult {
@@ -15,11 +16,16 @@ public final class AuthResult {
         this.account = account;
     }
 
-    static AuthResult success(Account account) {
-        return new AuthResult(AuthStatus.SUCCESS, "Đăng nhập thành công!", account);
+    public static AuthResult success(Account account) {
+        return new AuthResult(AuthStatus.SUCCESS, "Đăng nhập thành công!", Objects.requireNonNull(account));
     }
 
-    static AuthResult failure(AuthStatus status, String message) {
+    public static AuthResult failure(AuthStatus status, String message) {
+        Objects.requireNonNull(status);
+        Objects.requireNonNull(message);
+        if (status == AuthStatus.SUCCESS) {
+            throw new IllegalArgumentException("Use success(account) for successful authentication");
+        }
         return new AuthResult(status, message, null);
     }
 

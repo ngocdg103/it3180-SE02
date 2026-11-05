@@ -64,3 +64,26 @@ Do not log passwords or bind StoredAccount (DAO-only credentials) to UI.
 Session operations are serialized across service instances. Permission guards
 and role management are US-018 work, not implemented by this delivery.
 No outbound message has been sent to team members.
+
+## Mock-compatible controller injection
+
+Dev-2 should type the controller dependency as
+`com.bluemoon.services.AuthenticationService` (interface), implemented by the real
+`AuthService`. Keep the existing `AuthResult login(String, String)` signature.
+The interface also declares `void logout()` and `Optional<Account> currentUser()`.
+Construct the real service at application composition as above; use a
+`MockAuthService implements AuthenticationService` during UI development.
+No DB configuration is needed for a mock.
+
+Public result factories for mocks:
+
+```java
+AuthResult.success(new Account(1, "admin", "Admin", Role.ADMIN));
+AuthResult.failure(AuthStatus.INVALID_CREDENTIALS,
+        "Tài khoản hoặc mật khẩu không chính xác!");
+```
+
+`success` rejects null accounts; `failure` rejects SUCCESS and null arguments.
+See `src/test/java/com/bluemoon/integration/AuthenticationContractTest.java` for
+a complete database-free mock. This mock is a test fixture, not application code
+or a replacement for Dev-2's LoginController/FXML.

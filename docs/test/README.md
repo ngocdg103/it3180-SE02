@@ -8,6 +8,12 @@ Thư mục lưu trữ tài liệu kiểm thử:
 
 ## Dev-1 / US-012 automated checks
 
+Latest Dev-2 handoff check: `mvn -Pjavafx-smoke clean verify` passed **19 tests**
+(4 configuration, 12 authentication, 2 external mock-contract, 1 FXML startup).
+`mvn javafx:run` also launched the BlueMoon window successfully; the verification
+window was closed normally and Maven reported BUILD SUCCESS. The MySQL result
+below is the earlier backend integration run; it was not rerun for the interface-only change.
+
 JDK 17 and Maven 3.9.x:
 
 - `mvn clean verify`: configuration + service tests, no GUI/MySQL needed.

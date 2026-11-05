@@ -12,7 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /** US-012 only: authentication, consecutive failures, timed lock and session. */
-public final class AuthService {
+public final class AuthService implements AuthenticationService {
     // SRS EP-06 BR-18 says "quá 5 lần liên tiếp"; SRS is the primary source.
     private static final int LOCK_THRESHOLD = 6;
     private static final Duration LOCK_DURATION = Duration.ofMinutes(5);
@@ -29,6 +29,7 @@ public final class AuthService {
         this.clock = Objects.requireNonNull(clock);
     }
 
+    @Override
     public AuthResult login(String username, String password) {
         // Serialize session operations across service instances in this desktop process.
         synchronized (AUTH_LOCK) {
@@ -78,9 +79,11 @@ public final class AuthService {
         }
     }
 
+    @Override
     public void logout() {
         synchronized (AUTH_LOCK) { SessionContext.clear(); }
     }
+    @Override
     public Optional<Account> currentUser() { return SessionContext.getCurrentUser(); }
 
     private static AuthResult invalidCredentials() {
