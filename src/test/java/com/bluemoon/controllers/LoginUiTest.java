@@ -6,6 +6,8 @@ import com.bluemoon.views.AuthenticationNavigator;
 import javafx.application.Platform;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
+import javafx.stage.Window;
+import javafx.stage.Modality;
 import org.junit.jupiter.api.*;
 import java.util.Optional;
 import java.util.concurrent.*;
@@ -26,7 +28,24 @@ class LoginUiTest {
         auth = new FakeAuth();
         fx(() -> { stage = new Stage(); new AuthenticationNavigator(stage, auth).showLogin(); stage.show(); });
     }
-    @AfterEach void close() throws Exception { auth.release.countDown(); fx(() -> stage.close()); }
+    @AfterEach void close() throws Exception {
+        auth.release.countDown();
+        fx(() -> {
+            // Copy the list because hiding a dialog mutates Window.getWindows().
+            for (Window window : java.util.List.copyOf(Window.getWindows())) {
+                if (window instanceof Stage dialog && dialog.getOwner() == stage) dialog.close();
+            }
+            stage.close();
+        });
+    }
+    private DialogPane warningPane() {
+        return Window.getWindows().stream()
+                .filter(window -> window instanceof Stage dialog && dialog.getOwner() == stage)
+                .map(window -> window.getScene().getRoot())
+                .filter(DialogPane.class::isInstance)
+                .map(DialogPane.class::cast)
+                .findFirst().orElse(null);
+    }
     private void fx(Runnable action) throws Exception {
         CompletableFuture<Void> done = new CompletableFuture<>();
         Platform.runLater(() -> { try { action.run(); done.complete(null); } catch (Throwable t) { done.completeExceptionally(t); } });
@@ -69,6 +88,29 @@ class LoginUiTest {
             assertEquals(0, auth.calls.get());
         });
     }
+    @Test void invalidCredentialsShowsOwnedWarningAndStaysOnLoginAfterDismissal() throws Exception {
+        auth.result = AuthResult.failure(AuthStatus.INVALID_CREDENTIALS, "SQL password=secret");
+        javafx.scene.Parent[] loginRoot = new javafx.scene.Parent[1];
+        fx(() -> { loginRoot[0] = stage.getScene().getRoot(); submit(); });
+        settled();
+        fx(() -> {
+            DialogPane pane = warningPane();
+            assertNotNull(pane, "AC-02 requires a visible warning dialog");
+            try {
+                assertTrue(pane.getStyleClass().contains("warning"));
+                assertEquals("Tài khoản hoặc mật khẩu không chính xác!", pane.getContentText());
+                assertNull(pane.getHeaderText());
+                assertEquals(Modality.WINDOW_MODAL, ((Stage) pane.getScene().getWindow()).getModality());
+                assertSame(loginRoot[0], stage.getScene().getRoot());
+                assertNull(stage.getScene().lookup("#greeting"));
+            } finally {
+                ((Button) pane.lookupButton(ButtonType.OK)).fire();
+            }
+            assertNull(warningPane());
+            assertSame(loginRoot[0], stage.getScene().getRoot());
+            assertFalse(control("loginButton", Button.class).isDisabled());
+        });
+    }
     @Test void failuresStayOnLoginAndRestoreControls() throws Exception {
         for (AuthStatus status : new AuthStatus[]{AuthStatus.INVALID_CREDENTIALS, AuthStatus.ACCOUNT_LOCKED, AuthStatus.SYSTEM_ERROR, AuthStatus.VALIDATION_ERROR}) {
             auth.result = AuthResult.failure(status, status == AuthStatus.VALIDATION_ERROR ? "Validation" : "SQL password=secret");
@@ -81,6 +123,13 @@ class LoginUiTest {
                     default -> "Validation";
                 };
                 assertEquals(expected, message());
+                DialogPane pane = warningPane();
+                if (status == AuthStatus.INVALID_CREDENTIALS) {
+                    assertNotNull(pane);
+                    ((Button) pane.lookupButton(ButtonType.OK)).fire();
+                } else {
+                    assertNull(pane, "Other statuses must not show the AC-02 warning");
+                }
                 assertNull(stage.getScene().lookup("#greeting"));
                 assertFalse(control("username", TextField.class).isDisabled());
                 assertEquals("", control("password", PasswordField.class).getText());

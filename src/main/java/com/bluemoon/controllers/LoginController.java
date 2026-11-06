@@ -56,7 +56,16 @@ public final class LoginController {
                     status.setText("");
                     onSuccess.accept(result.account().orElseThrow());
                 }
-                case INVALID_CREDENTIALS -> status.setText("Tài khoản hoặc mật khẩu không chính xác!");
+                case INVALID_CREDENTIALS -> {
+                    String message = "Tài khoản hoặc mật khẩu không chính xác!";
+                    status.setText(message);
+                    Alert warning = new Alert(Alert.AlertType.WARNING, message, ButtonType.OK);
+                    warning.initOwner(loginButton.getScene().getWindow());
+                    warning.initModality(javafx.stage.Modality.WINDOW_MODAL);
+                    warning.setTitle("Cảnh báo đăng nhập");
+                    warning.setHeaderText(null);
+                    warning.show();
+                }
                 case ACCOUNT_LOCKED -> status.setText("Tài khoản của bạn đã bị tạm khóa!");
                 case SYSTEM_ERROR -> status.setText(SYSTEM);
                 case VALIDATION_ERROR -> status.setText(result.message());
