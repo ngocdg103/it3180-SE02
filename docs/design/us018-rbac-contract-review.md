@@ -1,5 +1,10 @@
 # US-018 — Mốc 1: Contract Review, chờ Lead Dev duyệt
 
+> Bản thiết kế lịch sử của Mốc 1. Lead Dev đã phê duyệt có điều kiện và cho phép
+> Mốc 2 theo lệnh triển khai tiếp theo. API và kết quả implementation hiện tại:
+> [Mốc 2 handoff](us018-rbac-implementation-handoff.md). Không coi các câu
+> “chưa triển khai/chờ duyệt” bên dưới là trạng thái hiện tại của Mốc 2.
+
 Ngày: 06/11/2026. Phạm vi Dev-1: WBS **1.4.2.2.3**, authorization nghiệp vụ.
 Đây là bản thiết kế; chưa tạo production class, unit test hay thay đổi chính sách
 US-012. Không chuyển sang Mốc 2 trước khi Lead Dev duyệt public API.
