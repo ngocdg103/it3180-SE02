@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bluemoon.controllers.HouseholdListController" spacing="16" stylesheets="@household.css" styleClass="household-page">
+ <Label fx:id="title" text="Hồ sơ hộ gia đình và căn hộ" styleClass="heading"/>
+ <HBox spacing="12" alignment="CENTER_LEFT">
+  <Label text="Trạng thái"/><ComboBox fx:id="statusFilter" onAction="#reload" prefWidth="180"/>
+  <Button fx:id="reloadButton" text="Tải lại" onAction="#reload"/>
+  <Pane HBox.hgrow="ALWAYS"/>
+  <Button fx:id="createButton" text="Tạo mới" onAction="#create"/>
+  <Button fx:id="detailButton" text="Xem chi tiết" onAction="#details" disable="true"/>
+ </HBox>
+ <HBox spacing="12" alignment="CENTER_LEFT"><ProgressIndicator fx:id="progress" visible="false" managed="false" prefWidth="24" prefHeight="24"/><Label fx:id="message" wrapText="true"/></HBox>
+ <TableView fx:id="households" VBox.vgrow="ALWAYS">
+  <columns>
+   <TableColumn fx:id="apartmentColumn" text="Số căn hộ" prefWidth="120"/>
+   <TableColumn fx:id="householdColumn" text="Mã hộ" prefWidth="140"/>
+   <TableColumn fx:id="floorColumn" text="Tầng" prefWidth="70"/>
+   <TableColumn fx:id="areaColumn" text="Diện tích (m²)" prefWidth="140"/>
+   <TableColumn fx:id="dateColumn" text="Ngày nhận nhà" prefWidth="160"/>
+   <TableColumn fx:id="statusColumn" text="Trạng thái" prefWidth="150"/>
+  </columns>
+ </TableView>
+</VBox>

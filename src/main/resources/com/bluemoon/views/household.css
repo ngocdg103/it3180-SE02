@@ -1,0 +1,8 @@
+.household-page { -fx-background-color: #f4f7fb; -fx-padding: 28; -fx-font-family: "Segoe UI"; -fx-font-size: 14px; }
+.heading { -fx-font-size: 25px; -fx-font-weight: bold; -fx-text-fill: #174b85; }
+.button { -fx-background-color: #205c9c; -fx-text-fill: white; -fx-padding: 9 16; -fx-background-radius: 5; -fx-cursor: hand; }
+.button:focused { -fx-border-color: #102e50; -fx-border-width: 2; -fx-border-radius: 5; }
+.text-field, .combo-box, .date-picker { -fx-pref-height: 36; }
+.field-error { -fx-text-fill: #a22332; }
+.form-fields { -fx-padding: 16; -fx-background-color: white; }
+.table-view { -fx-background-color: white; }

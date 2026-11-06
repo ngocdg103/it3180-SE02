@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bluemoon.controllers.HouseholdFormController" spacing="16" stylesheets="@household.css" styleClass="household-page">
+ <Label fx:id="title" styleClass="heading"/>
+ <Label text="Các trường có dấu * là bắt buộc."/>
+ <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
+ <content><GridPane fx:id="fields" hgap="24" vgap="10" styleClass="form-fields">
+ <columnConstraints><ColumnConstraints minWidth="155"/><ColumnConstraints hgrow="ALWAYS"/></columnConstraints>
+<Label text="Số căn hộ *" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+ <VBox spacing="4" GridPane.rowIndex="0" GridPane.columnIndex="1"><TextField fx:id="soCanHo" promptText="P1204" maxWidth="Infinity"/><Label fx:id="soCanHoError" wrapText="true" styleClass="field-error"/></VBox>
+<Label text="Mã hộ *" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+ <VBox spacing="4" GridPane.rowIndex="1" GridPane.columnIndex="1"><TextField fx:id="maHo" promptText="HK-1204" maxWidth="Infinity"/><Label fx:id="maHoError" wrapText="true" styleClass="field-error"/></VBox>
+<Label text="Tầng *" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+ <VBox spacing="4" GridPane.rowIndex="2" GridPane.columnIndex="1"><TextField fx:id="tang" promptText="1–30" maxWidth="Infinity"/><Label fx:id="tangError" wrapText="true" styleClass="field-error"/></VBox>
+<Label text="Diện tích (m²) *" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+ <VBox spacing="4" GridPane.rowIndex="3" GridPane.columnIndex="1"><TextField fx:id="dienTich" promptText="85.50" maxWidth="Infinity"/><Label fx:id="dienTichError" wrapText="true" styleClass="field-error"/></VBox>
+<Label text="Ngày nhận nhà *" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+ <VBox spacing="4" GridPane.rowIndex="4" GridPane.columnIndex="1"><DatePicker fx:id="ngayNhanNha" promptText="YYYY-MM-DD" maxWidth="Infinity"/><Label fx:id="ngayNhanNhaError" wrapText="true" styleClass="field-error"/></VBox>
+<Label text="Trạng thái *" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+ <VBox spacing="4" GridPane.rowIndex="5" GridPane.columnIndex="1"><ComboBox fx:id="trangThai" maxWidth="Infinity"/><Label fx:id="trangThaiError" wrapText="true" styleClass="field-error"/></VBox>
+ </GridPane></content></ScrollPane>
+ <HBox spacing="12" alignment="CENTER_LEFT"><ProgressIndicator fx:id="progress" visible="false" managed="false" prefWidth="24" prefHeight="24"/><Label fx:id="message" wrapText="true" HBox.hgrow="ALWAYS"/></HBox>
+ <HBox spacing="12"><Button fx:id="saveButton" text="Lưu hồ sơ" onAction="#save" defaultButton="true"/><Button fx:id="cancelButton" text="Hủy" onAction="#cancel"/></HBox>
+</VBox>
