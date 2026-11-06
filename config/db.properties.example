@@ -1,15 +1,13 @@
 # BlueMoon Database Configuration Template
 # Copy this file to config/db.properties and fill in your actual credentials.
 
-db.driver=com.mysql.cj.jdbc.Driver
-db.url=jdbc:mysql://localhost:3306/bluemoon_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-db.username=root
-db.password=your_password_here
+# MySQL Connector/J is discovered automatically by JDBC.
+db.url=
+db.username=
+db.password=
 
-# Connection Pool Settings (Optional)
-db.pool.initialSize=5
-db.pool.maxTotal=20
-db.pool.maxIdle=10
-db.pool.minIdle=2
-db.pool.maxWaitMillis=10000
+# Set values locally; never commit credentials.
+# BLUEMOON_DB_CONFIG selects another file path.
+# BLUEMOON_DB_URL, BLUEMOON_DB_USERNAME and BLUEMOON_DB_PASSWORD
+# override individual properties. Connections are not pooled.
 

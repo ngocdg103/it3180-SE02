@@ -31,8 +31,9 @@ bluemoon/
 ```
 
 ## Yêu cầu môi trường
-- Java Development Kit (JDK) 17+ (hoặc JDK 21)
-- Hệ quản trị CSDL: MySQL / PostgreSQL / SQL Server
+- Java Development Kit (JDK) 17.
+- Maven 3.9.x; JavaFX + FXML (dependency qua Maven).
+- Hệ quản trị CSDL: MySQL 8.x, truy cập qua JDBC.
 - IDE khuyên dùng: IntelliJ IDEA / Eclipse / VS Code
 
 ## Cài đặt & Khởi chạy
@@ -41,8 +42,18 @@ bluemoon/
    cp config/db.properties.example config/db.properties
    ```
 2. Cập nhật thông tin kết nối CSDL trong `config/db.properties`.
-3. Chạy các file SQL trong thư mục `database/` theo thứ tự:
-   - `database/schema.sql`
-   - `database/seed.sql`
-4. Mở dự án trong IDE và tiến hành biên dịch/chạy ứng dụng.
+3. Build/test: `mvn clean verify`.
+4. Khởi chạy màn hình Foundation: `mvn javafx:run`.
+
+Source mới theo Maven nằm trong `src/main/java/com/bluemoon/`;
+FXML nằm trong `src/main/resources/com/bluemoon/views/`;
+test nằm trong `src/test/java/com/bluemoon/`.
+
+Backend US-012 sử dụng bảng `users`, BCrypt và `SessionContext` theo SRS EP-06.
+Login UI do Dev-2 phụ trách; app hiện hiển thị màn hình Foundation.
+Khởi tạo database MySQL 8.x riêng, chọn database rồi chạy `database/schema.sql`
+và `database/seed.sql`. Seed chỉ dùng cho local/QA (tài khoản mẫu trong SRS).
+Xem [hướng dẫn setup](docs/user-guide/developer-setup.md),
+[đối chiếu yêu cầu](docs/design/iteration-01-review.md) và
+[hợp đồng API cho Dev-2](docs/design/auth-api-proposal.md).
 

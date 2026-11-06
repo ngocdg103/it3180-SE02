@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" alignment="CENTER" spacing="12">
+    <Label text="BlueMoon" style="-fx-font-size: 28px;" />
+    <Label text="Project Foundation — Iteration 01" />
+</VBox>

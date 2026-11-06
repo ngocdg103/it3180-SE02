@@ -23,6 +23,8 @@
 .vagrant/
 
 # Maven
+.tools/
+.m2-local/
 target/
 pom.xml.tag
 pom.xml.releaseBackup
