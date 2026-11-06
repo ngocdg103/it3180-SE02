@@ -10,7 +10,7 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
-/** Owns scene replacement; no dashboard history is retained after logout. */
+/** Replaces the view root while preserving the window scene and user-selected geometry. */
 public final class AuthenticationNavigator {
     private final Stage stage;
     private final AuthenticationService auth;
@@ -33,7 +33,14 @@ public final class AuthenticationNavigator {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/bluemoon/views/" + name));
             loader.setControllerFactory(type -> controller);
             Parent root = loader.load();
-            stage.setScene(new Scene(root, 720, 600));
+            Scene scene = stage.getScene();
+            if (scene == null) {
+                stage.setScene(new Scene(root, 720, 600));
+            } else {
+                // Replacing the Scene with fixed dimensions shrinks maximized/custom windows.
+                // Each FXML root owns its stylesheet; no scene CSS or handlers are appended.
+                scene.setRoot(root);
+            }
         } catch (IOException failure) { throw new UncheckedIOException("Cannot load authentication view", failure); }
     }
 }
