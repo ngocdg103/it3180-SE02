@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.VBox?>
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.bluemoon.controllers.FeeCategoryController"
+      styleClass="fee-root" stylesheets="@fee-category.css" spacing="12" prefWidth="1000" prefHeight="600">
+    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+    <Label text="Danh mục khoản thu" styleClass="page-title"/>
+    <HBox spacing="16" VBox.vgrow="ALWAYS">
+        <VBox spacing="8" HBox.hgrow="ALWAYS">
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="Trạng thái:"/>
+                <ComboBox fx:id="filterBox" prefWidth="160"/>
+                <ProgressIndicator fx:id="loadingIndicator" prefWidth="20" prefHeight="20" visible="false" managed="false"/>
+            </HBox>
+            <TableView fx:id="feeTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="codeColumn" text="Mã" prefWidth="120"/>
+                    <TableColumn fx:id="nameColumn" text="Tên khoản thu" prefWidth="200"/>
+                    <TableColumn fx:id="kindColumn" text="Loại" prefWidth="90"/>
+                    <TableColumn fx:id="methodColumn" text="Hình thức tính" prefWidth="150"/>
+                    <TableColumn fx:id="amountColumn" text="Số tiền mặc định" prefWidth="110"/>
+                    <TableColumn fx:id="statusColumn" text="Trạng thái" prefWidth="110"/>
+                </columns>
+            </TableView>
+            <Button fx:id="retryButton" text="Tải lại" visible="false" managed="false"/>
+        </VBox>
+        <VBox spacing="8" prefWidth="320" minWidth="320" styleClass="form-panel">
+            <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
+            <Label text="Tạo khoản thu mới" styleClass="section-title"/>
+            <GridPane hgap="8" vgap="2">
+                <columnConstraints><ColumnConstraints percentWidth="100"/></columnConstraints>
+                <Label text="Mã khoản thu" GridPane.rowIndex="0"/>
+                <TextField fx:id="codeField" promptText="VD: PHI_QL" GridPane.rowIndex="1"/>
+                <Label fx:id="codeError" styleClass="error-text" wrapText="true" GridPane.rowIndex="2"/>
+                <Label text="Tên khoản thu" GridPane.rowIndex="3"/>
+                <TextField fx:id="nameField" GridPane.rowIndex="4"/>
+                <Label fx:id="nameError" styleClass="error-text" wrapText="true" GridPane.rowIndex="5"/>
+                <Label text="Loại khoản thu" GridPane.rowIndex="6"/>
+                <ComboBox fx:id="kindBox" maxWidth="Infinity" GridPane.rowIndex="7"/>
+                <Label fx:id="kindError" styleClass="error-text" wrapText="true" GridPane.rowIndex="8"/>
+                <Label text="Hình thức tính" GridPane.rowIndex="9"/>
+                <ComboBox fx:id="methodBox" maxWidth="Infinity" GridPane.rowIndex="10"/>
+                <Label fx:id="methodError" styleClass="error-text" wrapText="true" GridPane.rowIndex="11"/>
+                <Label text="Số tiền mặc định (VNĐ)" GridPane.rowIndex="12"/>
+                <TextField fx:id="amountField" promptText="0" GridPane.rowIndex="13"/>
+                <Label fx:id="amountError" styleClass="error-text" wrapText="true" GridPane.rowIndex="14"/>
+                <Label text="Trạng thái" GridPane.rowIndex="15"/>
+                <ComboBox fx:id="statusBox" maxWidth="Infinity" GridPane.rowIndex="16"/>
+                <Label fx:id="statusError" styleClass="error-text" wrapText="true" GridPane.rowIndex="17"/>
+            </GridPane>
+            <HBox spacing="8">
+                <Button fx:id="saveButton" text="Lưu" defaultButton="true" styleClass="primary-button"/>
+                <Button fx:id="cancelButton" text="Hủy / Tạo lại"/>
+            </HBox>
+            <Label fx:id="messageLabel" wrapText="true"/>
+        </VBox>
+    </HBox>
+</VBox>

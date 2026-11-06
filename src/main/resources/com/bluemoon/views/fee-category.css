@@ -1,0 +1,9 @@
+/* BlueMoon fee category screen (US-005). Scoped under .fee-root; does not touch auth.css. */
+.fee-root { -fx-background-color: #f4f7fb; -fx-font-size: 13px; }
+.fee-root .page-title { -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #1f3a5f; }
+.fee-root .section-title { -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1f3a5f; }
+.fee-root .form-panel { -fx-background-color: white; -fx-border-color: #d5deea; -fx-background-radius: 6; -fx-border-radius: 6; }
+.fee-root .error-text { -fx-text-fill: #c0392b; -fx-font-size: 12px; }
+.fee-root .state-text { -fx-text-fill: #5b6b7f; }
+.fee-root .primary-button { -fx-background-color: #2f6fb5; -fx-text-fill: white; -fx-font-weight: bold; }
+.fee-root .primary-button:disabled { -fx-opacity: 0.5; }
