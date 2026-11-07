@@ -8,7 +8,7 @@ import com.bluemoon.models.Apartment;
 import com.bluemoon.models.ApartmentStatus;
 import com.bluemoon.models.Household;
 import com.bluemoon.models.HouseholdProfile;
-import com.bluemoon.models.Role;
+import com.bluemoon.services.HouseholdTestAuthorization;
 import com.bluemoon.services.HouseholdResult;
 import com.bluemoon.services.HouseholdServiceImpl;
 import com.bluemoon.models.HouseholdForm;
@@ -149,7 +149,7 @@ class HouseholdMySqlIT {
     }
 
     @Test void serviceOnRealDatabaseCoversAcceptanceCriteria() {
-        var service = new HouseholdServiceImpl(dao, ApartmentChargeLookup.NONE, () -> Role.ADMIN,
+        var service = new HouseholdServiceImpl(dao, ApartmentChargeLookup.NONE, HouseholdTestAuthorization.admin(),
                 java.time.Clock.systemDefaultZone());
 
         var created = service.createHousehold(

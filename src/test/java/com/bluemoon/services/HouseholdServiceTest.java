@@ -11,6 +11,7 @@ import com.bluemoon.models.HouseholdForm;
 import com.bluemoon.models.HouseholdProfile;
 import com.bluemoon.models.HouseholdUpdateForm;
 import com.bluemoon.models.Role;
+import com.bluemoon.models.Account;
 import com.bluemoon.services.HouseholdResult.Status;
 import java.math.BigDecimal;
 import java.sql.SQLException;
@@ -21,7 +22,6 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -41,7 +41,12 @@ class HouseholdServiceTest {
         repository = new InMemoryHouseholdRepository();
         role = new AtomicReference<>(Role.ADMIN);
         billed = new AtomicReference<>(false);
-        service = new HouseholdServiceImpl(repository, soCanHo -> billed.get(), role::get, CLOCK);
+        service = new HouseholdServiceImpl(repository, soCanHo -> billed.get(), authorization(), CLOCK);
+    }
+
+    private AuthorizationService authorization() {
+        return new RoleBasedAuthorizationService(
+                () -> Optional.of(new Account(1, "testuser", "Test User", role.get())), null);
     }
 
     private static HouseholdForm valid() {
@@ -305,7 +310,7 @@ class HouseholdServiceTest {
     }
 
     @Test void noSessionIsDeniedAndNothingIsWritten() {
-        Supplier<Role> noSession = () -> { throw new IllegalStateException("No authenticated session"); };
+        AuthorizationService noSession = new RoleBasedAuthorizationService(Optional::empty, null);
         var guarded = new HouseholdServiceImpl(repository, ApartmentChargeLookup.NONE, noSession, CLOCK);
         assertThrows(AccessDeniedException.class, () -> guarded.createHousehold(valid()));
         assertTrue(service.listHouseholds(null).data().orElseThrow().isEmpty());
@@ -314,7 +319,7 @@ class HouseholdServiceTest {
     // ---- database failure ----
 
     @Test void databaseFailureBecomesGenericSystemError() {
-        var broken = new HouseholdServiceImpl(new FailingRepository(), ApartmentChargeLookup.NONE, role::get, CLOCK);
+        var broken = new HouseholdServiceImpl(new FailingRepository(), ApartmentChargeLookup.NONE, authorization(), CLOCK);
         for (var result : List.of(
                 broken.createHousehold(valid()),
                 broken.updateHousehold("HK-1204", new HouseholdUpdateForm("12", "85", "2024-03-15",
@@ -330,7 +335,7 @@ class HouseholdServiceTest {
     @Test void chargeLookupFailureIsSystemError() {
         created(valid());
         var failingLookup = new HouseholdServiceImpl(repository, soCanHo -> { throw new SQLException("secret"); },
-                role::get, CLOCK);
+                authorization(), CLOCK);
         var result = failingLookup.updateHousehold("HK-1204",
                 new HouseholdUpdateForm("12", "99", "2024-03-15", ApartmentStatus.DANG_O), false);
         assertEquals(Status.SYSTEM_ERROR, result.status());
