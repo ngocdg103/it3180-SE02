@@ -1,5 +1,20 @@
 # Testing Documentation
 
+## Dev-1 / US-018 Mốc 2
+
+- `mvn clean verify`: **115 tests PASS**, không failures/errors/skips.
+- `mvn -Pjavafx-smoke clean verify`: **116 tests PASS**, không failures/errors/skips.
+- `git diff --check`: PASS.
+- RBAC: 97 tests (66 permission/role combinations, 22 no-session cases, 9 scope,
+  resolver-failure, session-change, matrix-coverage and fake-operation guard checks).
+- Authentication regression: 12 service tests + 2 contract tests vẫn PASS;
+  config: 4 PASS; JavaFX profile thêm 1 Stage/FXML check PASS.
+- Unit RBAC không yêu cầu MySQL. Chưa chạy tích hợp UI/service của Dev-2/Dev-3
+  hoặc production ownership adapter; không khẳng định toàn bộ US-018 đã nghiệm thu.
+
+API, phạm vi và dependency: [US-018 implementation handoff](../design/us018-rbac-implementation-handoff.md).
+Các kết quả US-012 bên dưới là các lần kiểm thử Foundation trước Mốc 2.
+
 Thư mục lưu trữ tài liệu kiểm thử:
 - Test Plan (Kế hoạch kiểm thử)
 - Test Cases (Kịch bản kiểm thử chi tiết)
