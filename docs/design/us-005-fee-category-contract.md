@@ -84,3 +84,11 @@ Sẽ tạo: FXML, controller, CSS, interface/DTO/enum (mục 3), test + fake. S�
 6. Không có thao tác xóa cứng (BR-07); không phụ thuộc bảng hóa đơn US-007.
 7. Phân quyền: ADMIN, ACCOUNTANT; RESIDENT bị từ chối; UI xử lý `AccessDeniedException`, kiểm tra thật ở Service (Dev-2).
 8. Dev-3 sở hữu interface/DTO/enum; Dev-2 cài DAO, bảng `fee_types`, `FeeTypeServiceImpl` (xem `us-005-serviceimpl-guide.md`).
+
+## 9. Hướng dẫn tích hợp UI & vòng đời Controller (Iteration 03)
+1. Bên gọi (Dashboard/launcher của Dev-2) tạo và **giữ tham chiếu** `FeeCategoryController`, rồi nạp màn hình bằng `FeeCategoryController.load(controller)`. Overload `load(FeeTypeService)` không trả controller nên không thể `dispose()` — chỉ dùng cho demo/test.
+2. Khi rời module hoặc đăng xuất, gọi `controller.dispose()` **trên JavaFX thread**.
+3. Sau `dispose()`, không dùng lại controller cũ. Khi mở lại module, tạo controller mới (và `load` lại FXML).
+4. `dispose()` idempotent; sau đó mọi callback muộn (danh sách, tạo khoản thu) bị bỏ qua và không cập nhật giao diện.
+5. `dispose()` chỉ vô hiệu hóa callback UI. **Không** suy luận rằng giao dịch database đã bị hủy: `createFeeType` đang chạy vẫn có thể commit ở Service; lần mở lại phải tải lại danh sách để thấy dữ liệu thật.
+6. Branch này không sửa Dashboard production (`BlueMoonApplication`, UI của Dev-2); việc gắn module và gọi `dispose()` do bên tích hợp thực hiện.
