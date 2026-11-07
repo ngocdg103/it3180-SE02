@@ -1,5 +1,9 @@
 # US-018 — Service Integration Preparation, Mốc 1
 
+> Review lịch sử đã được Lead Dev phê duyệt. Implementation trên branch mới từ
+> main đã được ghi trong [Household integration handoff](us018-household-integration-handoff.md).
+> Các mô tả “hiện tại/chưa triển khai” bên dưới phản ánh thời điểm review trước integration.
+
 Ngày: 07/11/2026. Chỉ review/đề xuất cho WBS **1.4.2.2.3**.
 Chưa sửa production code, chưa tạo branch integration, chưa merge/rebase.
 

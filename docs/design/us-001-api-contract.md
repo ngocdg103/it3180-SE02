@@ -9,9 +9,15 @@ Nguồn: `docs/srs/EP01_QuanLyCuDan.md` mục 1, EP-06 (RBAC), WBS sheet 03 (US-
 HouseholdService service = new HouseholdServiceImpl(
         new HouseholdDAO(new DatabaseConnection(DatabaseConfig.load())), ApartmentChargeLookup.NONE);
 // Chạy UI không cần MySQL (dữ liệu trong RAM, cùng luật unique với schema):
-HouseholdService mock = new HouseholdServiceImpl(new InMemoryHouseholdRepository(),
-        ApartmentChargeLookup.NONE, () -> Role.ADMIN, Clock.systemDefaultZone());
+AuthorizationService authorization = new RoleBasedAuthorizationService(null);
+HouseholdService inMemory = new HouseholdServiceImpl(new InMemoryHouseholdRepository(),
+        ApartmentChargeLookup.NONE, authorization, Clock.systemDefaultZone());
 ```
+
+Constructor production hai tham số giữ nguyên. Constructor đầy đủ nay nhận
+`AuthorizationService` thay `Supplier<Role>` theo US-018 integration đã duyệt.
+Cả hai cách đều kiểm tra session hiện tại; dữ liệu RAM không bỏ qua xác thực/phân quyền.
+Không dựng role ADMIN giả trong production. Các fixture principal chỉ nằm trong test.
 
 Controller chỉ gọi `HouseholdService`; không viết SQL, không tự kiểm tra luật nghiệp vụ.
 Mọi lệnh gọi chặn theo JDBC: chạy trong `Task` nền, cập nhật view trên FX thread.
@@ -27,7 +33,7 @@ Mọi lệnh gọi chặn theo JDBC: chạy trong `Task` nền, cập nhật vie
 | `listHouseholds(ApartmentStatus filter)` | ADMIN, ACCOUNTANT | `null` = tất cả, sắp theo `so_can_ho`; rỗng vẫn là SUCCESS |
 
 RESIDENT bị từ chối mọi method (EP-06: "Không có quyền"). Sai quyền hoặc chưa đăng nhập → ném
-`AccessDeniedException` (unchecked, theo EP-06 BR-20); không có dữ liệu nào bị đổi.
+`AccessDeniedException` (unchecked, theo EP-06 BR-22); không có dữ liệu nào bị đổi.
 
 ## 3. DTO
 
@@ -87,5 +93,5 @@ Dữ liệu mẫu để thử UI: `database/migrations/us001_seed.sql` (6 căn; 
 6. SRS chỉ có thông báo cho vi phạm luật; câu cho "ngày sai định dạng" là **[ĐỀ XUẤT]**.
 7. BR-02 (xác nhận khi đổi diện tích căn hộ đã có kỳ thu): bảng phí là US-007 chưa tồn tại → `ApartmentChargeLookup.NONE` luôn trả "chưa có kỳ thu". Cần nối khi US-007 xong.
 8. BR-03 (căn hộ trống thì nhân khẩu = 0) và tên chủ hộ/số nhân khẩu cho EP-03/EP-04/EP-07 phụ thuộc bảng nhân khẩu của Dev-1; US-001 chưa đọc những dữ liệu này.
-9. Ma trận quyền: ADMIN toàn quyền, ACCOUNTANT chỉ xem (EP-06 dòng "Hồ sơ căn hộ & hộ khẩu"). Mục RESIDENT xem căn hộ mình thuộc US-014.
-10. `AccessDeniedException` do tôi tạo ở `com.bluemoon.services`. Dev-1 (US-018) nếu có lớp trùng tên thì giữ một bản.
+9. Ma trận quyền US-001: ADMIN tạo/sửa/xem, ACCOUNTANT chỉ xem, RESIDENT bị từ chối. Quyền OWN của US-018 chỉ áp dụng lịch sử đóng phí, không mở HOUSEHOLD_VIEW.
+10. Dùng class chung `com.bluemoon.services.AccessDeniedException` đã tích hợp trên main; không tạo class thứ hai. Guard Household gọi AuthorizationService, không còn requireRole nội bộ.

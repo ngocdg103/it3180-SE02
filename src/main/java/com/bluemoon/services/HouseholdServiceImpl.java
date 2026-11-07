@@ -9,7 +9,7 @@ import com.bluemoon.models.Household;
 import com.bluemoon.models.HouseholdForm;
 import com.bluemoon.models.HouseholdProfile;
 import com.bluemoon.models.HouseholdUpdateForm;
-import com.bluemoon.models.Role;
+import com.bluemoon.models.Permission;
 import com.bluemoon.services.HouseholdResult.Status;
 import java.math.BigDecimal;
 import java.sql.SQLException;
@@ -20,7 +20,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 /** US-001 rules from docs/srs/EP01_QuanLyCuDan.md section 1. Messages are the SRS text where one is given. */
@@ -45,25 +44,25 @@ public final class HouseholdServiceImpl implements HouseholdService {
 
     private final HouseholdRepository repository;
     private final ApartmentChargeLookup charges;
-    private final Supplier<Role> currentRole;
+    private final AuthorizationService authorization;
     private final Clock clock;
 
     /** Production: new HouseholdServiceImpl(new HouseholdDAO(connection), ApartmentChargeLookup.NONE). */
     public HouseholdServiceImpl(HouseholdRepository repository, ApartmentChargeLookup charges) {
-        this(repository, charges, SessionContext::getCurrentRole, Clock.systemDefaultZone());
+        this(repository, charges, new RoleBasedAuthorizationService(null), Clock.systemDefaultZone());
     }
 
     public HouseholdServiceImpl(HouseholdRepository repository, ApartmentChargeLookup charges,
-                                Supplier<Role> currentRole, Clock clock) {
+                                AuthorizationService authorization, Clock clock) {
         this.repository = Objects.requireNonNull(repository);
         this.charges = Objects.requireNonNull(charges);
-        this.currentRole = Objects.requireNonNull(currentRole);
+        this.authorization = Objects.requireNonNull(authorization);
         this.clock = Objects.requireNonNull(clock);
     }
 
     @Override
     public HouseholdResult<HouseholdProfile> createHousehold(HouseholdForm form) {
-        requireRole(true);
+        authorization.requirePermission(Permission.HOUSEHOLD_CREATE);
         Objects.requireNonNull(form);
         var errors = new LinkedHashMap<String, String>();
         var soCanHo = trim(form.soCanHo());
@@ -92,7 +91,7 @@ public final class HouseholdServiceImpl implements HouseholdService {
     @Override
     public HouseholdResult<HouseholdProfile> updateHousehold(String maHo, HouseholdUpdateForm form,
                                                              boolean confirmAreaChange) {
-        requireRole(true);
+        authorization.requirePermission(Permission.HOUSEHOLD_UPDATE);
         Objects.requireNonNull(form);
         var errors = new LinkedHashMap<String, String>();
         var fields = validateEditable(form.tang(), form.dienTich(), form.ngayNhanNha(), form.trangThai(), errors);
@@ -123,7 +122,7 @@ public final class HouseholdServiceImpl implements HouseholdService {
 
     @Override
     public HouseholdResult<HouseholdProfile> getHouseholdById(String maHo) {
-        requireRole(false);
+        authorization.requirePermission(Permission.HOUSEHOLD_VIEW);
         try {
             return repository.findByMaHo(trim(maHo)).map(p -> HouseholdResult.success("OK", p))
                     .orElseGet(HouseholdServiceImpl::notFound);
@@ -134,7 +133,7 @@ public final class HouseholdServiceImpl implements HouseholdService {
 
     @Override
     public HouseholdResult<HouseholdProfile> getHouseholdByApartment(String soCanHo) {
-        requireRole(false);
+        authorization.requirePermission(Permission.HOUSEHOLD_VIEW);
         try {
             return repository.findBySoCanHo(trim(soCanHo)).map(p -> HouseholdResult.success("OK", p))
                     .orElseGet(HouseholdServiceImpl::notFound);
@@ -145,7 +144,7 @@ public final class HouseholdServiceImpl implements HouseholdService {
 
     @Override
     public HouseholdResult<List<HouseholdProfile>> listHouseholds(ApartmentStatus filter) {
-        requireRole(false);
+        authorization.requirePermission(Permission.HOUSEHOLD_VIEW);
         try {
             return HouseholdResult.success("OK", List.copyOf(repository.findAll(filter)));
         } catch (SQLException failure) {
@@ -180,17 +179,6 @@ public final class HouseholdServiceImpl implements HouseholdService {
         if (status == null) { errors.put("trang_thai", MSG_TRANG_THAI); }
         result.trangThai = status;
         return result;
-    }
-
-    private void requireRole(boolean write) {
-        Role role;
-        try {
-            role = currentRole.get();
-        } catch (IllegalStateException noSession) {
-            throw new AccessDeniedException("Chưa đăng nhập");
-        }
-        boolean allowed = role == Role.ADMIN || (!write && role == Role.ACCOUNTANT);
-        if (!allowed) { throw new AccessDeniedException("Bạn không có quyền thực hiện chức năng này"); }
     }
 
     private static String trim(String text) { return text == null ? "" : text.trim(); }

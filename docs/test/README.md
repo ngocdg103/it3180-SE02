@@ -1,5 +1,23 @@
 # Testing Documentation
 
+## US-018 Household integration — verification mới nhất
+
+- Base: `3d0f86082263581f5f4a35c4295ca133c6b4b83f` trên main, đã có Foundation,
+  US-001 và Authorization Layer.
+- `mvn clean verify`: **204 tests PASS**, 0 failures/errors/skips.
+- `mvn -Pjavafx-smoke clean verify`: **205 tests PASS**, 0 failures/errors/skips.
+- `git diff --check`: PASS.
+- 29 Household–RBAC tests mới: 20 tổ hợp operation/session, 5 guard-before-validation,
+  4 kiểm tra session/OWN/data-integrity/null injection. Dùng policy RBAC thật và
+  in-memory repository có quan sát thao tác.
+- Giữ 60 Household regression, 97 RBAC, 12 AuthService, 2 Authentication contract,
+  4 config tests PASS; JavaFX profile thêm 1 FXML/Stage check PASS.
+- MySQL IT đã cập nhật constructor và được compile; chưa chạy suite MySQL opt-in
+  trong đợt này. Không khẳng định đã kiểm thử DB hoặc UI tích hợp thực tế.
+
+Xem [handoff integration](../design/us018-household-integration-handoff.md).
+Các kết quả bên dưới là lịch sử các mốc trước.
+
 ## Dev-1 / US-018 Mốc 2
 
 - `mvn clean verify`: **115 tests PASS**, không failures/errors/skips.
