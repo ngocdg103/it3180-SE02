@@ -40,6 +40,7 @@ class HouseholdMySqlIT {
     }
 
     @BeforeEach void freshSchema() throws Exception {
+        runSql("DROP TABLE IF EXISTS residents"); // US-002 FK: must go before households
         runSql("DROP TABLE IF EXISTS households");
         runSql("DROP TABLE IF EXISTS apartments");
         runScript("database/migrations/us001_household_apartment.sql");
