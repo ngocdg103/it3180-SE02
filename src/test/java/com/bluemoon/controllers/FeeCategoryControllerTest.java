@@ -34,6 +34,7 @@ class FeeCategoryControllerTest {
     private FakeFeeTypeService service;
     private Stage stage;
     private Parent root;
+    private FeeCategoryController controller;
 
     @BeforeAll static void toolkit() throws Exception {
         CompletableFuture<Void> ready = new CompletableFuture<>();
@@ -58,7 +59,8 @@ class FeeCategoryControllerTest {
 
     private void open() throws Exception {
         fx(() -> {
-            root = FeeCategoryController.load(service);
+            controller = new FeeCategoryController(service);
+            root = FeeCategoryController.load(controller);
             stage = new Stage();
             stage.setScene(new Scene(root));
             stage.show();
@@ -335,5 +337,87 @@ class FeeCategoryControllerTest {
         assertTrue(get(() -> table().getPlaceholder() instanceof Label l && FeeCategoryController.MSG_LOADING.equals(l.getText())));
         service.listGate.countDown();
         waitUntil(() -> table().getItems().size() == 2);
+    }
+
+    // ---- lifecycle (dispose) ----
+
+    private void dispose() throws Exception { fx(() -> { controller.dispose(); return null; }); }
+
+    @Test void leavingWhileListIsLoadingDropsLateResultAndKeepsLoadingState() throws Exception {
+        service.listGate = new CountDownLatch(1);
+        open();
+        waitUntil(() -> service.listCalls.get() == 1);
+        dispose();
+        service.listGate.countDown();
+        Thread.sleep(300);
+        assertTrue(get(() -> table().getItems().isEmpty()), "late list result must not fill the old screen");
+        assertEquals(FeeCategoryController.MSG_LOADING, get(() -> ((Label) table().getPlaceholder()).getText()));
+        assertTrue(get(() -> controller.isDisposed()));
+    }
+
+    @Test void leavingWhileListFailsDoesNotShowErrorOrDenial() throws Exception {
+        service.listGate = new CountDownLatch(1);
+        service.listFailure = new AccessDeniedException("late");
+        open();
+        waitUntil(() -> service.listCalls.get() == 1);
+        dispose();
+        service.listGate.countDown();
+        Thread.sleep(300);
+        assertEquals(FeeCategoryController.MSG_LOADING, get(() -> ((Label) table().getPlaceholder()).getText()));
+        assertFalse(get(() -> button("saveButton").isDisabled()), "late denial must not alter the old screen");
+    }
+
+    @Test void leavingWhileCreatingDropsCallbackButDoesNotCancelTheService() throws Exception {
+        service.createGate = new CountDownLatch(1);
+        open();
+        loaded();
+        fill("PHI_DV", "Phí dịch vụ", FeeKind.BAT_BUOC, ChargeMethod.THEO_DIEN_TICH, "");
+        save();
+        waitUntil(() -> service.createCalls.get() == 1);
+        int listCalls = service.listCalls.get();
+        dispose();
+        service.createGate.countDown();
+        waitUntil(() -> service.stored.size() == 3); // the Service call still ran to completion
+        Thread.sleep(300);
+        assertEquals(1, service.createCalls.get());
+        assertEquals(listCalls, service.listCalls.get(), "no refresh after dispose");
+        assertEquals("", get(() -> label("messageLabel").getText()), "no success message on a dead screen");
+        assertEquals("PHI_DV", get(() -> field("codeField").getText()), "form not reset by a late callback");
+        assertTrue(get(() -> button("saveButton").isDisabled()), "saving state is not changed behind the user");
+        assertEquals(2, get(() -> table().getItems().size()));
+    }
+
+    @Test void oldScreenCallbackDoesNotTouchNewScreen() throws Exception {
+        service.listGate = new CountDownLatch(1);
+        open();
+        waitUntil(() -> service.listCalls.get() == 1);
+        FeeCategoryController old = controller;
+        Parent oldRoot = root;
+        dispose();
+        service.listGate = null;
+        FeeCategoryController fresh = fx(() -> new FeeCategoryController(service));
+        Parent freshRoot = fx(() -> FeeCategoryController.load(fresh));
+        controller = fresh;
+        root = freshRoot;
+        waitUntil(() -> table().getItems().size() == 2);
+        service.stored.clear();
+        assertTrue(get(() -> ((TableView<?>) oldRoot.lookup("#feeTable")).getItems().isEmpty()));
+        assertTrue(get(() -> old.isDisposed()));
+        assertFalse(get(() -> fresh.isDisposed()));
+        assertEquals(2, get(() -> table().getItems().size()), "new screen keeps its own data");
+    }
+
+    @Test void disposedScreenIgnoresFurtherUserActions() throws Exception {
+        open();
+        loaded();
+        dispose();
+        int lists = service.listCalls.get();
+        fill("PHI_DV", "Phí dịch vụ", FeeKind.BAT_BUOC, ChargeMethod.THEO_DIEN_TICH, "");
+        save();
+        fx(() -> { combo("filterBox").getSelectionModel().select(FeeCategoryController.Filter.STOPPED); return null; });
+        Thread.sleep(200);
+        assertEquals(0, service.createCalls.get());
+        assertEquals(lists, service.listCalls.get());
+        fx(() -> { controller.dispose(); return null; }); // idempotent
     }
 }

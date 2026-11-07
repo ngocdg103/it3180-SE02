@@ -32,6 +32,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
@@ -72,6 +74,8 @@ public final class FeeCategoryController {
 
     private final FeeTypeService service;
     private final Executor executor;
+    private final boolean ownsExecutor;
+    private boolean disposed; // FX thread only; once true no callback touches the screen
     private boolean saving;
     private boolean denied;
     private long listRequest; // only the newest list response may update the table
@@ -103,18 +107,37 @@ public final class FeeCategoryController {
     @FXML private Button saveButton;
     @FXML private Button cancelButton;
 
-    public FeeCategoryController(FeeTypeService service) { this(service, defaultExecutor()); }
+    public FeeCategoryController(FeeTypeService service) { this(service, defaultExecutor(), true); }
 
     /** The executor must run work off the FX thread (tests may pass their own). */
-    public FeeCategoryController(FeeTypeService service, Executor executor) {
+    public FeeCategoryController(FeeTypeService service, Executor executor) { this(service, executor, false); }
+
+    private FeeCategoryController(FeeTypeService service, Executor executor, boolean ownsExecutor) {
         this.service = Objects.requireNonNull(service);
         this.executor = Objects.requireNonNull(executor);
+        this.ownsExecutor = ownsExecutor;
     }
+
+    /**
+     * Call on the FX thread when the screen is removed (module switch, logout, window close).
+     * Late Service results are dropped instead of touching the old screen. It does NOT cancel or
+     * roll back a Service call already running: a create that was started may still commit.
+     * Idempotent.
+     */
+    public void dispose() {
+        if (disposed) { return; }
+        disposed = true;
+        listRequest++;
+        if (ownsExecutor && executor instanceof ExecutorService pool) { pool.shutdown(); } // lets in-flight work finish
+    }
+
+    public boolean isDisposed() { return disposed; }
 
     /** Loads FeeCategoryView.fxml with this controller. Call on the FX thread. */
     public static Parent load(FeeTypeService service) { return load(new FeeCategoryController(service)); }
 
-    static Parent load(FeeCategoryController controller) {
+    /** Load with a controller the caller keeps, so it can call {@link #dispose()} when the screen goes away. */
+    public static Parent load(FeeCategoryController controller) {
         FXMLLoader loader = new FXMLLoader(
                 FeeCategoryController.class.getResource("/com/bluemoon/views/FeeCategoryView.fxml"));
         loader.setControllerFactory(type -> controller);
@@ -164,7 +187,7 @@ public final class FeeCategoryController {
     // ---- list ----
 
     private void reload() {
-        if (denied) { return; }
+        if (denied || disposed) { return; }
         Filter filter = filterBox.getValue() == null ? Filter.ALL : filterBox.getValue();
         long request = ++listRequest;
         showTableState(true, MSG_LOADING, false);
@@ -231,7 +254,7 @@ public final class FeeCategoryController {
     // ---- save ----
 
     private void save() {
-        if (saving || denied) { return; }
+        if (saving || denied || disposed) { return; }
         clearErrors();
         showMessage("", false);
         FeeTypeForm form = readForm();
@@ -343,8 +366,9 @@ public final class FeeCategoryController {
         Task<T> task = new Task<>() {
             @Override protected T call() throws Exception { return call.call(); }
         };
-        task.setOnSucceeded(event -> onSuccess.accept(task.getValue()));
-        task.setOnFailed(event -> onFailure.accept(task.getException()));
-        executor.execute(task);
+        task.setOnSucceeded(event -> { if (!disposed) { onSuccess.accept(task.getValue()); } });
+        task.setOnFailed(event -> { if (!disposed) { onFailure.accept(task.getException()); } });
+        try { executor.execute(task); }
+        catch (RejectedExecutionException rejected) { if (!disposed) { onFailure.accept(rejected); } }
     }
 }
