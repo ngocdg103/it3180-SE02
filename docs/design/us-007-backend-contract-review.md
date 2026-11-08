@@ -1,6 +1,6 @@
 # US-007 — Lập kỳ thu và tính phí tự động: Contract Review & Technical Design (Mốc 1) — Dev-3 → Lead Dev
 
-Trạng thái: **chỉ thiết kế**. Chưa có production code, chưa có migration thật (SQL bên dưới là *đề xuất*), chưa sửa API có sẵn. Chưa commit/push cho tới khi Lead Dev cho phép.
+Trạng thái: **chỉ thiết kế**. Chưa có production code, chưa có migration thật (SQL bên dưới là *đề xuất*), chưa sửa API có sẵn. **Revision 02 (sau PO phê duyệt Q1–Q18; main 162d9ea):** Q11 đổi thành *chỉ cho lập kỳ = tháng hiện tại* (không quá khứ, không tương lai), inject `Clock`; Q6 lưu `DECIMAL(19,2)` nhưng làm tròn HALF_UP về 1 VNĐ trước khi lưu; tách mã MySQL 1062 / 1213 / 1205; tách `FeeRateLookup` (contract công khai) khỏi việc load đơn giá cùng connection trong `BillingTx`; phụ thuộc US-006: **Dev-2 Schema/DAO, Dev-1 Service/UI**; snapshot bất biến ở application layer, DB chưa khóa UPDATE trực tiếp.
 Quy ước: **[SRS]** = có trong tài liệu; **[WBS]** = Sprint 1 WBS; **[CODE]** = đã có trên `origin/main` (0385182); **[ĐỀ XUẤT]** = Dev-3 đề xuất, chờ duyệt; **[PO?]** = cần PO quyết định (mục G, có mặc định).
 Nguồn đã đọc: `docs/srs/EP03` §1–3, `EP01` §1–2 (BR-01..05), `EP06` §2 (RBAC), `docs/design/us-005-backend-handoff.md`, `us-002-contract-review.md`, `FeeTypeService/FeeTypeDAO`, `ResidentRepository.countByMaHo`, `HouseholdRepository`, `ApartmentChargeLookup`, `RoleBasedAuthorizationService`, `SessionContext`, migrations us001/us002/us005, và các chuỗi mô tả US-006/US-007 trong `SE_02_Implementation_WBS.xlsx` (chỉ trích được text; không đọc được cấu trúc hàng/cột/assignee).
 
@@ -12,7 +12,8 @@ Nguồn đã đọc: `docs/srs/EP03` §1–3, `EP01` §1–2 (BR-01..05), `EP06`
 3. Kỳ đã chốt **không bao giờ được tính lại** từ dữ liệu hiện tại: không có method update/delete cho `billing_periods`/`invoice_lines`; `invoices` chỉ cho US-008 cập nhật các cột thanh toán.
 4. `previewPeriod` chỉ đọc, không ghi. `generatePeriod` chạy **một transaction duy nhất** (all-or-nothing); chống tạo trùng bằng `UNIQUE/PRIMARY KEY (ky_thu)` của DB, không bằng kiểm tra "SELECT rồi INSERT".
 5. Engine **data-driven**: tính theo mọi `fee_types` loại `BAT_BUOC`, `DANG_AP_DUNG`, theo `phuong_thuc_tinh` (diện tích / nhân khẩu / cố định) với đơn giá hiệu lực từ US-006. AC-01 (P1204 → 1.384.000) là một trường hợp của engine này.
-6. Tiền dùng `BigDecimal`; làm tròn HALF_UP về VNĐ **theo từng dòng**, tổng = tổng các dòng đã làm tròn.
+6. Tiền dùng `BigDecimal`; làm tròn HALF_UP về 1 VNĐ **theo từng dòng** *trước khi lưu*, tổng = tổng các dòng đã làm tròn; cột lưu `DECIMAL(19,2)` (phần thập phân luôn `.00`, DB có CHECK).
+6a. **Kỳ thu chỉ được lập cho tháng hiện tại** (Q11). `Clock` được inject vào `BillingServiceImpl` để test xác định (deterministic); production dùng `Clock.system(ZoneId.of("Asia/Ho_Chi_Minh"))`.
 7. **Nút thắt lớn nhất: US-006 (bảng đơn giá theo thời điểm) chưa có trên main** — xem D-1 và mục I.
 
 ## B. Mapping SRS → business rule → service API
@@ -47,24 +48,25 @@ Nguồn đã đọc: `docs/srs/EP03` §1–3, `EP01` §1–2 (BR-01..05), `EP06`
 1. **Cố định theo hộ (`THEO_CAN_HO`)**: `so_luong = 1`, `thanh_tien = round(don_gia)`. Đơn giá lấy từ US-006 như mọi khoản bắt buộc (vì US-006 chấp nhận "danh mục khoản thu bắt buộc còn hiệu lực"). *SRS không nêu khoản cố định cụ thể nào; BR-08 chỉ có 3 giá chuẩn → xem C.1/Q12.*
 2. **Theo diện tích**: `so_luong = apartments.dien_tich` (snapshot DECIMAL(8,2)); `thanh_tien = round(dien_tich × don_gia)`.
 3. **Theo nhân khẩu**: `so_luong` = số nhân khẩu như B/BR-05; `0` hợp lệ (BR-10).
-4. **Khoản ngừng áp dụng**: chỉ khoản `DANG_AP_DUNG` tại thời điểm chốt được đưa vào kỳ **mới**. Kỳ đã chốt giữ nguyên dòng cũ (snapshot có tên/hình thức/giá nên không phụ thuộc trạng thái hiện tại). Hạn chế: `fee_types` không có ngày ngừng áp dụng → lập kỳ *quá khứ* sau khi khoản đã ngừng sẽ thiếu khoản đó (Q11 hạn chế lập kỳ quá khứ).
+4. **Khoản ngừng áp dụng**: chỉ khoản `DANG_AP_DUNG` tại thời điểm chốt được đưa vào kỳ **mới**. Kỳ đã chốt giữ nguyên dòng cũ (snapshot có tên/hình thức/giá nên không phụ thuộc trạng thái hiện tại). Vì chỉ lập kỳ tháng hiện tại (Q11), trạng thái `fee_types` tại lúc bấm "Lập kỳ" chính là trạng thái của kỳ; `fee_types` không có ngày ngừng áp dụng nên **không** hỗ trợ dựng lại kỳ lịch sử.
 5. **Thiếu diện tích / thiếu dữ liệu hộ**: schema hiện tại **không cho phép** (`dien_tich NOT NULL CHECK > 0`; `households.so_can_ho` FK). BR-11 là *phòng thủ*: nếu gặp (dữ liệu hỏng/nhập tay) → bỏ qua hộ đó + cảnh báo trong kết quả, không làm hỏng cả kỳ (đúng SRS). **Thiếu đơn giá hiệu lực của khoản đang áp dụng** là lỗi *cấu hình toàn kỳ* → `MISSING_RATE`, không ghi gì (bỏ khoản đó âm thầm sẽ thu thiếu cho cả tòa nhà) [Q7].
 6. **Số tiền = 0**: dòng 0 đồng (VS của hộ trống) vẫn lưu. Hóa đơn có `tong_tien = 0` (khi mọi dòng bằng 0) không lập, đưa vào `skipped` với lý do `ZERO_TOTAL`. Thực tế gần như không xảy ra vì `don_gia > 0` và `dien_tich > 0`.
 7. **Khoản tự nguyện (`DONG_GOP`)**: không tự sinh dòng nào trong US-007. SRS có câu "+ Khoản đóng góp (nếu đã đăng ký)" nhưng không có cơ chế "đăng ký" nào trong schema/US, và US-005 BR-06 nói "không ép buộc, chỉ ghi nhận theo thực tế hộ đóng góp" → mâu thuẫn, chọn theo WBS (không gộp). Tiền đóng góp thực tế thuộc US-008.
 8. **Hộ được tính**: hộ có `households.ngay_nhan_nha ≤ ngày cuối kỳ`, mọi trạng thái căn hộ (`DANG_O`, `CHO_THUE`, `CAN_HO_TRONG`) vì BR-10/BR-03 vẫn thu QL+DV. Nếu căn hộ `CAN_HO_TRONG` nhưng vẫn có nhân khẩu (dữ liệu chưa nhất quán, xem Q17 của US-002) → **đếm theo dữ liệu thực** và thêm cảnh báo `VACANT_WITH_RESIDENTS`.
-9. **Làm tròn**: `BigDecimal.setScale(0, HALF_UP)` mỗi dòng; `tong_tien = Σ thanh_tien`. Không bao giờ dùng `double`.
+9. **Làm tròn (Q6)**: `BigDecimal.setScale(0, HALF_UP)` mỗi dòng **trước khi lưu**, rồi lưu vào cột `DECIMAL(19,2)` (giá trị dạng `1384000.00`); `tong_tien = Σ thanh_tien`. Không bao giờ dùng `double`.
 
 ### C.3 Quy tắc snapshot (không tính lại kỳ đã chốt)
 - Lưu trong `invoices`: `dien_tich`, `so_nhan_khau`, `ma_ho`, `so_can_ho`, `han_nop`.
 - Lưu trong `invoice_lines`: `ma_loai_thu`, `ten_loai_thu`, `phuong_thuc_tinh`, `so_luong`, `don_gia`, `ngay_ap_dung_gia`, `thanh_tien`.
 - Đổi diện tích (US-001), thêm nhân khẩu (US-002), đổi giá (US-006) **sau** khi chốt → không đổi hóa đơn cũ. `getPeriod/getInvoice` chỉ đọc bảng snapshot, không join `apartments/residents/fee_rates` để lấy số liệu tiền.
+- **Bất biến ở application layer**: chỉ bảo đảm vì repository không có update/delete cho `billing_periods`/`invoice_lines`. **DB chưa khóa UPDATE trực tiếp** (không trigger/không tách quyền); ai ghi được vào DB vẫn sửa được snapshot (R2).
 - `previewPeriod` cho kỳ **đã tồn tại** trả snapshot đã lưu (`alreadyGenerated = true`), không tính lại từ dữ liệu sống.
 
 ## D. Dependencies
 
 | # | Phụ thuộc | Trạng thái | Việc cần |
 |---|---|---|---|
-| D-1 | **US-006** `fee_rates` + `FeeRateLookup` | **Chưa có trên main** (WBS có FeeRate entity nhưng chưa merge) | Chốt schema tối thiểu: `fee_rates(ma_loai_thu, don_gia DECIMAL(19,2) > 0, ngay_ap_dung DATE, UNIQUE(ma_loai_thu, ngay_ap_dung))`; ai làm, khi nào |
+| D-1 | **US-006** `fee_rates` + `FeeRateLookup` | **Chưa có trên main.** Phân công: **Dev-2 làm Schema/DAO** (`fee_rates` + truy vấn đơn giá hiệu lực); **Dev-1 làm Service/UI** (service công khai + `FeeRateLookup`) | Chốt schema tối thiểu: `fee_rates(ma_loai_thu, don_gia DECIMAL(19,2) > 0, ngay_ap_dung DATE, UNIQUE(ma_loai_thu, ngay_ap_dung))`; Dev-3 (US-007) *không* sửa US-006. Mốc 2a chỉ cần interface `FeeRateLookup`; Mốc 2b cần schema+DAO của Dev-2 để load đơn giá cùng connection (xem F.2) |
 | D-2 | US-005 `fee_types` | Có (`FeeTypeDAO`) | US-007 đọc `fee_types` trực tiếp trong transaction (không gọi `FeeTypeService` vì cần cùng connection/snapshot); FK từ `invoice_lines` |
 | D-3 | US-001 `apartments/households` | Có | đọc `dien_tich`, `ngay_nhan_nha`; FK; triển khai `ApartmentChargeLookup` |
 | D-4 | US-002 `residents` | Có | `countByMaHo` hiện **không lọc ngày** và mở connection riêng → US-007 dùng SQL đếm riêng trong transaction (có test đối chiếu với `countByMaHo`). Không sửa `ResidentRepository` |
@@ -83,7 +85,7 @@ billing_periods(ky_thu PK) 1 --- n invoices(ma_hoa_don PK; UNIQUE(ky_thu,so_can_
 ```
 
 ### E.1 Proposed migration `database/migrations/us007_billing.sql` (CHƯA tạo file) [ĐỀ XUẤT]
-Độc lập như us001/us002/us005; MySQL 8.0.16+; áp dụng sau us001, us002, us005 và schema users. Số tiền VNĐ là `DECIMAL(19,0)` (ép làm tròn ở DB).
+Độc lập như us001/us002/us005; MySQL 8.0.16+; áp dụng sau us001, us002, us005 và schema users. Số tiền VNĐ là `DECIMAL(19,2)` (Q6); service làm tròn HALF_UP về 1 VNĐ trước khi lưu và DB có CHECK `col = ROUND(col, 0)` để chặn giá trị lẻ.
 
 ```sql
 CREATE TABLE IF NOT EXISTS billing_periods (
@@ -92,12 +94,12 @@ CREATE TABLE IF NOT EXISTS billing_periods (
     trang_thai   ENUM('DA_PHAT_HANH') NOT NULL DEFAULT 'DA_PHAT_HANH',
     so_hoa_don   INT NOT NULL DEFAULT 0,
     so_ho_bo_qua INT NOT NULL DEFAULT 0,
-    tong_tien    DECIMAL(19,0) NOT NULL DEFAULT 0,
+    tong_tien    DECIMAL(19,2) NOT NULL DEFAULT 0,
     created_by   BIGINT NOT NULL,
     created_at   DATETIME(6) NOT NULL,
     PRIMARY KEY (ky_thu),
     CONSTRAINT ck_bp_ky CHECK (REGEXP_LIKE(ky_thu, '^[0-9]{4}-(0[1-9]|1[0-2])$', 'c')),
-    CONSTRAINT ck_bp_counts CHECK (so_hoa_don >= 0 AND so_ho_bo_qua >= 0 AND tong_tien >= 0),
+    CONSTRAINT ck_bp_counts CHECK (so_hoa_don >= 0 AND so_ho_bo_qua >= 0 AND tong_tien >= 0 AND tong_tien = ROUND(tong_tien, 0)),
     CONSTRAINT fk_bp_user FOREIGN KEY (created_by) REFERENCES users (id) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -108,15 +110,16 @@ CREATE TABLE IF NOT EXISTS invoices (
     so_can_ho     VARCHAR(10) NOT NULL,
     dien_tich     DECIMAL(8,2) NOT NULL,      -- snapshot
     so_nhan_khau  INT NOT NULL,               -- snapshot
-    tong_tien     DECIMAL(19,0) NOT NULL,
-    da_thanh_toan DECIMAL(19,0) NOT NULL DEFAULT 0,   -- US-008 owns writes
-    con_thieu     DECIMAL(19,0) GENERATED ALWAYS AS (tong_tien - da_thanh_toan) STORED,
+    tong_tien     DECIMAL(19,2) NOT NULL,
+    da_thanh_toan DECIMAL(19,2) NOT NULL DEFAULT 0,   -- US-008 owns writes
+    con_thieu     DECIMAL(19,2) GENERATED ALWAYS AS (tong_tien - da_thanh_toan) STORED,
     trang_thai    ENUM('CHUA_DONG','DONG_THIEU','DA_DONG_DU','DONG_THUA') NOT NULL DEFAULT 'CHUA_DONG',
     han_nop       DATE NOT NULL,
     created_at    DATETIME(6) NOT NULL,
     PRIMARY KEY (ma_hoa_don),
     CONSTRAINT uq_invoice_period_apartment UNIQUE (ky_thu, so_can_ho),
-    CONSTRAINT ck_inv_amounts CHECK (tong_tien >= 0 AND da_thanh_toan >= 0 AND dien_tich > 0 AND so_nhan_khau >= 0),
+    CONSTRAINT ck_inv_amounts CHECK (tong_tien >= 0 AND da_thanh_toan >= 0 AND dien_tich > 0 AND so_nhan_khau >= 0
+        AND tong_tien = ROUND(tong_tien, 0)),   -- da_thanh_toan: US-008 tự quyết quy tắc làm tròn của nó
     CONSTRAINT fk_inv_period FOREIGN KEY (ky_thu) REFERENCES billing_periods (ky_thu) ON UPDATE RESTRICT ON DELETE RESTRICT,
     CONSTRAINT fk_inv_household FOREIGN KEY (ma_ho) REFERENCES households (ma_ho) ON UPDATE RESTRICT ON DELETE RESTRICT,
     CONSTRAINT fk_inv_apartment FOREIGN KEY (so_can_ho) REFERENCES apartments (so_can_ho) ON UPDATE RESTRICT ON DELETE RESTRICT,
@@ -131,9 +134,9 @@ CREATE TABLE IF NOT EXISTS invoice_lines (
     so_luong         DECIMAL(10,2) NOT NULL,  -- m2 / nguoi / 1
     don_gia          DECIMAL(19,2) NOT NULL,  -- snapshot
     ngay_ap_dung_gia DATE NOT NULL,           -- hieu luc cua don gia da dung
-    thanh_tien       DECIMAL(19,0) NOT NULL,
+    thanh_tien       DECIMAL(19,2) NOT NULL,  -- đã làm tròn HALF_UP về 1 VNĐ trước khi lưu
     PRIMARY KEY (ma_hoa_don, ma_loai_thu),
-    CONSTRAINT ck_line_amounts CHECK (so_luong >= 0 AND don_gia > 0 AND thanh_tien >= 0),
+    CONSTRAINT ck_line_amounts CHECK (so_luong >= 0 AND don_gia > 0 AND thanh_tien >= 0 AND thanh_tien = ROUND(thanh_tien, 0)),
     CONSTRAINT fk_line_invoice FOREIGN KEY (ma_hoa_don) REFERENCES invoices (ma_hoa_don) ON UPDATE RESTRICT ON DELETE RESTRICT,
     CONSTRAINT fk_line_fee FOREIGN KEY (ma_loai_thu) REFERENCES fee_types (ma_loai_thu) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -160,7 +163,7 @@ Ghi chú: FK `ON DELETE RESTRICT` ở mọi nơi → bảo đảm BR-07 (khoản
 
 Quy ước giống US-005: `AccessDeniedException` (không phải Result) khi thiếu quyền/không session; **kiểm tra quyền trước validate và trước repository**; Result bất biến với `status/message/data/fieldErrors`; thông báo SYSTEM_ERROR chung, không lộ chi tiết SQL. Gọi JDBC → không chạy trên JavaFX thread.
 
-`BillingResult.Status`: `SUCCESS`, `VALIDATION_ERROR` (`ky_thu` sai định dạng/tháng không tồn tại/sau tháng hiện tại [Q11]), `DUPLICATE` (kỳ đã tồn tại), `MISSING_RATE` (liệt kê mã khoản thu thiếu giá), `NOTHING_TO_BILL` (không có khoản `BAT_BUOC` đang áp dụng hoặc không có hộ nào), `NOT_FOUND`, `BUSY` (lock wait timeout/deadlock, thử lại), `SYSTEM_ERROR`.
+`BillingResult.Status`: `SUCCESS`, `VALIDATION_ERROR` (`ky_thu` null/sai định dạng/tháng không tồn tại, **hoặc khác tháng hiện tại theo `Clock`** — cả quá khứ lẫn tương lai đều bị từ chối [Q11]; áp dụng cho **cả** `previewPeriod` và `generatePeriod`; xem kỳ cũ bằng `getPeriod/getInvoice`), `DUPLICATE` (kỳ đã tồn tại), `MISSING_RATE` (liệt kê mã khoản thu thiếu giá), `NOTHING_TO_BILL` (không có khoản `BAT_BUOC` đang áp dụng hoặc không có hộ nào), `NOT_FOUND`, `BUSY` (lock wait timeout/deadlock, thử lại), `SYSTEM_ERROR`.
 Thông báo tiếng Việt, AC-02: `"Kỳ thu 2026-11 đã tồn tại trên hệ thống!"`.
 
 ### F.2 Repository (package `com.bluemoon.dao`) — Unit-of-Work để preview và generate dùng **cùng** logic đọc
@@ -181,13 +184,20 @@ interface BillingTx {        // cùng 1 connection
     void finalizePeriod(String kyThu, int invoices, int skipped, BigDecimal total) throws SQLException;
 }
 ```
-`FeeRateLookup` (interface mỏng, do US-006 cung cấp implementation) — `BillingTx.loadInputs` đọc `fee_rates` trong cùng transaction. DAO chỉ chứa SQL; công thức nằm ở `BillingCalculator` (hàm thuần, test không cần DB). Prepared statement 100%, connection mới từ `DatabaseConnection`, như `FeeTypeDAO`. `DuplicateRecordException` của US-001 tái sử dụng *không sửa* (hoặc exception riêng như `ResidentDuplicateException` — để Lead chọn).
+**`FeeRateLookup` ≠ load đơn giá trong `BillingTx`** (hai thứ khác nhau):
+- `FeeRateLookup` là *contract công khai* (Mốc 2a): `Optional<BigDecimal> findEffectiveRate(String maKhoanThu, LocalDate onDate)`, mỗi lần gọi tự mở connection riêng. Dùng cho preview/hiển thị, test double và các module khác; **không** tham gia transaction của `generatePeriod`, nên không dùng nó để tính kỳ chốt.
+- `BillingTx.loadInputs` (Mốc 2b) tự đọc `fee_rates` bằng **cùng connection/transaction** của generate để có snapshot nhất quán. Việc này phụ thuộc schema `fee_rates` của US-006 (Dev-2), không đi qua `FeeRateLookup`. Test đối chiếu: với cùng dữ liệu, kết quả `loadInputs` và `FeeRateLookup` phải trùng.
+
+DAO chỉ chứa SQL; công thức nằm ở `BillingCalculator` (hàm thuần, test không cần DB). Prepared statement 100%, connection mới từ `DatabaseConnection`, như `FeeTypeDAO`. `DuplicateRecordException` của US-001 tái sử dụng *không sửa* (hoặc exception riêng như `ResidentDuplicateException` — để Lead chọn).
 
 ### F.3 Transaction & locking (`generatePeriod`)
 ```
-authz -> validate(kyThu, clock) -> inTransaction (REPEATABLE READ, mặc định MySQL):
+authz -> validate(kyThu == YearMonth.now(clock), định dạng) -> inTransaction (REPEATABLE READ, mặc định MySQL):
   1. INSERT billing_periods(ky_thu, ... totals=0)      -- lấy khóa duy nhất NGAY, tuần tự hóa các request cùng kỳ
-       1062 hoặc deadlock 1213 -> rollback -> đọc lại kỳ: nếu tồn tại -> DUPLICATE
+       MySQL 1062 (duplicate key) -> rollback -> DUPLICATE (kỳ đã tồn tại)
+       MySQL 1213 (deadlock)      -> rollback -> đọc lại kỳ ở transaction mới: có -> DUPLICATE; chưa có -> thử lại tối đa 1 lần,
+                                     vẫn lỗi -> BUSY. KHÔNG coi 1213 là DUPLICATE nếu kỳ không tồn tại.
+       MySQL 1205 (lock timeout)  -> rollback -> BUSY
   2. loadInputs(period)    -- đọc nhất quán (MVCC snapshot) fees, rates, households, residents
        thiếu rate -> rollback -> MISSING_RATE ; không hộ/khoản -> rollback -> NOTHING_TO_BILL
   3. BillingCalculator.compute(...)   -- thuần, không I/O
@@ -195,7 +205,7 @@ authz -> validate(kyThu, clock) -> inTransaction (REPEATABLE READ, mặc định
   COMMIT                       -- lỗi bất kỳ -> ROLLBACK toàn bộ, không có kỳ nửa vời
 ```
 - **Idempotency [ĐỀ XUẤT]**: khóa tự nhiên `ky_thu`. Gọi lại không bao giờ sinh dữ liệu mới; trả `DUPLICATE` (AC-02) chứ không "SUCCESS giả", để UI báo đúng thông điệp. UI lấy kỳ hiện có bằng `getPeriod`.
-- **Đồng thời**: request thứ hai chờ ở khóa của bước 1 cho tới khi request đầu commit (→ 1062 → `DUPLICATE`) hoặc rollback (→ nó tự chạy được). Chờ quá `innodb_lock_wait_timeout` (1205) → `BUSY`. Không dùng `synchronized`/lock trong JVM (nhiều tiến trình client).
+- **Đồng thời**: request thứ hai chờ ở khóa của bước 1 cho tới khi request đầu commit (→ 1062 → `DUPLICATE`) hoặc rollback (→ nó tự chạy được). Mã lỗi phân biệt rõ: **1062 → `DUPLICATE`** (chắc chắn đã có dòng trùng); **1213 (deadlock) → không suy ra trùng**, phải đọc lại kỳ rồi quyết định (xem F.3); **1205 (`innodb_lock_wait_timeout`) → `BUSY`**. Không dùng `synchronized`/lock trong JVM (nhiều tiến trình client).
 - **Không khóa dòng hộ/căn hộ/nhân khẩu**: đọc snapshot nhất quán là đủ; không chặn US-001/US-002 sửa dữ liệu khi đang chốt. Thay đổi commit sau điểm đọc đầu tiên thuộc về kỳ sau.
 - Preview: đọc-only, transaction `READ ONLY` ngắn; **không** là bảo đảm kết quả generate (dữ liệu có thể đổi giữa hai lần bấm) → generate luôn tính lại trong transaction, không tin dữ liệu preview từ client.
 - Kích thước: vài trăm hộ × vài khoản → batch insert một transaction là phù hợp; không chia nhỏ để giữ tính nguyên tử.
@@ -216,12 +226,12 @@ Khớp EP06 ("Lập kỳ thu: ADMIN toàn quyền, ACCOUNTANT toàn quyền, RES
 | Q3 | Chốt số nhân khẩu vào thời điểm nào? | Lúc bấm "Lập kỳ", đếm nhân khẩu có `ngay_chuyen_den ≤ ngày cuối kỳ`; lưu `so_nhan_khau` vào snapshot. Không tính theo ngày lẻ (không prorate); Sprint 1 chưa có chuyển đi |
 | Q4 | Giá đổi giữa kỳ dùng giá nào? | Giá có `ngay_ap_dung` lớn nhất **≤ ngày đầu kỳ** (đúng US-006 BR-09); giá hiệu lực giữa tháng áp dụng từ kỳ sau |
 | Q5 | Diện tích đổi thì kỳ đã chốt xử lý sao? | **Không đổi** kỳ đã chốt; chỉ ảnh hưởng kỳ mới. Điều chỉnh sai sót do hủy/lập lại → hoãn (Q9) |
-| Q6 | Quy tắc làm tròn? | HALF_UP về 1 VNĐ **từng dòng**, tổng = tổng dòng; cột tiền `DECIMAL(19,0)` |
+| Q6 | Quy tắc làm tròn? | HALF_UP về 1 VNĐ **từng dòng** trước khi lưu, tổng = tổng dòng; cột tiền `DECIMAL(19,2)` (luôn `.00`, có CHECK) — **PO duyệt** |
 | Q7 | Hộ thiếu dữ liệu hợp lệ: bỏ qua hay lỗi cả kỳ? | **Hộ thiếu diện tích/dữ liệu hộ → bỏ qua riêng hộ đó + cảnh báo** (đúng BR-11). **Khoản đang áp dụng thiếu đơn giá → lỗi cả kỳ `MISSING_RATE`** (không thu thiếu âm thầm). Hộ bị bỏ qua sẽ không có hóa đơn bù trong Sprint 1 (xem Q9) |
 | Q8 | Generate lần hai: trả kỳ hiện có hay báo trùng? | **Báo trùng** `DUPLICATE` với đúng thông điệp AC-02, không ghi gì; xem kỳ cũ bằng `getPeriod` |
 | Q9 | Có hỗ trợ sửa/hủy/lập lại kỳ đã phát hành trong Sprint 1? | **Không**. Kỳ đã chốt bất biến; sai sót xử lý bằng bút toán điều chỉnh ở sprint sau. Cũng hoãn "lập bù hóa đơn cho hộ bị bỏ qua" |
 | Q10 | Kết quả lưu thành snapshot nào để truy vết? | Snapshot hai cấp đã nêu ở C.3: header (diện tích, nhân khẩu, hạn nộp, người tạo, thời điểm) + dòng (mã/tên/hình thức khoản thu, số lượng, đơn giá, ngày hiệu lực giá, thành tiền) |
-| Q11 | Cho lập kỳ **tương lai** / **quá khứ** không? | Tương lai (sau tháng hiện tại): **không** (chưa biết nhân khẩu/giá). Quá khứ: cho phép nhưng cảnh báo (khoản đã ngừng không còn trong kỳ, vì `fee_types` không có ngày ngừng) |
+| Q11 | Cho lập kỳ **tương lai** / **quá khứ** không? | **PO quyết định (thay đổi so với đề xuất ban đầu): chỉ cho phép `ky_thu` = tháng hiện tại.** Quá khứ và tương lai đều bị từ chối (`VALIDATION_ERROR`). "Tháng hiện tại" tính bằng `Clock` được inject (production: `Asia/Ho_Chi_Minh`) |
 | Q12 | Chỉ 3 khoản BR-08 hay mọi khoản `BAT_BUOC` đang áp dụng? | **Mọi khoản `BAT_BUOC` + `DANG_AP_DUNG`** (data-driven, gồm cả `THEO_CAN_HO`). Lưu ý: khoản bắt buộc nào được thêm mà chưa có đơn giá sẽ làm kỳ lỗi `MISSING_RATE` |
 | Q13 | Tên bảng: SRS `hoa_don_ky`/`chi_tiet_hoa_don` hay WBS `BillingPeriod/Charge` hay `invoices/invoice_lines`? | `billing_periods`, `invoices`, `invoice_lines` (đồng bộ `fee_types`); mapping ghi trong tài liệu |
 | Q14 | Hộ được tính từ khi nào? | `ngay_nhan_nha ≤ ngày cuối kỳ`, mọi trạng thái căn hộ (kể cả `CAN_HO_TRONG`/`CHO_THUE`) |
@@ -245,12 +255,12 @@ Khớp EP06 ("Lập kỳ thu: ADMIN toàn quyền, ACCOUNTANT toàn quyền, RES
 6. **BR-11 không thể xảy ra** với schema hiện tại (diện tích `NOT NULL > 0`) → chỉ làm phòng thủ.
 7. **EP01 BR-05** "thường trú/tạm trú đang ở" nhưng `residents` không có loại cư trú hay ngày chuyển đi → đếm toàn bộ bản ghi theo `ngay_chuyen_den`.
 8. **`ApartmentChargeLookup`** hiện là hook mặc định `NONE` → US-007 phải cung cấp implementation để BR-02 hoạt động; cần xác nhận phạm vi sửa `HouseholdServiceImpl` composition (không ở trong US-007 gốc).
-9. **`fee_types` không có ngày ngừng áp dụng** → kỳ quá khứ bị thiếu khoản đã ngừng (Q11).
+9. **`fee_types` không có ngày ngừng áp dụng** và `residents` không có ngày chuyển đi → không dựng lại được kỳ lịch sử; vấn đề này được tránh bằng Q11 (chỉ tháng hiện tại), không phải được giải quyết.
 10. Em chưa đọc được cấu trúc WBS (xlsx) để xác nhận assignee/ngày; chỉ dùng text mô tả. Cần Lead xác nhận US-006 ai làm.
 
 ### I.1 Rủi ro cần PO quyết định (Lead Dev yêu cầu bổ sung)
 Các mặc định Q1–Q18 giữ nguyên; mục này chỉ nêu rủi ro, không đổi chính sách.
-- **R1 — Lập kỳ quá khứ (liên quan Q11):** kỳ quá khứ được tính từ dữ liệu *hiện tại*, nên có thể sai: (a) `fee_types` không có ngày ngừng áp dụng, khoản đã ngừng sau kỳ đó sẽ bị thiếu, còn khoản mới thêm sau kỳ đó lại bị tính nhầm; (b) `residents` không có ngày chuyển đi, nên nhân khẩu lịch sử có thể sai (người đã rời đi vẫn được đếm); (c) diện tích hiện tại có thể khác diện tích thời điểm đó. PO cần quyết định cho phép hay cấm lập kỳ quá khứ, hoặc chỉ cho phép kèm cảnh báo/quyền đặc biệt.
+- **R1 — Lập kỳ quá khứ (Q11) — ĐÃ GIẢM THIỂU bằng quyết định PO:** tính kỳ quá khứ từ dữ liệu *hiện tại* sẽ sai trạng thái khoản thu (`fee_types` không có ngày ngừng), nhân khẩu lịch sử (`residents` không có ngày chuyển đi) và diện tích. PO đã chọn chỉ cho phép tháng hiện tại, nên rủi ro này bị chặn ở service. Rủi ro còn lại: kỳ lập **muộn trong tháng** vẫn dùng dữ liệu tại lúc bấm; và nếu sau này PO muốn lập bù kỳ quá khứ thì cần thêm ngày hiệu lực cho khoản thu/nhân khẩu trước.
 - **R2 — Bất biến snapshot chỉ ở mức API (liên quan Q5, Q9):** `invoice_lines` (và `billing_periods`) chưa được DB bảo vệ khỏi `UPDATE` trực tiếp; Sprint 1 chỉ bảo đảm vì repository không có method update/delete. Ai có quyền ghi DB vẫn sửa được. Trigger/quyền DB chống UPDATE đang được hoãn (mục H); PO/Lead cần quyết định có đưa vào Sprint 1 không.
 - **R3 — Nhất quán khi dữ liệu đầu vào đổi đồng thời:** thiết kế dựa vào đọc snapshot nhất quán của InnoDB (REPEATABLE READ) trong một transaction. Điều này **chưa được chứng minh** cho tới khi có MySQL IT thật (J.3-4, J.4-3) với thay đổi diện tích/nhân khẩu/đơn giá/trạng thái khoản thu đồng thời lúc generate. Đây là điều kiện nghiệm thu của Mốc 3, không phải giả định.
 
@@ -268,11 +278,16 @@ Các mặc định Q1–Q18 giữ nguyên; mục này chỉ nêu rủi ro, khôn
 | U7 | Thiếu rate cho khoản đang áp dụng | `MISSING_RATE`, liệt kê mã, không ghi |
 | U8 | Hộ thiếu diện tích (mô phỏng) | bỏ qua + cảnh báo; hộ khác vẫn lập |
 | U9 | `tong_tien = 0` | `ZERO_TOTAL` |
-| U10 | `ky_thu` null/rỗng/`2026-13`/`2026-1`/`2026/11`/có khoảng trắng/tương lai | `VALIDATION_ERROR` + `fieldErrors["ky_thu"]` |
+| U10 | `ky_thu` null/rỗng/`2026-13`/`2026-1`/`2026/11`/có khoảng trắng | `VALIDATION_ERROR` + `fieldErrors["ky_thu"]` |
+| U10a | `Clock` cố định = 2026-11-15: `ky_thu` = `2026-10` (quá khứ), `2025-11`, `2026-12` (tương lai), `2027-11` — cho cả `previewPeriod` và `generatePeriod` | `VALIDATION_ERROR`; repository **không** được gọi, không ghi |
+| U10b | `Clock` cố định = 2026-11-15: `ky_thu = 2026-11` | hợp lệ (qua bước validate) |
+| U10c | Biên tháng với `Clock` + `ZoneId` `Asia/Ho_Chi_Minh`: `2026-11-30T23:59:59+07:00` → `2026-11` hợp lệ/`2026-12` bị từ chối; `2026-12-01T00:00:00+07:00` → ngược lại; thời điểm UTC `2026-11-30T17:30Z` (đã sang 12/01 giờ VN) → tính theo giờ VN | đạt |
+| U10d | Biên năm: `Clock` = 2026-12-31T23:59 và 2027-01-01T00:00 (giờ VN) | `2026-12` rồi `2027-01`; `han_nop` = 2027-01-15 / 2027-02-15 |
 | U11 | `han_nop` Dec → Jan năm sau; Feb | đúng |
 | U12 | `ma_hoa_don` | `HD-202611-P1204` |
 | U13 | RBAC: ADMIN, ACCOUNTANT ok; RESIDENT/no session → `AccessDeniedException`, repository **không** được gọi, kiểm tra trước validate | đạt |
-| U14 | Lỗi SQL (mock) → rollback, `SYSTEM_ERROR` chung; 1062/1213 → `DUPLICATE`; 1205 → `BUSY` | đạt |
+| U14 | Lỗi SQL (mock) → rollback, `SYSTEM_ERROR` chung; SQLException có `getErrorCode()` = **1062 → `DUPLICATE`**; **1213 → đọc lại kỳ (mock): có → `DUPLICATE`, chưa có → thử lại 1 lần rồi `BUSY`, không bao giờ `DUPLICATE` khi kỳ không tồn tại**; **1205 → `BUSY`**; mã khác → `SYSTEM_ERROR` | đạt |
+| U17 | Làm tròn lưu `DECIMAL(19,2)`: mọi `thanh_tien`/`tong_tien` có `scale` 2 và phần thập phân `.00`; không có giá trị lẻ trước khi lưu | đạt |
 | U15 | Preview không gọi bất kỳ method ghi nào; kỳ đã có → `alreadyGenerated=true` + snapshot cũ | đạt |
 | U16 | `DONG_GOP`/`THEO_*` không hợp lệ không xuất hiện; `VACANT_WITH_RESIDENTS` cảnh báo | đạt |
 
@@ -294,9 +309,9 @@ commit khi OK; rollback + suppressed khi lỗi giữa batch; prepared statement 
 
 ### J.4 Concurrency IT (cùng MySQL) — `BillingConcurrencyIT`
 1. **8–16 thread** cùng `generatePeriod("2026-11")` (CountDownLatch phát lệnh cùng lúc) → **đúng 1 SUCCESS, còn lại DUPLICATE**, 1 dòng `billing_periods`, số hóa đơn = số hộ, không `SYSTEM_ERROR`.
-2. Hai kỳ khác nhau song song → cả hai SUCCESS, không deadlock.
+2. **Không** kỳ vọng hai kỳ khác tháng đều `SUCCESS` qua public API (Q11 chỉ cho tháng hiện tại). Thay vào đó: (a) với `Clock` cố định, request cho tháng khác tháng hiện tại → `VALIDATION_ERROR`, không khóa/ghi gì; (b) tính độc lập của khóa `ky_thu` được kiểm ở **tầng repository** (gọi trực tiếp `BillingRepository.inTransaction` với hai `ky_thu` khác nhau song song → cả hai commit, không deadlock) — đây là test hạ tầng, không phải hành vi service.
 3. Generate đồng thời với thêm nhân khẩu / sửa diện tích → kỳ nhất quán (mỗi hóa đơn khớp snapshot một thời điểm), không treo.
-4. Mô phỏng 1205 (giữ khóa dài, hạ `innodb_lock_wait_timeout`) → `BUSY`; sau đó thử lại thành công/`DUPLICATE`.
+4. Mô phỏng **1205** (giữ khóa dài, hạ `innodb_lock_wait_timeout`) → `BUSY`; sau đó thử lại thành công/`DUPLICATE`. Kiểm riêng **1062** (→ `DUPLICATE`) và **1213** (gây deadlock có chủ đích ở tầng repository nếu tái hiện được; nếu không tái hiện được trên MySQL thật thì ghi rõ và chỉ dựa vào unit test U14 — không khẳng định đã kiểm chứng).
 5. Rollback của request thắng khóa → request chờ chạy được (không kẹt).
 6. Preview song song với generate → không lỗi, không ghi.
 
@@ -304,7 +319,7 @@ commit khi OK; rollback + suppressed khi lỗi giữa batch; prepared statement 
 Branch mới từ `origin/main` (không cherry-pick), tách hai bước như US-005: **2a** contract (interface + models + Result, chưa implementation, để Dev-2 làm UI/mock) → **2b** implementation.
 - `database/migrations/us007_billing.sql`
 - `models/`: `BillingPeriod`, `MonthlyCharge`, `ChargeLine`, `ChargeStatus`, `BillingPreview`, `BillingPeriodDetail`, `SkippedHousehold`, `AppliedRate`
-- `services/`: `BillingService`, `BillingResult`, `BillingServiceImpl`, `BillingCalculator`
+- `services/`: `BillingService`, `BillingResult`, `BillingServiceImpl` (nhận `Clock` qua constructor), `BillingCalculator`
 - `dao/`: `BillingRepository`, `BillingDAO` (+ `BillingTx`), `FeeRateLookup` (phối hợp US-006)
 - `src/test/.../`: `BillingCalculatorTest`, `BillingServiceTest`, `BillingDAOTest`, `BillingMySqlIT`, `BillingConcurrencyIT`
 - `docs/design/us-007-backend-handoff.md`
@@ -314,6 +329,6 @@ Branch mới từ `origin/main` (không cherry-pick), tách hai bước như US-
 ## L. Đề xuất READY / BLOCKED
 - **Contract review: READY** để Lead/PO duyệt.
 - **Implementation: BLOCKED**, vì cần:
-  1. PO duyệt tối thiểu **Q1, Q3, Q4, Q6, Q7, Q8, Q9, Q11, Q12** (các câu còn lại có mặc định an toàn).
-  2. Lead/PO chốt **US-006**: ai làm, schema `fee_rates` tối thiểu (D-1). Nếu US-006 chưa kịp: có thể làm calculator/service/DAO với `FeeRateLookup` giả, nhưng tích hợp thật và MySQL IT toàn tuyến bị chặn; **không** dùng `so_tien_mac_dinh` làm giá thay thế nếu chưa có quyết định bằng văn bản của PO.
+  1. ~~PO duyệt Q1–Q18~~ — **đã xong** (Q11 thay đổi: chỉ tháng hiện tại; xem bảng G).
+  2. **US-006**: đã phân công Dev-2 (Schema/DAO), Dev-1 (Service/UI); còn thiếu schema `fee_rates` tối thiểu được chốt và merge (D-1). Mốc 2a (contract) không bị chặn bởi việc này; Mốc 2b bị chặn. Nếu US-006 chưa kịp: có thể làm calculator/service/DAO với `FeeRateLookup` giả, nhưng tích hợp thật và MySQL IT toàn tuyến bị chặn; **không** dùng `so_tien_mac_dinh` làm giá thay thế nếu chưa có quyết định bằng văn bản của PO.
   3. Lead cho phép tạo branch Mốc 2 từ `origin/main`.
