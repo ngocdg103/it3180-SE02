@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bluemoon.controllers.LoginController"
+      alignment="CENTER" spacing="16" stylesheets="@auth.css" styleClass="page">
+    <VBox alignment="CENTER_LEFT" spacing="12" maxWidth="360" styleClass="card">
+        <Label text="BlueMoon" styleClass="brand"/>
+        <Label text="Đăng nhập vào hệ thống" styleClass="subtitle"/>
+        <Label text="Tên đăng nhập" labelFor="$username"/>
+        <TextField fx:id="username" promptText="Tên đăng nhập" onAction="#login"/>
+        <Label text="Mật khẩu" labelFor="$password"/>
+        <PasswordField fx:id="password" promptText="Mật khẩu" onAction="#login"/>
+        <Button fx:id="loginButton" text="Đăng nhập" onAction="#login" defaultButton="true" maxWidth="Infinity"/>
+        <Label fx:id="status" wrapText="true" minHeight="52" maxWidth="310" styleClass="status"/>
+    </VBox>
+</VBox>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bluemoon.controllers.DashboardController"
+      alignment="CENTER" spacing="18" stylesheets="@auth.css" styleClass="page">
+    <VBox alignment="CENTER_LEFT" spacing="18" maxWidth="420" styleClass="card">
+        <Label text="BlueMoon" styleClass="brand"/>
+        <Label fx:id="greeting" wrapText="true" styleClass="subtitle"/>
+        <Label fx:id="role"/>
+        <Button fx:id="logoutButton" text="Đăng xuất" onAction="#logout"/>
+    </VBox>
+</VBox>

@@ -2,7 +2,6 @@ package com.bluemoon;
 
 import javafx.application.Platform;
 import javafx.stage.Stage;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CompletableFuture;
@@ -15,7 +14,8 @@ class FoundationSmokeIT {
     @Test
     void applicationLoadsFxmlAndShowsStage() throws Exception {
         var finished = new CompletableFuture<Void>();
-        Platform.startup(() -> {
+        Runnable check = () -> {
+            Platform.setImplicitExit(false);
             Stage stage = new Stage();
             try {
                 new BlueMoonApplication().start(stage);
@@ -28,9 +28,11 @@ class FoundationSmokeIT {
             } finally {
                 stage.close();
             }
-        });
+        };
+        try { Platform.startup(check); }
+        catch (IllegalStateException alreadyStarted) { Platform.runLater(check); }
         finished.get(30, TimeUnit.SECONDS);
     }
 
-    @AfterAll static void stopToolkit() { Platform.exit(); }
+
 }

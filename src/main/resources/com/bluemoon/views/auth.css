@@ -1,0 +1,8 @@
+ .page { -fx-background-color: #edf3fa; -fx-font-family: "Segoe UI"; -fx-font-size: 14px; -fx-padding: 24; }
+.card { -fx-background-color: white; -fx-background-radius: 16; -fx-padding: 28; }
+.brand { -fx-text-fill: #174b85; -fx-font-size: 30px; -fx-font-weight: bold; }
+.subtitle { -fx-text-fill: #34465b; -fx-font-size: 18px; }
+.text-field { -fx-padding: 10; -fx-background-radius: 6; }
+.button { -fx-background-color: #205c9c; -fx-text-fill: white; -fx-padding: 10 20; -fx-background-radius: 6; -fx-cursor: hand; }
+.button:focused { -fx-border-color: #152f50; -fx-border-width: 2; -fx-border-radius: 6; }
+.status { -fx-text-fill: #a12b35; }
