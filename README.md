@@ -157,14 +157,14 @@ Không yêu cầu môi trường đồ họa JavaFX hoặc CSDL MySQL ngoài:
 ```bash
 mvn clean test
 ```
-*Kết quả hiện tại trên `main`: **695/695 tests PASS** (0 failures, 0 errors).*
+*Kết quả hiện tại trên `main`: **699/699 tests PASS** (0 failures, 0 errors).*
 
 ### 3. Chạy kiểm thử Smoke Test Giao Diện JavaFX
 Kiểm tra vòng đời khởi tạo giao diện FXML, Stage, Scene và khả năng render:
 ```bash
 mvn -Pjavafx-smoke test
 ```
-*Kết quả hiện tại trên `main`: **696/696 tests PASS** (0 failures, 0 errors).*
+*Kết quả hiện tại trên `main`: **700/700 tests PASS** (0 failures, 0 errors).*
 
 ### 4. Chạy kiểm thử tích hợp CSDL thật (MySQL Integration Tests)
 Yêu cầu tạo một CSDL kiểm thử riêng biệt có tên kết thúc bằng `_test` (ví dụ `bluemoon_test`):
@@ -183,7 +183,7 @@ mvn -Pmysql-it verify
 Các quyết định nghiệp vụ đã được PO và Ban Điều Phối phê duyệt cho phạm vi Sprint 1:
 1. **BR-13 (Cấn trừ nợ tự động kỳ sau):** Số tiền nộp thừa đã được ghi nhận an toàn vào bảng `apartment_credit`. Logic tự động khấu trừ vào hóa đơn kỳ sau được xếp lịch triển khai trong Sprint 2 cùng với module tính phí nâng cao.
 2. **BR-17 (Xuất thông báo thu tiền):** Xuất tệp HTML định dạng in ấn (`page-break`) chuẩn mực để in hoặc chuyển lưu thành PDF qua trình duyệt máy tính; chưa nhúng thư viện sinh file PDF nhị phân nội bộ.
-3. **PR #28 (Household BR-02 UI Guard):** Đang trong giai đoạn hoàn thiện Review & QA; backend và repository hook của BR-02 đã nằm sẵn trong `main`.
+3. **Household BR-02 UI (PR #28):** Đã hoàn tất merge (commit `aff01b6`); hộp thoại xác nhận khi đổi diện tích căn hộ có hóa đơn và bảng lịch sử thu phí đã hoạt động hoàn thiện trên `main`.
 4. **US-016 & Quản lý Phương tiện (Vehicle Management):** Thuộc phạm vi của Sprint 2.
 
 Chi tiết xem tại tệp: [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md).

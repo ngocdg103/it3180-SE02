@@ -7,19 +7,14 @@ và dự án này tuân thủ theo [Semantic Versioning](https://semver.org/spec
 
 ---
 
-## [Unreleased]
-
-### Pending Merge
-- **PR #28 — Household BR-02 Confirmation & Billing History UI:**
-  - Hộp thoại cảnh báo xác nhận khi thay đổi diện tích căn hộ đã phát sinh hóa đơn tính phí (`CONFIRMATION_REQUIRED` $\rightarrow$ OK xác nhận / Cancel giữ nguyên).
-  - Bảng lịch sử các kỳ phí của căn hộ hiển thị trong màn hình Chi tiết Hộ gia đình (`HouseholdDetailController`).
-  - *Tình trạng:* Đã nạp backend (PR #25) vào `main`; nhánh `feature/us001-br02-ui` đang trong quá trình Independent QA và Peer Review, chưa merge vào `main`.
-
----
-
 ## [0.1.0] - 2026-11-08 — Sprint 1 Delivery
 
 ### Added
+- **Quản lý Hộ gia đình & Căn hộ (US-001 - PR #12, PR #16, PR #25, PR #28):**
+  - Quản lý danh sách căn hộ theo tầng và trạng thái; thêm mới hộ gia đình; cập nhật diện tích và danh sách thành viên.
+  - Hộp thoại cảnh báo xác nhận khi thay đổi diện tích căn hộ đã phát sinh hóa đơn tính phí (`CONFIRMATION_REQUIRED` $\rightarrow$ OK xác nhận / Cancel giữ nguyên - PR #28, Merge `aff01b6`).
+  - Bảng lịch sử các kỳ phí của căn hộ hiển thị trực quan trong màn hình Chi tiết Hộ gia đình (`HouseholdDetailController`, `ApartmentHistoryPanel` - PR #28).
+  - Hook kiểm tra lịch sử thu phí BR-02 qua `BillingDAO.hasCharges()` và `BillingService.getApartmentHistory()`.
 - **Authentication & RBAC (US-012, US-018):**
   - Đăng nhập bảo mật sử dụng mật mã băm BCrypt cost-12; tự động khóa tài khoản tạm thời 5 phút sau 5 lần nhập sai liên tiếp theo SRS BR-18.
   - Cơ chế quản lý phiên làm việc tập trung `SessionContext` và công cụ phân quyền `RoleBasedAuthorizationService` với 3 vai trò: `ADMIN`, `ACCOUNTANT`, `RESIDENT`.
@@ -27,9 +22,6 @@ và dự án này tuân thủ theo [Semantic Versioning](https://semver.org/spec
   - Khung ứng dụng đa phân hệ thống nhất (`DashboardController`), điều hướng mượt mà trên cùng một Stage/Scene, không tạo trùng lặp cửa sổ.
   - Quản lý trạng thái bận (`busyProperty`) khi đang thực thi tác vụ nền, tự động hủy bỏ listener và giải phóng tài nguyên (`close()`).
   - Kết nối 5 module nghiệp vụ sản xuất: Phí (`feeRates`), Lập hóa đơn (`billing`), Thông báo (`notices`), Thu tiền (`receipts`), Báo cáo nợ (`debt`).
-- **Quản lý Căn hộ & Hộ gia đình (US-001 - PR #12, PR #16):**
-  - Quản lý danh sách căn hộ theo tầng và trạng thái; thêm mới hộ gia đình; cập nhật diện tích và danh sách thành viên.
-  - Hook kiểm tra lịch sử thu phí BR-02 qua `BillingDAO.hasCharges()`.
 - **Quản lý Nhân khẩu & Cư dân (US-002 - PR #20):**
   - Màn hình quản lý danh sách nhân khẩu theo hộ gia đình (`ResidentPanelController`), xem chi tiết và thêm mới cư dân kèm quan hệ với chủ hộ.
 - **Tra cứu & Tìm kiếm Cư dân (US-014 - PR #23):**
