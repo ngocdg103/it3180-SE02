@@ -4,6 +4,8 @@ import com.bluemoon.models.*;
 import com.bluemoon.services.*;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -23,6 +25,9 @@ public final class FeeRateController {
     private final FeeRateService service;
     private final AuthorizationService authorization;
     private final ExecutorService worker;
+    // FX-thread accounting includes queued tasks and chained refreshes, not just the current spinner/write.
+    private final Set<Task<?>> tasks = new HashSet<>();
+    private final ReadOnlyBooleanWrapper busy = new ReadOnlyBooleanWrapper();
     private boolean disposed, saving, updatingChoices;
     private long choiceRequest, historyRequest;
     @FXML private ComboBox<FeeType> feeBox;
@@ -113,9 +118,9 @@ public final class FeeRateController {
     }
     private record History(FeeRateResult<List<FeeRate>> rows, FeeRateResult<Optional<FeeRate>> effective) { }
     private void reloadHistory() {
+        if (disposed) { return; }
         long request = ++historyRequest;
         historyTable.getItems().clear(); effectiveLabel.setText("");
-        if (disposed) { return; }
         if (!canView()) { deny(); return; }
         FeeType fee = feeBox.getValue();
         if (fee == null) { loading(false); tableState.setText("Chọn khoản thu để xem lịch sử."); return; }
@@ -190,20 +195,32 @@ public final class FeeRateController {
     }
     private void failed(Throwable failure) { if (failure instanceof AccessDeniedException) { deny(); } else { message(SYSTEM); } }
     private <T> void run(Callable<T> call, Consumer<T> success, Consumer<Throwable> failure) {
+        if (disposed) { return; }
         Task<T> task = new Task<>() { @Override protected T call() throws Exception { return call.call(); } };
         task.setOnSucceeded(event -> {
-            if (disposed) { return; }
-            if (!canView()) { deny(); return; }
-            success.accept(task.getValue());
+            try {
+                if (disposed) { return; }
+                if (!canView()) { deny(); return; }
+                success.accept(task.getValue());
+            } finally { finished(task); }
         });
         task.setOnFailed(event -> {
-            if (disposed) { return; }
-            if (!canView()) { deny(); return; }
-            failure.accept(task.getException());
+            try {
+                if (disposed) { return; }
+                if (!canView()) { deny(); return; }
+                failure.accept(task.getException());
+            } finally { finished(task); }
         });
+        task.setOnCancelled(event -> finished(task));
+        tasks.add(task); busy.set(true);
         try { worker.execute(task); }
-        catch (RejectedExecutionException rejected) { if (!disposed) { failure.accept(rejected); } }
+        catch (RejectedExecutionException rejected) {
+            try { if (!disposed) { failure.accept(rejected); } }
+            finally { finished(task); }
+        }
     }
+    private void finished(Task<?> task) { if (tasks.remove(task)) { busy.set(!tasks.isEmpty()); } }
+    public ReadOnlyBooleanProperty busyProperty() { return busy.getReadOnlyProperty(); }
     /** FX thread only. In-flight writes may commit; late callbacks never touch a removed screen. */
     public void dispose() {
         if (!Platform.isFxApplicationThread()) { throw new IllegalStateException("Fee rate lifecycle requires FX thread"); }
