@@ -26,9 +26,18 @@ public final class ResidentDAO implements ResidentRepository {
     private static final String COLUMNS = "ma_nhan_khau, ma_ho, ho_ten, ngay_sinh, gioi_tinh, so_cccd, "
             + "quan_he_chu_ho, ngay_chuyen_den";
 
+    @FunctionalInterface interface Connections { Connection open() throws SQLException; }
     private final DatabaseConnection connections;
+    private final Connections insertConnections;
 
-    public ResidentDAO(DatabaseConnection connections) { this.connections = Objects.requireNonNull(connections); }
+    public ResidentDAO(DatabaseConnection connections) {
+        this(connections, Objects.requireNonNull(connections)::getConnection);
+    }
+    // Test-only transaction factory; public read methods retain their existing connection path.
+    ResidentDAO(DatabaseConnection connections, Connections insertConnections) {
+        this.connections = Objects.requireNonNull(connections);
+        this.insertConnections = Objects.requireNonNull(insertConnections);
+    }
 
     @Override
     public InsertOutcome insert(Resident resident, HeadPolicy policy, Long expectedHeadId)
@@ -46,7 +55,7 @@ public final class ResidentDAO implements ResidentRepository {
 
     private InsertOutcome insertOnce(Resident resident, HeadPolicy policy, Long expectedHeadId)
             throws SQLException, ResidentDuplicateException {
-        try (var connection = connections.getConnection()) {
+        try (var connection = insertConnections.open()) {
             connection.setAutoCommit(false);
             try {
                 var outcome = insertLocked(connection, resident, policy, expectedHeadId);
@@ -141,6 +150,15 @@ public final class ResidentDAO implements ResidentRepository {
                 rows.next();
                 return rows.getInt(1);
             }
+        }
+    }
+
+    /** Q17 current read. Caller owns this Connection and must already hold the household lock. */
+    static boolean hasAnyForUpdate(Connection connection, String maHo) throws SQLException {
+        try (var statement = connection.prepareStatement(
+                "SELECT ma_nhan_khau FROM residents WHERE ma_ho = ? LIMIT 1 FOR UPDATE")) {
+            statement.setString(1, maHo);
+            try (var rows = statement.executeQuery()) { return rows.next(); }
         }
     }
 

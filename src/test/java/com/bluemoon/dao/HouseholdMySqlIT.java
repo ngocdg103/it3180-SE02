@@ -45,6 +45,8 @@ class HouseholdMySqlIT {
         runSql("DROP TABLE IF EXISTS apartments");
         runScript("database/migrations/us001_household_apartment.sql");
         runScript("database/migrations/us001_seed.sql");
+        // Q17's authoritative vacancy check requires the merged US-002 table, even with no residents.
+        runScript("database/migrations/us002_residents.sql");
         dao = new HouseholdDAO(connections);
     }
 

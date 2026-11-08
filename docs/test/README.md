@@ -1,5 +1,22 @@
 # Testing Documentation
 
+## Q17 — Household/Resident guard (Mốc 2)
+
+Base main `162d9ea`; JDK 17 / Maven **3.9.9**, Enforcer enabled.
+
+- `mvn clean verify`: **352 PASS**.
+- `mvn -Pjavafx-smoke clean verify`: **353 PASS**.
+- `mvn -Pmysql-it '-Dtest=HouseholdQ17MySqlIT,HouseholdMySqlIT,ResidentMySqlIT' verify`:
+  **40 PASS**, không failure/error/skip; MySQL 8.4.13 thật, schema riêng
+  `bluemoon_q17_test`, BLUEMOON_MYSQL_TEST=1 và config user chỉ có quyền schema này.
+- Q17: 7 DAO unit + 4 Service unit + 7 MySQL cases; R-first/U-first dùng JDBC/latches,
+  stale RR snapshot, failure-after-write rollback và stress 40 lượt.
+- MySQL regression US-001 12 + US-002 21 vẫn PASS; không sửa migration/production data.
+- Test profile có destructive setup; chỉ chạy trên schema disposable riêng.
+
+Chi tiết: [Q17 handoff](../design/q17-household-resident-implementation-handoff.md).
+Các kết quả bên dưới là lịch sử các mốc trước.
+
 ## US-018 Household integration — verification mới nhất
 
 - Base: `3d0f86082263581f5f4a35c4295ca133c6b4b83f` trên main, đã có Foundation,

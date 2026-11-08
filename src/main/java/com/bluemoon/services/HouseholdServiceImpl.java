@@ -3,6 +3,7 @@ package com.bluemoon.services;
 import com.bluemoon.dao.ApartmentChargeLookup;
 import com.bluemoon.dao.DuplicateRecordException;
 import com.bluemoon.dao.HouseholdRepository;
+import com.bluemoon.dao.HouseholdHasResidentsException;
 import com.bluemoon.models.Apartment;
 import com.bluemoon.models.ApartmentStatus;
 import com.bluemoon.models.Household;
@@ -34,6 +35,8 @@ public final class HouseholdServiceImpl implements HouseholdService {
     static final String MSG_TRANG_THAI = "Vui lòng chọn trạng thái căn hộ!";
     static final String MSG_INVALID = "Dữ liệu không hợp lệ, vui lòng kiểm tra lại các trường được đánh dấu.";
     static final String MSG_SYSTEM = "Lỗi hệ thống, vui lòng thử lại sau.";
+    static final String MSG_HAS_RESIDENTS =
+            "Không thể chuyển căn hộ sang trạng thái Căn hộ trống khi hộ vẫn còn nhân khẩu.";
     static final String MSG_AREA_CONFIRM =
             "Căn hộ này đã phát sinh kỳ thu phí. Thay đổi diện tích sẽ ảnh hưởng tính phí, bạn có chắc chắn muốn lưu?";
 
@@ -115,6 +118,9 @@ public final class HouseholdServiceImpl implements HouseholdService {
                     ? HouseholdResult.success("Cập nhật hồ sơ căn hộ " + current.soCanHo() + " thành công",
                             updated.get())
                     : notFound();
+        } catch (HouseholdHasResidentsException occupied) {
+            return HouseholdResult.failure(Status.VALIDATION_ERROR, MSG_HAS_RESIDENTS,
+                    Map.of("trang_thai", MSG_HAS_RESIDENTS));
         } catch (SQLException failure) {
             return systemError();
         }

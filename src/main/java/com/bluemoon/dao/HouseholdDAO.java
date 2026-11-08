@@ -21,13 +21,15 @@ public final class HouseholdDAO implements HouseholdRepository {
     private static final String SELECT = "SELECT a.so_can_ho, a.tang, a.dien_tich, a.trang_thai, "
             + "h.ma_ho, h.ngay_nhan_nha FROM apartments a JOIN households h ON h.so_can_ho = a.so_can_ho ";
 
-    private final DatabaseConnection connections;
+    @FunctionalInterface interface Connections { Connection open() throws SQLException; }
+    private final Connections connections;
 
-    public HouseholdDAO(DatabaseConnection connections) { this.connections = Objects.requireNonNull(connections); }
+    public HouseholdDAO(DatabaseConnection connections) { this(Objects.requireNonNull(connections)::getConnection); }
+    HouseholdDAO(Connections connections) { this.connections = Objects.requireNonNull(connections); }
 
     @Override
     public void insert(HouseholdProfile profile) throws SQLException, DuplicateRecordException {
-        try (var connection = connections.getConnection()) {
+        try (var connection = connections.open()) {
             connection.setAutoCommit(false);
             try {
                 try (var statement = connection.prepareStatement(
@@ -69,7 +71,7 @@ public final class HouseholdDAO implements HouseholdRepository {
     @Override
     public List<HouseholdProfile> findAll(ApartmentStatus status) throws SQLException {
         var sql = SELECT + (status == null ? "" : "WHERE a.trang_thai = ? ") + "ORDER BY a.so_can_ho";
-        try (var connection = connections.getConnection(); var statement = connection.prepareStatement(sql)) {
+        try (var connection = connections.open(); var statement = connection.prepareStatement(sql)) {
             if (status != null) { statement.setString(1, status.name()); }
             try (var rows = statement.executeQuery()) {
                 var result = new ArrayList<HouseholdProfile>();
@@ -82,22 +84,45 @@ public final class HouseholdDAO implements HouseholdRepository {
     @Override
     public boolean update(String maHo, int tang, BigDecimal dienTich, LocalDate ngayNhanNha,
                           ApartmentStatus trangThai) throws SQLException {
-        // One multi-table statement: apartment and household change together or not at all.
-        try (var connection = connections.getConnection(); var statement = connection.prepareStatement(
-                "UPDATE apartments a JOIN households h ON h.so_can_ho = a.so_can_ho "
-                        + "SET a.tang = ?, a.dien_tich = ?, a.trang_thai = ?, h.ngay_nhan_nha = ? "
-                        + "WHERE h.ma_ho = ?")) {
-            statement.setInt(1, tang);
-            statement.setBigDecimal(2, dienTich);
-            statement.setString(3, trangThai.name());
-            statement.setObject(4, ngayNhanNha);
-            statement.setString(5, maHo);
-            return statement.executeUpdate() > 0;
+        // Shared serialization point with ResidentDAO.insert: household first, never apartment first.
+        try (var connection = connections.open()) {
+            connection.setAutoCommit(false);
+            try {
+                try (var lock = connection.prepareStatement("SELECT ma_ho FROM households WHERE ma_ho = ? FOR UPDATE")) {
+                    lock.setString(1, maHo);
+                    try (var rows = lock.executeQuery()) {
+                        if (!rows.next()) {
+                            connection.rollback();
+                            return false;
+                        }
+                    }
+                }
+                if (trangThai == ApartmentStatus.CAN_HO_TRONG && ResidentDAO.hasAnyForUpdate(connection, maHo)) {
+                    throw new HouseholdHasResidentsException();
+                }
+                boolean updated;
+                try (var statement = connection.prepareStatement(
+                        "UPDATE apartments a JOIN households h ON h.so_can_ho = a.so_can_ho "
+                                + "SET a.tang = ?, a.dien_tich = ?, a.trang_thai = ?, h.ngay_nhan_nha = ? "
+                                + "WHERE h.ma_ho = ?")) {
+                    statement.setInt(1, tang);
+                    statement.setBigDecimal(2, dienTich);
+                    statement.setString(3, trangThai.name());
+                    statement.setObject(4, ngayNhanNha);
+                    statement.setString(5, maHo);
+                    updated = statement.executeUpdate() > 0;
+                }
+                connection.commit();
+                return updated;
+            } catch (SQLException | RuntimeException failure) {
+                rollback(connection, failure);
+                throw failure;
+            }
         }
     }
 
     private Optional<HouseholdProfile> findOne(String where, String key) throws SQLException {
-        try (var connection = connections.getConnection();
+        try (var connection = connections.open();
              var statement = connection.prepareStatement(SELECT + where)) {
             statement.setString(1, key);
             try (var rows = statement.executeQuery()) {
