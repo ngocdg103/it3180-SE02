@@ -79,8 +79,7 @@ public final class DashboardController implements AutoCloseable {
         releaseModule();
         VBox home = new VBox(16, new Label("Tổng quan BlueMoon"),
             new Label("Chọn chức năng trong menu để bắt đầu."),
-            new Label("Quản lý đơn giá: chưa khả dụng."),
-            new Label("Lập kỳ thu: chưa khả dụng."));
+            new Label("Các chức năng khả dụng được hiển thị trong menu theo quyền của bạn."));
         home.getStyleClass().add("card");
         for (var node : home.getChildren()) { ((Label) node).setWrapText(true); }
         moduleContent.getChildren().setAll(home); shellStatus.setText(""); refreshBusy();

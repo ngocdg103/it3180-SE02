@@ -2,6 +2,11 @@ package com.bluemoon.views;
 
 import com.bluemoon.config.DatabaseConnection;
 import com.bluemoon.controllers.FeeCategoryModule;
+import com.bluemoon.controllers.FeeRateModule;
+import com.bluemoon.controllers.BillingModule;
+import com.bluemoon.controllers.NoticeModule;
+import com.bluemoon.controllers.ReceiptModule;
+import com.bluemoon.controllers.DebtModule;
 import com.bluemoon.dao.ApartmentChargeLookup;
 import com.bluemoon.dao.HouseholdDAO;
 import com.bluemoon.models.Permission;
@@ -21,6 +26,13 @@ public final class ProductionModules {
                     new com.bluemoon.services.ResidentSearchServiceImpl(new com.bluemoon.dao.ResidentDAO(connections),
                         new com.bluemoon.services.RoleBasedAuthorizationService(null)))),
             new ModuleRegistration("feeCategories", "Danh mục khoản thu", Permission.FEE_CATEGORY_VIEW,
-                () -> FeeCategoryModule.open(connections)));
+                () -> FeeCategoryModule.open(connections)),
+            FeeRateModule.registration(connections),
+            BillingModule.registration(connections),
+            NoticeModule.registration(connections),
+            new ModuleRegistration("receipts", "Ghi nhận thanh toán / Phiếu thu", Permission.PAYMENT_HISTORY_VIEW_ALL,
+                () -> ReceiptModule.open(connections)),
+            new ModuleRegistration("debt", "Báo cáo công nợ", Permission.DEBT_REPORT_VIEW,
+                () -> DebtModule.open(connections)));
     }
 }

@@ -148,6 +148,18 @@ class NoticeServiceTest {
         @Override public BillingResult<BillingPeriod> generatePeriod(String kyThu) { throw new UnsupportedOperationException(); }
         @Override public BillingResult<List<BillingPeriod>> listPeriods() { throw new UnsupportedOperationException(); }
 
+        // Incoming PR #25 contract; also compiles against the pre-merge BillingService interface.
+        @SuppressWarnings("unchecked") public BillingResult<List<MonthlyCharge>> getApartmentHistory(String soCanHo) {
+            calls++;
+            if (failure != null) { return (BillingResult<List<MonthlyCharge>>) failure; }
+            var headers=invoices.values().stream().filter(c -> c.soCanHo().equals(soCanHo))
+                    .sorted((a,b) -> b.kyThu().compareTo(a.kyThu()))
+                    .map(c -> new MonthlyCharge(c.maHoaDon(),c.kyThu(),c.maHo(),c.soCanHo(),c.dienTich(),
+                            c.soNhanKhau(),c.tongTien(),c.daThanhToan(),c.conThieu(),c.trangThai(),c.hanNop(),List.of()))
+                    .toList();
+            return BillingResult.success("OK",headers);
+        }
+
         @SuppressWarnings("unchecked") @Override public BillingResult<BillingPeriodDetail> getPeriod(String kyThu) {
             calls++;
             if (failure != null) { return (BillingResult<BillingPeriodDetail>) failure; }
