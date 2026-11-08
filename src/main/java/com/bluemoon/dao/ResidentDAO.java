@@ -19,7 +19,7 @@ import java.util.Optional;
  * Lock order (docs/design/us-002-contract-review.md B.4a): households row FOR UPDATE, then residents.
  * This class never locks apartments; the apartment status is a plain read after the household lock is held.
  */
-public final class ResidentDAO implements ResidentRepository {
+public final class ResidentDAO implements ResidentRepository, ResidentSearchRepository {
     static final int DUPLICATE_ENTRY = 1062;
     static final int NO_REFERENCED_ROW = 1452;
     static final int DEADLOCK = 1213;
@@ -197,6 +197,37 @@ public final class ResidentDAO implements ResidentRepository {
                 rows.getObject("ngay_sinh", LocalDate.class), Gender.valueOf(rows.getString("gioi_tinh")),
                 rows.getString("so_cccd"), RelationToHead.valueOf(rows.getString("quan_he_chu_ho")),
                 rows.getObject("ngay_chuyen_den", LocalDate.class));
+    }
+    @Override public List<com.bluemoon.models.ResidentSearchHit> search(com.bluemoon.models.ResidentSearchCriteria criteria) throws SQLException {
+        Objects.requireNonNull(criteria); Objects.requireNonNull(criteria.field());Objects.requireNonNull(criteria.value());
+        String predicate=switch(criteria.field()) {
+            case APARTMENT -> "a.so_can_ho LIKE ? ESCAPE '!'";
+            case NAME -> "REPLACE(REPLACE(r.ho_ten, 'đ', 'd'), 'Đ', 'D') COLLATE utf8mb4_0900_ai_ci LIKE ? ESCAPE '!'";
+            case CCCD -> "r.so_cccd = ?";
+            case FLOOR -> "a.tang = ?";
+        };
+        String sql="SELECT h.ma_ho AS household_code,a.so_can_ho,a.tang,a.dien_tich,a.trang_thai,head.ho_ten AS head_name, "
+            +"r.ma_nhan_khau,r.ma_ho,r.ho_ten,r.ngay_sinh,r.gioi_tinh,r.so_cccd,r.quan_he_chu_ho,r.ngay_chuyen_den "
+            +"FROM apartments a JOIN households h ON h.so_can_ho=a.so_can_ho "
+            +"LEFT JOIN residents r ON r.ma_ho=h.ma_ho LEFT JOIN residents head ON head.head_ma_ho=h.ma_ho "
+            +"WHERE "+predicate+" ORDER BY a.so_can_ho,r.ma_nhan_khau";
+        String value=criteria.value().replace("!","!!").replace("%","!%").replace("_","!_");
+        try(var c=connections.getConnection();var s=c.prepareStatement(sql)) {
+            switch(criteria.field()) {
+                case APARTMENT -> s.setString(1,value+"%");
+                case NAME -> s.setString(1,"%"+value+"%");
+                case CCCD -> s.setString(1,criteria.value());
+                case FLOOR -> s.setInt(1,Integer.parseInt(criteria.value()));
+            }
+            try(var rows=s.executeQuery()) {
+                var result=new ArrayList<com.bluemoon.models.ResidentSearchHit>();
+                while(rows.next()) {
+                    rows.getLong("ma_nhan_khau");boolean empty=rows.wasNull();
+                    result.add(new com.bluemoon.models.ResidentSearchHit(rows.getString("household_code"),rows.getString("so_can_ho"),rows.getInt("tang"),
+                        rows.getBigDecimal("dien_tich"),com.bluemoon.models.ApartmentStatus.valueOf(rows.getString("trang_thai")),rows.getString("head_name"),empty?null:map(rows)));
+                }return List.copyOf(result);
+            }
+        }
     }
 
     /** MySQL names the key in its message ('residents.uq_...'). An unrecognised key is NOT guessed: empty. */
