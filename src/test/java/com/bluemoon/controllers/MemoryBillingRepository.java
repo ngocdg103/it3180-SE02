@@ -79,6 +79,15 @@ final class MemoryBillingRepository implements BillingRepository {
         return invoices.stream().anyMatch(c -> c.soCanHo().equals(soCanHo));
     }
 
+    // Incoming PR #25 contract; also compiles while main still has the previous interface.
+    public synchronized List<MonthlyCharge> findChargesByApartment(String soCanHo) {
+        return invoices.stream().filter(c -> c.soCanHo().equals(soCanHo))
+                .sorted((a, b) -> b.kyThu().compareTo(a.kyThu()))
+                .map(c -> new MonthlyCharge(c.maHoaDon(), c.kyThu(), c.maHo(), c.soCanHo(), c.dienTich(),
+                        c.soNhanKhau(), c.tongTien(), c.daThanhToan(), c.conThieu(), c.trangThai(), c.hanNop(), List.of()))
+                .toList();
+    }
+
     private final class Tx implements BillingTx {
         BillingPeriod period;
         final List<MonthlyCharge> invoices = new ArrayList<>();
