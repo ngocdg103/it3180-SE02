@@ -1,6 +1,6 @@
 # US-007 — Lập kỳ thu và tính phí tự động: Contract Review & Technical Design (Mốc 1) — Dev-3 → Lead Dev
 
-Trạng thái: **chỉ thiết kế**. Chưa có production code, chưa có migration thật (SQL bên dưới là *đề xuất*), chưa sửa API có sẵn. **Revision 02 (sau PO phê duyệt Q1–Q18; main 162d9ea):** Q11 đổi thành *chỉ cho lập kỳ = tháng hiện tại* (không quá khứ, không tương lai), inject `Clock`; Q6 lưu `DECIMAL(19,2)` nhưng làm tròn HALF_UP về 1 VNĐ trước khi lưu; tách mã MySQL 1062 / 1213 / 1205; tách `FeeRateLookup` (contract công khai) khỏi việc load đơn giá cùng connection trong `BillingTx`; phụ thuộc US-006: **Dev-2 Schema/DAO, Dev-1 Service/UI**; snapshot bất biến ở application layer, DB chưa khóa UPDATE trực tiếp.
+Trạng thái: **chỉ thiết kế**. Chưa có production code, chưa có migration thật (SQL bên dưới là *đề xuất*), chưa sửa API có sẵn. **Revision 03 (peer review PR #11):** chốt `FeeRateLookup` là `Optional<AppliedRate> getEffectiveRate(String, LocalDate)` cho khớp code; bổ sung invariant `ChargeLine` (số nhân khẩu nguyên) và `MonthlyCharge` (trạng thái khớp số tiền) ở mục E.2. Không đổi Q1–Q18. **Revision 02 (sau PO phê duyệt Q1–Q18; main 162d9ea):** Q11 đổi thành *chỉ cho lập kỳ = tháng hiện tại* (không quá khứ, không tương lai), inject `Clock`; Q6 lưu `DECIMAL(19,2)` nhưng làm tròn HALF_UP về 1 VNĐ trước khi lưu; tách mã MySQL 1062 / 1213 / 1205; tách `FeeRateLookup` (contract công khai) khỏi việc load đơn giá cùng connection trong `BillingTx`; phụ thuộc US-006: **Dev-2 Schema/DAO, Dev-1 Service/UI**; snapshot bất biến ở application layer, DB chưa khóa UPDATE trực tiếp.
 Quy ước: **[SRS]** = có trong tài liệu; **[WBS]** = Sprint 1 WBS; **[CODE]** = đã có trên `origin/main` (0385182); **[ĐỀ XUẤT]** = Dev-3 đề xuất, chờ duyệt; **[PO?]** = cần PO quyết định (mục G, có mặc định).
 Nguồn đã đọc: `docs/srs/EP03` §1–3, `EP01` §1–2 (BR-01..05), `EP06` §2 (RBAC), `docs/design/us-005-backend-handoff.md`, `us-002-contract-review.md`, `FeeTypeService/FeeTypeDAO`, `ResidentRepository.countByMaHo`, `HouseholdRepository`, `ApartmentChargeLookup`, `RoleBasedAuthorizationService`, `SessionContext`, migrations us001/us002/us005, và các chuỗi mô tả US-006/US-007 trong `SE_02_Implementation_WBS.xlsx` (chỉ trích được text; không đọc được cấu trúc hàng/cột/assignee).
 
@@ -148,6 +148,9 @@ Ghi chú: FK `ON DELETE RESTRICT` ở mọi nơi → bảo đảm BR-07 (khoản
 - `MonthlyCharge(maHoaDon, kyThu, maHo, soCanHo, dienTich, soNhanKhau, tongTien, daThanhToan, conThieu, trangThai, hanNop, List<ChargeLine> lines)`.
 - `ChargeLine(maKhoanThu, tenKhoanThu, hinhThuc, soLuong, donGia, ngayApDungGia, thanhTien)` (= BillingDetail).
 - `ChargeStatus { CHUA_DONG, DONG_THIEU, DA_DONG_DU, DONG_THUA }`.
+- **Invariant của model (Revision 03, theo peer review):**
+  - `ChargeLine`: `THEO_NHAN_KHAU` bắt buộc `soLuong` là số nguyên không âm (0, 1, 2, 2.00 hợp lệ; 0.5, 1.5, số âm bị từ chối). `THEO_DIEN_TICH` vẫn cho phép số thập phân; `THEO_CAN_HO` bắt buộc `soLuong = 1`.
+  - `MonthlyCharge` (theo BR-13 và định nghĩa enum): `CHUA_DONG` ⇒ `daThanhToan = 0`; `DONG_THIEU` ⇒ `daThanhToan > 0` và `conThieu > 0`; `DA_DONG_DU` ⇒ `conThieu = 0`; `DONG_THUA` ⇒ `conThieu < 0`. Áp dụng cho cả header-only và hóa đơn đầy đủ. Không thêm trạng thái mới.
 - `BillingPreview(kyThu, hanNop, alreadyGenerated, List<MonthlyCharge> charges, List<SkippedHousehold> skipped, List<AppliedRate> rates, tongTien)`; `SkippedHousehold(soCanHo, reason, message)` với `reason ∈ {MISSING_AREA, ZERO_TOTAL}`; `AppliedRate(maKhoanThu, donGia, ngayApDung)`; `Warning` (VD `VACANT_WITH_RESIDENTS`).
 
 ## F. Service / Repository contract [ĐỀ XUẤT]
@@ -185,7 +188,7 @@ interface BillingTx {        // cùng 1 connection
 }
 ```
 **`FeeRateLookup` ≠ load đơn giá trong `BillingTx`** (hai thứ khác nhau):
-- `FeeRateLookup` là *contract công khai* (Mốc 2a): `Optional<BigDecimal> findEffectiveRate(String maKhoanThu, LocalDate onDate)`, mỗi lần gọi tự mở connection riêng. Dùng cho preview/hiển thị, test double và các module khác; **không** tham gia transaction của `generatePeriod`, nên không dùng nó để tính kỳ chốt.
+- `FeeRateLookup` là *contract công khai* (Mốc 2a): `Optional<AppliedRate> getEffectiveRate(String maKhoanThu, LocalDate atDate)` (Lead Dev chốt; **không** trả `Optional<BigDecimal>`; `AppliedRate(maKhoanThu, donGia, ngayApDung)` là kiểu dùng chung duy nhất, US-006 không tạo `AppliedRate` hay `FeeRateRepository` thứ hai; `ngayApDung` là ngày hiệu lực của bản ghi giá, không phải `atDate`), mỗi lần gọi tự mở connection riêng. Dùng cho preview/hiển thị, test double và các module khác; **không** tham gia transaction của `generatePeriod`, nên không dùng nó để tính kỳ chốt.
 - `BillingTx.loadInputs` (Mốc 2b) tự đọc `fee_rates` bằng **cùng connection/transaction** của generate để có snapshot nhất quán. Việc này phụ thuộc schema `fee_rates` của US-006 (Dev-2), không đi qua `FeeRateLookup`. Test đối chiếu: với cùng dữ liệu, kết quả `loadInputs` và `FeeRateLookup` phải trùng.
 
 DAO chỉ chứa SQL; công thức nằm ở `BillingCalculator` (hàm thuần, test không cần DB). Prepared statement 100%, connection mới từ `DatabaseConnection`, như `FeeTypeDAO`. `DuplicateRecordException` của US-001 tái sử dụng *không sửa* (hoặc exception riêng như `ResidentDuplicateException` — để Lead chọn).
