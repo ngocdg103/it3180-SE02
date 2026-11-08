@@ -1,0 +1,68 @@
+{
+    "dependency_base_commit":  "7b6364af6f5cf2cc0e4c8457fa2c5a7b1d9de506",
+    "dependency_base_tree":  "973f369cd97bbafb2da8f12fe19d878ebc0995e7",
+    "parent_pr27":  "93ce0494a80fac0a431991ef4e1ea2c70fe7f5b8",
+    "parent_pr25":  "6339cf2e10a9090a39bab3461aa2d85f9d240a94",
+    "br02_source_head":  "a61d85b248cbb93496e573472f019f3710499dcf",
+    "br02_only_delta_commit":  "b2f54dab736a442f0413dc9fbbc62c4c6f7a3994",
+    "patch_sha256":  "cdc4e5ef8ec38b5a352dcbdacf98e8726d9856ff3ed53c7c445dd7fe0aba8a2b",
+    "files":  [
+                  {
+                      "path":  "docs/design/household-br02-final-shell-handoff.md",
+                      "target_blob_sha":  "7c6f0124aaa799aef5bcf36617e761e983ef53c1"
+                  },
+                  {
+                      "path":  "src/main/java/com/bluemoon/controllers/ApartmentHistoryPanel.java",
+                      "target_blob_sha":  "6b6e6f5b88313dc288a3fd36bfcc1829e008aefb"
+                  },
+                  {
+                      "path":  "src/main/java/com/bluemoon/controllers/HouseholdDetailController.java",
+                      "target_blob_sha":  "509fb4f418c2fdac3a287571ada5da864d072ea7"
+                  },
+                  {
+                      "path":  "src/main/java/com/bluemoon/controllers/HouseholdFormController.java",
+                      "target_blob_sha":  "abde5d2806fa8a387b29b19b5d5271d0c13de94a"
+                  },
+                  {
+                      "path":  "src/main/java/com/bluemoon/views/HouseholdNavigator.java",
+                      "target_blob_sha":  "5ee849ce0176d850093c963715847d96cea6149d"
+                  },
+                  {
+                      "path":  "src/main/java/com/bluemoon/views/ProductionModules.java",
+                      "target_blob_sha":  "7f87ccb7c9f20ee66b6fdc5f7f712d006b193e84"
+                  },
+                  {
+                      "path":  "src/main/resources/com/bluemoon/views/HouseholdDetailView.fxml",
+                      "target_blob_sha":  "cf14269f7e58b5ab6fb7ea36b1073bae84ef10f6"
+                  },
+                  {
+                      "path":  "src/test/java/com/bluemoon/controllers/ApartmentHistoryPanelTest.java",
+                      "target_blob_sha":  "b176f11eb1fc2072e369feb81a6d3484b601142b"
+                  },
+                  {
+                      "path":  "src/test/java/com/bluemoon/controllers/HouseholdBr02MySqlIT.java",
+                      "target_blob_sha":  "5dc278b2555ff05a6bdf295ff3eceaeaf9697fa0"
+                  }
+              ],
+    "verification":  {
+                         "git_apply_check":  "PASS",
+                         "nine_file_match_to_source_head":  "PASS",
+                         "diff_check":  "PASS",
+                         "supplied_script_replay":  "PASS",
+                         "rebuilt_normal":  {
+                                                "skipped":  0,
+                                                "errors":  0,
+                                                "tests":  699,
+                                                "build":  "SUCCESS",
+                                                "failures":  0
+                                            }
+                     },
+    "source_regression":  {
+                              "normal":  699,
+                              "javafx_smoke":  700,
+                              "mysql_it":  832,
+                              "failures":  0,
+                              "errors":  0,
+                              "skipped":  0
+                          }
+}

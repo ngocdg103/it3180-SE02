@@ -1,0 +1,699 @@
+From b2f54dab736a442f0413dc9fbbc62c4c6f7a3994 Mon Sep 17 00:00:00 2001
+From: NHGVinh <giavinh5edva@gmail.com>
+Date: Sun, 8 Nov 2026 23:05:59 +0700
+Subject: [PATCH] Review patch: Household BR-02 UI and integration tests only
+
+---
+ .../household-br02-final-shell-handoff.md     | 130 ++++++++++++++
+ .../controllers/ApartmentHistoryPanel.java    |  90 ++++++++++
+ .../HouseholdDetailController.java            |  11 ++
+ .../controllers/HouseholdFormController.java  |   7 +-
+ .../bluemoon/views/HouseholdNavigator.java    |  23 ++-
+ .../com/bluemoon/views/ProductionModules.java |  12 +-
+ .../bluemoon/views/HouseholdDetailView.fxml   |   1 +
+ .../ApartmentHistoryPanelTest.java            |  76 ++++++++
+ .../controllers/HouseholdBr02MySqlIT.java     | 165 ++++++++++++++++++
+ 9 files changed, 503 insertions(+), 12 deletions(-)
+ create mode 100644 docs/design/household-br02-final-shell-handoff.md
+ create mode 100644 src/main/java/com/bluemoon/controllers/ApartmentHistoryPanel.java
+ create mode 100644 src/test/java/com/bluemoon/controllers/ApartmentHistoryPanelTest.java
+ create mode 100644 src/test/java/com/bluemoon/controllers/HouseholdBr02MySqlIT.java
+
+diff --git a/docs/design/household-br02-final-shell-handoff.md b/docs/design/household-br02-final-shell-handoff.md
+new file mode 100644
+index 0000000..7c6f012
+--- /dev/null
++++ b/docs/design/household-br02-final-shell-handoff.md
+@@ -0,0 +1,130 @@
++# Household BR-02 and final App Shell — Dev-2 handoff
++
++2026-11-08. PO remains the only main merge coordinator.
++
++## Branches and ownership
++
++Initial fetched main: `43f3897aa2fca6828c4d0fe65531f3c71152b903`.
++Updated fetched main: `743b21f59937b3ca8dd066c1bfd5d966d241862b`.
++
++* BR-02 worktree `.worktrees/household-br02`, branch `integration/household-br02-local`.
++  Composite dependency base `5d20bd93dd36b46dd35fe26291c221781fdc8f5b`; own BR-02 commit
++  `e2edd3eedc650e49ae648358afe526cdea0edae9` (source + tests, no dependency source copied).
++* Full integration worktree `.worktrees/final-shell`, branch `integration/final-shell-local`.
++  Includes approved main UI/search/completion/hotfix and frozen #25, plus local dependency merges.
++  Latest dependency revision base: `e0f81e0f6a4215cbb7b1b2380be219be9dafc8f4`.
++* Clean review branch `feature/final-app-shell-integration` starts from main `743b21f...` in
++  `.worktrees/final-shell-review`. It contains only production composition/home copy and test changes;
++  BR-02 production UI and unmerged #25 source are excluded. Its regression is recorded separately.
++  Published as PR #27: https://github.com/ngocdg103/it3180-SE02/pull/27, verified source commit
++  `6ec8ee1013eefe3d79d426fa657770367273ea79` (694 normal / 695 smoke / 821 full MySQL, all PASS).
++
++All old worktrees and #20/#22/#23 local branches were preserved. No reset/clean/discard/force push.
++
++| Dependency | Frozen source | Contained in fetched main |
++|---|---|---|
++| #18 Billing UI | `9ab70d110a8c28158c40466533af5eb1bf9b137d` | yes |
++| #19 Notice | `070ca49cb281bc350829b4e3c270f4c6fd4648fc` | yes |
++| #21 Payment | `fb80bee6f85d01b12724b399c9f0ccdb318d670e` | yes |
++| #24 Debt | `399ad6b11312fc55d88c2ece5b9643ddf4df050c` | yes |
++| #25 BR-02 Billing history | `6339cf2e10a9090a39bab3461aa2d85f9d240a94` | **no — local integration only** |
++| Fee Rate hotfix | `8a5b1072646775e8cff6154adb14abc91ea65a77` | yes |
++
++Git ancestry verified the merged source commits; GitHub API still reported #18/#19 open at inspection despite
++their source commits being ancestors of main. Do not confuse API status with absence of the actual code.
++
++## BR-02 implementation (local until #25 is merged)
++
++Production HouseholdServiceImpl now receives `new BillingDAO(connections)` instead of ApartmentChargeLookup.NONE.
++The production BillingServiceImpl is supplied to HouseholdNavigator alongside ResidentService and ResidentSearchService.
++Search and Resident UI remain wired. Neither production BillingDAO/BillingService nor owner module code was edited.
++
++Household Detail includes a read-only invoice-history table: period, invoice ID, total VND, due date and area/people
++at billing time. It calls getApartmentHistory on a background Task, preserves newest-first results and never
++recalculates snapshots. With Payment already in main and the revised #25 handoff confirming the committed source,
++paid/owing/status columns now display daThanhToan/conThieu/trangThai directly from stored invoice headers. The UI
++only translates the provided enum label; it never derives a status from an absent payment integration or recomputes balances.
++The #25 revision changed no production Billing history contract; its new test proves committed partial/full Payment
++is reflected while billing input snapshots remain unchanged. Original frozen #25 was `6dbd784...`; revision is `6339cf2...`.
++
++DEBT_REPORT_VIEW is checked before loading and before applying a completed result. ADMIN/ACCOUNTANT can view;
++RESIDENT is denied both by Dashboard navigation and service authorization. Empty/error/retry are explicit and errors
++are sanitized. History busy state is ORed with Household and Resident activity. Dispose cancels the history Task,
++clears data and removes the busy listener; late callbacks cannot repopulate a detached panel.
++
++The existing area-change Alert now holds the module busy while confirmation is pending. Save/cancel are guarded,
++the exact submitted payload is reused only after OK, and Cancel makes no confirmed update. Shell navigation/logout
++therefore remain locked during both the write and confirmation. No Scene/Stage or AuthenticationNavigator changes.
++
++## Final module composition
++
++* FeeRateModule.registration — FEE_RATE_VIEW (real owner hotfix, no fabricated busy property).
++* BillingModule.registration and NoticeModule.registration — DEBT_REPORT_VIEW.
++* ReceiptModule.open — PAYMENT_HISTORY_VIEW_ALL, per its handoff. PAYMENT_RECORD remains ACCOUNTANT-only in owner UI/service.
++* DebtModule.open — DEBT_REPORT_VIEW, per its handoff.
++
++All factories use the existing production Service/DAO graph; no placeholders/fakes. Existing DashboardModule lifecycle,
++busy guards, session checks and Scene management remain in force. Home no longer says integrated modules are unavailable.
++
++## Approved compatibility fixtures
++
++Lead explicitly approved both test-only adaptations required by #25:
++
++1. MemoryBillingRepository.findChargesByApartment filters its invoice collection by apartment, sorts descending period,
++   and returns header snapshots. A new test verifies filtering/order/snapshot preservation without changing old assertions.
++2. NoticeServiceTest.Stub.getApartmentHistory does the same over its existing invoice map and retains scripted failures.
++
++No production contract/DAO/NoticeService was changed. The clean review branch deliberately omits @Override on these
++two incoming methods so the same fixtures compile both before and after #25. Signatures and behavior remain identical.
++
++## Full local integration regression
++
++JDK 17.0.17, Maven 3.9.9, Enforcer enabled. Every command completed BUILD SUCCESS, no skipped tests:
++
++| Profile | Tests | Failures | Errors | Skipped |
++|---|---:|---:|---:|---:|
++| normal | 699 | 0 | 0 | 0 |
++| javafx-smoke | 700 | 0 | 0 | 0 |
++| mysql-it | 832 | 0 | 0 | 0 |
++
++Commands used `-Dsurefire.useManifestOnlyJar=false`: default Windows manifest classpaths spanning V:/C: produced a
++Surefire fork error even after assertions ran. This runtime workaround changes neither tests, Enforcer nor pom.xml.
++Latest revision logs: original workspace `.tools/br02-revision-normal.log`, `br02-revision-javafx-smoke.log`,
++`br02-revision-mysql-it.log`. The final MySQL run was executed independently after an intermittent end-of-fork
++failure in the sequential-profile run; the independent run completed BUILD SUCCESS with all 832 tests.
++
++MySQL 8.4.0, isolated loopback port 33316, disposable `bluemoon_br02_test`, dedicated schema-scoped user and external
++ignored config. FK checks remained enabled. New fixtures guard `_test` before DDL, clean owned rows child-first,
++and only remove billing/payment tables absent on entry. Other suites passed in the full run.
++
++Verified real UI/MySQL:
++
++* Household production composition: saved invoice exists, Cancel leaves area 80, OK changes area to 95.50, invoice
++  remains byte-for-model equal; history still shows original snapshot area/total/due date. ACCOUNTANT reads; RESIDENT denied.
++* An authenticated real ACCOUNTANT records 23,000 VND through ReceiptService/ReceiptDAO against the fixture invoice.
++  Household Detail displays DONG_THIEU (Đóng thiếu), paid 23,000 and owing 100,000; snapshot total/area/people/due date stay unchanged.
++* BlueMoonApplication.start with real AuthService/AccountDAO and a disposable BCrypt account: Login → Dashboard →
++  Fee Rate/Billing/Notice/Payment/Debt → Home → Logout. Same Scene retained; session cleared.
++* Role menus/direct denial, duplicate opens, busy guards, disposal, DB-unavailable behavior covered by production-navigation
++  tests; existing AppShellTest/LoginUiTest cover maximize/restore and window-close handling.
++
++This is automated JavaFX/MySQL navigation coverage, not a manual business E2E claim for generating a period then
++recording a payment/exporting notices through every screen. New BR-02 UI tests use an issued invoice snapshot fixture;
++owner BillingMySqlIT separately verifies real generation and BR-02 lookup. Manual QA should still execute the full flow.
++
++## QA / merge order
++
++1. Review the clean composition/fixture PR on its own recorded regression. PO may merge it before #25; it intentionally
++   remains compatible with both versions and prevents #25 breaking Billing/Notice test compilation.
++2. PO merges approved #25. Create a clean BR-02 feature branch from updated main and transfer only the Household
++   UI/navigation/composition delta from the local integration, preserving Search and all five module registrations.
++   Re-run normal/smoke/full MySQL; do not push any composite dependency history as a PR.
++3. ADMIN: Household Detail → verify newest-first snapshot history → edit area → Cancel → verify unchanged → OK → verify
++   current area changes while old invoice totals/area remain unchanged. ACCOUNTANT can view; RESIDENT cannot access.
++4. Maximize/restore before switching modules; try navigation/logout while loading, writing and awaiting confirmation.
++   Stop only the disposable DB to verify sanitized errors/retry. Confirm old panels do not update after close/logout.
++5. ACCOUNTANT: preview/generate a test billing period, record partial/full payment, reload Debt, view/export Notice;
++   ADMIN may inspect payment but cannot record it. Test empty periods and repeated clicks.
++
++BR-02 acceptance: implemented and verified locally; **formal PR BLOCKED only by unmerged #25** at this snapshot.
++Composition: all five modules connected; clean PR verification tracked independently. No main merge performed by Dev-2.
+diff --git a/src/main/java/com/bluemoon/controllers/ApartmentHistoryPanel.java b/src/main/java/com/bluemoon/controllers/ApartmentHistoryPanel.java
+new file mode 100644
+index 0000000..6b6e6f5
+--- /dev/null
++++ b/src/main/java/com/bluemoon/controllers/ApartmentHistoryPanel.java
+@@ -0,0 +1,90 @@
++package com.bluemoon.controllers;
++
++import com.bluemoon.models.MonthlyCharge;
++import com.bluemoon.models.Permission;
++import com.bluemoon.services.*;
++import javafx.beans.property.ReadOnlyStringWrapper;
++import javafx.concurrent.Task;
++import javafx.scene.Parent;
++import javafx.scene.control.*;
++import javafx.scene.layout.VBox;
++import java.util.List;
++import java.util.Objects;
++import java.util.function.Consumer;
++import java.util.function.Function;
++
++/** Read-only snapshots and committed invoice payment fields. No inference or JDBC on the FX thread. */
++final class ApartmentHistoryPanel implements AutoCloseable {
++    private final BillingService service;
++    private final String apartment;
++    private final Consumer<Boolean> busy;
++    private final AuthorizationService authorization = new RoleBasedAuthorizationService(null);
++    private final VBox root = new VBox(10);
++    private final TableView<MonthlyCharge> table = new TableView<>();
++    private final Label status = new Label();
++    private final Button retry = new Button("Tải lại lịch sử");
++    private Task<BillingResult<List<MonthlyCharge>>> running;
++    private boolean closed;
++
++    ApartmentHistoryPanel(BillingService service, String apartment, Consumer<Boolean> busy) {
++        this.service=Objects.requireNonNull(service); this.apartment=Objects.requireNonNull(apartment);
++        this.busy=Objects.requireNonNull(busy);
++        table.setId("apartmentHistory"); table.setPrefHeight(220);
++        table.setPlaceholder(new Label("Chưa có hóa đơn cho căn hộ này."));
++        column("Kỳ thu", MonthlyCharge::kyThu);
++        column("Mã hóa đơn", MonthlyCharge::maHoaDon);
++        column("Tổng tiền (VNĐ)", row -> row.tongTien().toPlainString());
++        column("Hạn nộp", row -> row.hanNop().toString());
++        column("Diện tích lúc lập kỳ", row -> row.dienTich().toPlainString());
++        column("Nhân khẩu lúc lập kỳ", row -> Integer.toString(row.soNhanKhau()));
++        column("Đã thanh toán (VNĐ)", row -> row.daThanhToan().toPlainString());
++        column("Còn thiếu (VNĐ)", row -> row.conThieu().toPlainString());
++        column("Trạng thái thanh toán", row -> switch(row.trangThai()) {
++            case CHUA_DONG -> "Chưa đóng";
++            case DONG_THIEU -> "Đóng thiếu";
++            case DA_DONG_DU -> "Đã đóng đủ";
++            case DONG_THUA -> "Đóng thừa";
++        });
++        status.setId("historyStatus"); status.setWrapText(true); retry.setId("historyRetry");
++        retry.setOnAction(event -> load());
++        root.getChildren().addAll(new Label("Lịch sử hóa đơn theo căn hộ (snapshot)"), table,
++                new Label("Thanh toán đọc từ dữ liệu invoice đã commit bởi Payment; không tính lại hóa đơn."), status, retry);
++        load();
++    }
++    private void column(String title, Function<MonthlyCharge,String> value) {
++        var column=new TableColumn<MonthlyCharge,String>(title);
++        column.setCellValueFactory(row -> new ReadOnlyStringWrapper(value.apply(row.getValue())));
++        column.setPrefWidth(150); table.getColumns().add(column);
++    }
++    Parent view() { return root; }
++    private boolean allowed() { return authorization.canAccess(Permission.DEBT_REPORT_VIEW); }
++    private void deny() { table.getItems().clear(); status.setText("Bạn không có quyền xem lịch sử hóa đơn."); }
++    private void load() {
++        if (closed || running!=null) return;
++        if (!allowed()) { deny(); return; }
++        table.getItems().clear(); status.setText("Đang tải lịch sử…"); retry.setDisable(true); busy.accept(true);
++        var task=new Task<BillingResult<List<MonthlyCharge>>>() {
++            @Override protected BillingResult<List<MonthlyCharge>> call() { return service.getApartmentHistory(apartment); }
++        };
++        running=task;
++        task.setOnSucceeded(event -> {
++            if (closed) return;
++            finish();
++            if (!allowed()) { deny(); return; }
++            var result=task.getValue();
++            if (result!=null && result.isSuccess()) {
++                table.getItems().setAll(result.data().orElseThrow());
++                status.setText(table.getItems().isEmpty() ? "Chưa có hóa đơn cho căn hộ này." : "Hóa đơn mới nhất trước; giữ nguyên dữ liệu lúc lập kỳ.");
++            } else status.setText("Không tải được lịch sử hóa đơn. Vui lòng thử lại.");
++        });
++        task.setOnFailed(event -> { if (!closed) { finish(); if (!allowed()) deny();
++            else status.setText("Không tải được lịch sử hóa đơn. Vui lòng thử lại."); } });
++        var worker=new Thread(task,"bluemoon-apartment-history"); worker.setDaemon(true); worker.start();
++    }
++    private void finish() { running=null; retry.setDisable(false); busy.accept(false); }
++    @Override public void close() {
++        if (closed) return;
++        closed=true; if (running!=null) running.cancel(true); running=null;
++        table.getItems().clear(); status.setText(""); retry.setOnAction(null); busy.accept(false);
++    }
++}
+diff --git a/src/main/java/com/bluemoon/controllers/HouseholdDetailController.java b/src/main/java/com/bluemoon/controllers/HouseholdDetailController.java
+index 22baed8..509fb4f 100644
+--- a/src/main/java/com/bluemoon/controllers/HouseholdDetailController.java
++++ b/src/main/java/com/bluemoon/controllers/HouseholdDetailController.java
+@@ -13,11 +13,15 @@ public final class HouseholdDetailController extends HouseholdController {
+     @FXML private Button editButton, backButton;
+     @FXML private javafx.scene.layout.VBox residentContent;
+     private ResidentPanelController residents;
++    private ApartmentHistoryPanel history;
++    @FXML private javafx.scene.layout.VBox historyContent;
++    private final javafx.beans.value.ChangeListener<Boolean> busyListener = (o, old, value) -> busyChanged(value);
+     public HouseholdDetailController(HouseholdService service, HouseholdNavigator navigator, String maHo) {
+         super(service, navigator); this.maHo = maHo;
+     }
+     @FXML private void initialize() {
+         clearData();
++        navigator.busyProperty().addListener(busyListener);
+         execute(() -> service.getHouseholdById(maHo), result -> {
+             if (result.isSuccess()) {
+                 profile = result.data().orElseThrow();
+@@ -29,6 +33,10 @@ public final class HouseholdDetailController extends HouseholdController {
+                     residents=new ResidentPanelController(navigator.residents(),maHo,navigator::residentBusy);
+                     residentContent.getChildren().setAll(residents.view());
+                 }
++                if(navigator.billing()!=null && navigator.can(com.bluemoon.models.Permission.DEBT_REPORT_VIEW)) {
++                    history=new ApartmentHistoryPanel(navigator.billing(), profile.soCanHo(), navigator::historyBusy);
++                    historyContent.getChildren().setAll(history.view());
++                }
+             }
+         });
+     }
+@@ -38,6 +46,9 @@ public final class HouseholdDetailController extends HouseholdController {
+         backButton.setDisable(value); editButton.setDisable(value || profile == null || !navigator.can(com.bluemoon.models.Permission.HOUSEHOLD_UPDATE));
+     }
+     @Override protected void clearData() {
++        navigator.busyProperty().removeListener(busyListener);
++        if(history!=null) { history.close(); history=null; }
++        if(historyContent!=null) historyContent.getChildren().clear();
+         if(residents!=null) { residents.close(); residents=null; }
+         if(residentContent!=null) residentContent.getChildren().clear();
+         profile = null;
+diff --git a/src/main/java/com/bluemoon/controllers/HouseholdFormController.java b/src/main/java/com/bluemoon/controllers/HouseholdFormController.java
+index 0728670..abde5d2 100644
+--- a/src/main/java/com/bluemoon/controllers/HouseholdFormController.java
++++ b/src/main/java/com/bluemoon/controllers/HouseholdFormController.java
+@@ -20,6 +20,7 @@ public final class HouseholdFormController extends HouseholdController {
+     @FXML private GridPane fields;
+     @FXML private Button saveButton, cancelButton;
+     private Map<String, Label> errors;
++    private boolean confirmationPending;
+     public HouseholdFormController(HouseholdService service, HouseholdNavigator navigator, HouseholdProfile original) {
+         super(service, navigator); this.original = original;
+     }
+@@ -42,7 +43,7 @@ public final class HouseholdFormController extends HouseholdController {
+         }
+     }
+     @FXML private void save() {
+-        if (busy) return;
++        if (busy || confirmationPending) return;
+         errors.values().forEach(label -> label.setText(""));
+         // Keep the editor text, including malformed dates, for backend validation.
+         String date = ngayNhanNha.getEditor().getText();
+@@ -66,7 +67,9 @@ public final class HouseholdFormController extends HouseholdController {
+             alert(Alert.AlertType.WARNING, result.message()).show();
+         } else if (result.status() == HouseholdResult.Status.CONFIRMATION_REQUIRED && payload != null && !confirmed) {
+             Alert confirmation = alert(Alert.AlertType.CONFIRMATION, result.message());
++            confirmationPending=true; navigator.busy(true); busyChanged(true);
+             confirmation.setOnHidden(event -> {
++                confirmationPending=false; navigator.busy(false); busyChanged(false);
+                 if (confirmation.getResult() == ButtonType.OK) update(payload, true);
+             });
+             confirmation.show();
+@@ -80,7 +83,7 @@ public final class HouseholdFormController extends HouseholdController {
+         return alert;
+     }
+     @FXML private void cancel() {
+-        if (!busy) { if (original == null) navigator.showList(); else navigator.showDetail(original.maHo()); }
++        if (!busy && !confirmationPending) { if (original == null) navigator.showList(); else navigator.showDetail(original.maHo()); }
+     }
+     @Override protected void busyChanged(boolean value) {
+         fields.setDisable(value); saveButton.setDisable(value); cancelButton.setDisable(value);
+diff --git a/src/main/java/com/bluemoon/views/HouseholdNavigator.java b/src/main/java/com/bluemoon/views/HouseholdNavigator.java
+index 5e09ec9..5ee849c 100644
+--- a/src/main/java/com/bluemoon/views/HouseholdNavigator.java
++++ b/src/main/java/com/bluemoon/views/HouseholdNavigator.java
+@@ -22,12 +22,13 @@ public final class HouseholdNavigator implements DashboardModule {
+     private final Consumer<Parent> host;
+     private HouseholdController current;
+     private com.bluemoon.services.ResidentService residents;
++    private com.bluemoon.services.BillingService billing;
++    private boolean householdBusy, residentBusy, historyBusy;
+     private com.bluemoon.services.ResidentSearchService searchService;
+     private ResidentSearchController searchController;
+     public HouseholdNavigator(HouseholdService service, com.bluemoon.services.ResidentService residents,
+                               com.bluemoon.services.ResidentSearchService searchService) {
+-        this.service=Objects.requireNonNull(service);this.residents=Objects.requireNonNull(residents);
+-        this.searchService=Objects.requireNonNull(searchService);this.host=root -> content.getChildren().setAll(root);showList();
++        this(service, residents, searchService, null);
+     }
+     public boolean canSearch(){return searchService!=null && can(com.bluemoon.models.Permission.RESIDENT_PROFILE_VIEW);}
+     public void showSearch(){
+@@ -36,12 +37,22 @@ public final class HouseholdNavigator implements DashboardModule {
+         searchController=new ResidentSearchController(searchService,this::residentBusy,this::showDetail,this::showList);
+         host.accept(searchController.view());
+     }
+-    private boolean householdBusy, residentBusy;
+     public HouseholdNavigator(HouseholdService service, com.bluemoon.services.ResidentService residents) {
++        this(service, residents, null, null);
++    }
++    public HouseholdNavigator(HouseholdService service, com.bluemoon.services.ResidentService residents,
++                              com.bluemoon.services.BillingService billing) {
++        this(service, residents, null, billing);
++    }
++    public HouseholdNavigator(HouseholdService service, com.bluemoon.services.ResidentService residents,
++                              com.bluemoon.services.ResidentSearchService searchService,
++                              com.bluemoon.services.BillingService billing) {
+         this.service=Objects.requireNonNull(service); this.residents=Objects.requireNonNull(residents);
++        this.billing=billing; this.searchService=searchService;
+         this.host=root -> content.getChildren().setAll(root); showList();
+     }
+     public com.bluemoon.services.ResidentService residents() { return residents; }
++    public com.bluemoon.services.BillingService billing() { return billing; }
+     private final List<Dialog<?>> dialogs = new ArrayList<>();
+     private final javafx.scene.layout.StackPane content = new javafx.scene.layout.StackPane();
+     private final javafx.beans.property.ReadOnlyBooleanWrapper busy = new javafx.beans.property.ReadOnlyBooleanWrapper();
+@@ -66,8 +77,10 @@ public final class HouseholdNavigator implements DashboardModule {
+     }
+     public void trackDialog(Dialog<?> dialog) { dialogs.add(dialog); }
+     public boolean can(com.bluemoon.models.Permission permission) { return authorization.canAccess(permission); }
+-    public void busy(boolean value) { householdBusy=value; busy.set(householdBusy || residentBusy); }
+-    public void residentBusy(boolean value) { residentBusy=value; busy.set(householdBusy || residentBusy); }
++    public void busy(boolean value) { householdBusy=value; refreshBusy(); }
++    public void residentBusy(boolean value) { residentBusy=value; refreshBusy(); }
++    public void historyBusy(boolean value) { historyBusy=value; refreshBusy(); }
++    private void refreshBusy() { busy.set(householdBusy || residentBusy || historyBusy); }
+     @Override public javafx.beans.value.ObservableBooleanValue busyProperty() { return busy.getReadOnlyProperty(); }
+     @Override public Parent view() { return content; }
+     @Override public void close() { dispose(); content.getChildren().clear(); }
+diff --git a/src/main/java/com/bluemoon/views/ProductionModules.java b/src/main/java/com/bluemoon/views/ProductionModules.java
+index 2e14938..7f87ccb 100644
+--- a/src/main/java/com/bluemoon/views/ProductionModules.java
++++ b/src/main/java/com/bluemoon/views/ProductionModules.java
+@@ -2,12 +2,12 @@ package com.bluemoon.views;
+ 
+ import com.bluemoon.config.DatabaseConnection;
+ import com.bluemoon.controllers.FeeCategoryModule;
+-import com.bluemoon.controllers.FeeRateModule;
+ import com.bluemoon.controllers.BillingModule;
+ import com.bluemoon.controllers.NoticeModule;
+ import com.bluemoon.controllers.ReceiptModule;
+ import com.bluemoon.controllers.DebtModule;
+-import com.bluemoon.dao.ApartmentChargeLookup;
++import com.bluemoon.controllers.FeeRateModule;
++import com.bluemoon.dao.BillingDAO;
+ import com.bluemoon.dao.HouseholdDAO;
+ import com.bluemoon.models.Permission;
+ import com.bluemoon.services.HouseholdServiceImpl;
+@@ -20,16 +20,18 @@ public final class ProductionModules {
+         return List.of(
+             new ModuleRegistration("households", "Hộ gia đình / Căn hộ", Permission.HOUSEHOLD_VIEW,
+                 () -> new HouseholdNavigator(new HouseholdServiceImpl(new HouseholdDAO(connections),
+-                    ApartmentChargeLookup.NONE),
++                    new BillingDAO(connections)),
+                     new com.bluemoon.services.ResidentServiceImpl(new com.bluemoon.dao.ResidentDAO(connections),
+                         new HouseholdDAO(connections),new com.bluemoon.services.RoleBasedAuthorizationService(null)),
+                     new com.bluemoon.services.ResidentSearchServiceImpl(new com.bluemoon.dao.ResidentDAO(connections),
+-                        new com.bluemoon.services.RoleBasedAuthorizationService(null)))),
++                        new com.bluemoon.services.RoleBasedAuthorizationService(null)),
++                    new com.bluemoon.services.BillingServiceImpl(new BillingDAO(connections),
++                        new com.bluemoon.services.RoleBasedAuthorizationService(null),java.time.Clock.systemUTC()))),
+             new ModuleRegistration("feeCategories", "Danh mục khoản thu", Permission.FEE_CATEGORY_VIEW,
+                 () -> FeeCategoryModule.open(connections)),
+-            FeeRateModule.registration(connections),
+             BillingModule.registration(connections),
+             NoticeModule.registration(connections),
++            FeeRateModule.registration(connections),
+             new ModuleRegistration("receipts", "Ghi nhận thanh toán / Phiếu thu", Permission.PAYMENT_HISTORY_VIEW_ALL,
+                 () -> ReceiptModule.open(connections)),
+             new ModuleRegistration("debt", "Báo cáo công nợ", Permission.DEBT_REPORT_VIEW,
+diff --git a/src/main/resources/com/bluemoon/views/HouseholdDetailView.fxml b/src/main/resources/com/bluemoon/views/HouseholdDetailView.fxml
+index e61613e..cf14269 100644
+--- a/src/main/resources/com/bluemoon/views/HouseholdDetailView.fxml
++++ b/src/main/resources/com/bluemoon/views/HouseholdDetailView.fxml
+@@ -13,6 +13,7 @@
+ <Label text="Trạng thái" GridPane.rowIndex="5"/><Label fx:id="trangThai" wrapText="true" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+  </GridPane>
+  <VBox fx:id="residentContent" spacing="10"/>
++ <VBox fx:id="historyContent" spacing="10"/>
+  <HBox spacing="12"><ProgressIndicator fx:id="progress" visible="false" managed="false" prefWidth="24" prefHeight="24"/><Label fx:id="message" wrapText="true"/></HBox>
+  <HBox spacing="12"><Button fx:id="editButton" text="Cập nhật" onAction="#edit" disable="true"/><Button fx:id="backButton" text="Quay lại" onAction="#back"/></HBox>
+ </VBox>
+diff --git a/src/test/java/com/bluemoon/controllers/ApartmentHistoryPanelTest.java b/src/test/java/com/bluemoon/controllers/ApartmentHistoryPanelTest.java
+new file mode 100644
+index 0000000..b176f11
+--- /dev/null
++++ b/src/test/java/com/bluemoon/controllers/ApartmentHistoryPanelTest.java
+@@ -0,0 +1,76 @@
++package com.bluemoon.controllers;
++
++import com.bluemoon.models.*;
++import com.bluemoon.services.*;
++import javafx.application.Platform;
++import javafx.scene.control.*;
++import org.junit.jupiter.api.*;
++import java.lang.reflect.Proxy;
++import java.util.*;
++import java.util.concurrent.*;
++import java.util.concurrent.atomic.*;
++import static org.junit.jupiter.api.Assertions.*;
++
++class ApartmentHistoryPanelTest {
++    private ApartmentHistoryPanel panel;
++    private final AtomicBoolean busy=new AtomicBoolean();
++    private final CountDownLatch release=new CountDownLatch(1);
++    @BeforeAll static void toolkit() throws Exception {
++        var ready=new CompletableFuture<Void>();
++        try { Platform.startup(() -> { Platform.setImplicitExit(false); ready.complete(null); }); }
++        catch(IllegalStateException started) { ready.complete(null); }
++        ready.get(10,TimeUnit.SECONDS);
++    }
++    static void fx(Runnable action) throws Exception {
++        var done=new CompletableFuture<Void>();
++        Platform.runLater(() -> { try { action.run(); done.complete(null); } catch(Throwable e) { done.completeExceptionally(e); } });
++        done.get(10,TimeUnit.SECONDS);
++    }
++    @AfterEach void close() throws Exception {
++        release.countDown(); fx(() -> { if(panel!=null) panel.close(); }); FeeCategorySessionFixture.use(null);
++    }
++    private BillingService service(java.util.concurrent.Callable<BillingResult<List<MonthlyCharge>>> result) {
++        return (BillingService)Proxy.newProxyInstance(getClass().getClassLoader(),new Class<?>[]{BillingService.class},
++                (proxy,method,args) -> { assertEquals("getApartmentHistory",method.getName());
++                    assertFalse(Platform.isFxApplicationThread()); assertEquals("P1204",args[0]); return result.call(); });
++    }
++    private void settled() throws Exception {
++        long end=System.nanoTime()+TimeUnit.SECONDS.toNanos(10);
++        while(busy.get() && System.nanoTime()<end) Thread.sleep(10);
++        assertFalse(busy.get()); fx(() -> {});
++    }
++    @Test void emptyAndDatabaseErrorCanRetryWithoutLeakingSql() throws Exception {
++        FeeCategorySessionFixture.use(Role.ACCOUNTANT); var calls=new AtomicInteger();
++        fx(() -> panel=new ApartmentHistoryPanel(service(() -> {
++            if(calls.incrementAndGet()==1) throw new IllegalStateException("jdbc password=secret");
++            return BillingResult.success("OK",List.of());
++        }),"P1204",busy::set));
++        settled(); fx(() -> {
++            var status=(Label)panel.view().lookup("#historyStatus");
++            assertFalse(status.getText().contains("secret")); assertTrue(status.getText().contains("Không tải"));
++            ((Button)panel.view().lookup("#historyRetry")).fire();
++        });
++        settled(); fx(() -> assertTrue(((Label)panel.view().lookup("#historyStatus")).getText().contains("Chưa có")));
++        assertEquals(2,calls.get());
++    }
++    @Test void residentDeniedBeforeServiceCall() throws Exception {
++        FeeCategorySessionFixture.use(Role.RESIDENT);
++        fx(() -> panel=new ApartmentHistoryPanel(service(() -> { fail("Must deny before service"); return null; }),"P1204",busy::set));
++        fx(() -> assertTrue(((Label)panel.view().lookup("#historyStatus")).getText().contains("không có quyền")));
++    }
++    @Test void disposeDuringLoadClearsBusyAndIgnoresLateResult() throws Exception {
++        FeeCategorySessionFixture.use(Role.ADMIN); var entered=new CountDownLatch(1);
++        fx(() -> panel=new ApartmentHistoryPanel(service(() -> { entered.countDown(); release.await();
++            return BillingResult.success("OK",List.of()); }),"P1204",busy::set));
++        assertTrue(entered.await(5,TimeUnit.SECONDS)); assertTrue(busy.get());
++        fx(() -> { panel.close(); assertFalse(busy.get()); }); release.countDown();
++        fx(() -> assertTrue(((Label)panel.view().lookup("#historyStatus")).getText().isBlank()));
++    }
++    @Test void revokedPermissionDiscardsCompletedResult() throws Exception {
++        FeeCategorySessionFixture.use(Role.ADMIN); var entered=new CountDownLatch(1);
++        fx(() -> panel=new ApartmentHistoryPanel(service(() -> { entered.countDown(); release.await();
++            return BillingResult.success("OK",List.of()); }),"P1204",busy::set));
++        assertTrue(entered.await(5,TimeUnit.SECONDS)); FeeCategorySessionFixture.use(Role.RESIDENT); release.countDown();
++        settled(); fx(() -> assertTrue(((Label)panel.view().lookup("#historyStatus")).getText().contains("không có quyền")));
++    }
++}
+diff --git a/src/test/java/com/bluemoon/controllers/HouseholdBr02MySqlIT.java b/src/test/java/com/bluemoon/controllers/HouseholdBr02MySqlIT.java
+new file mode 100644
+index 0000000..5dc278b
+--- /dev/null
++++ b/src/test/java/com/bluemoon/controllers/HouseholdBr02MySqlIT.java
+@@ -0,0 +1,165 @@
++package com.bluemoon.controllers;
++
++import com.bluemoon.config.*;
++import com.bluemoon.dao.*;
++import com.bluemoon.models.*;
++import com.bluemoon.services.*;
++import com.bluemoon.views.*;
++import javafx.scene.*;
++import javafx.scene.control.*;
++import javafx.stage.*;
++import org.junit.jupiter.api.*;
++import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
++import java.nio.file.*;
++import java.time.Clock;
++import java.util.*;
++import java.util.concurrent.TimeUnit;
++import java.util.function.BooleanSupplier;
++import static org.junit.jupiter.api.Assertions.*;
++
++/** Real FXML + production composition + Service/DAO/MySQL. Owns P2981/BR02_UI_2981 and period 2097-01. */
++@EnabledIfEnvironmentVariable(named="BLUEMOON_MYSQL_TEST", matches="1")
++class HouseholdBr02MySqlIT {
++    private static DatabaseConnection db;
++    private static final List<String> created=new ArrayList<>();
++    private Stage stage;
++    private HouseholdNavigator navigator;
++    private final AuthenticationService auth=new AuthenticationService() {
++        public AuthResult login(String u,String p) { throw new UnsupportedOperationException(); }
++        public Optional<Account> currentUser() { return SessionContext.getCurrentUser(); }
++        public void logout() { FeeCategorySessionFixture.use(null); }
++    };
++    @BeforeAll static void schema() throws Exception {
++        ApartmentHistoryPanelTest.toolkit(); db=new DatabaseConnection(DatabaseConfig.load());
++        try(var c=db.getConnection()) {
++            assertTrue(c.getCatalog().endsWith("_test")); assertEquals("MySQL",c.getMetaData().getDatabaseProductName());
++            for(String table:List.of("phieu_thu","apartment_credit","invoice_lines","invoices","billing_periods")) {
++                try(var rows=c.getMetaData().getTables(c.getCatalog(),null,table,null)) { if(!rows.next())created.add(table); }
++            }
++        }
++        for(String path:List.of("database/schema.sql","database/migrations/us001_household_apartment.sql",
++                "database/migrations/us002_residents.sql","database/migrations/us005_fee_types.sql",
++                "database/migrations/us006_fee_rates.sql","database/migrations/us007_billing.sql","database/migrations/us008_receipts.sql")) {
++            for(String sql:Files.readString(Path.of(path)).replaceAll("(?m)^\\s*--.*$", "").split(";"))
++                if(!sql.isBlank())sql(sql);
++        }
++    }
++    private static void sql(String sql) throws Exception {
++        try(var c=db.getConnection()) { assertTrue(c.getCatalog().endsWith("_test"));
++            try(var command=c.createStatement()) { command.execute(sql); } }
++    }
++    private static void cleanup() throws Exception {
++        sql("DELETE FROM phieu_thu WHERE ma_hoa_don='HD-209701-P2981'");
++        sql("DELETE FROM apartment_credit WHERE so_can_ho='P2981'");
++        sql("DELETE FROM invoice_lines WHERE ma_hoa_don='HD-209701-P2981'");
++        sql("DELETE FROM invoices WHERE ma_hoa_don='HD-209701-P2981'");
++        sql("DELETE FROM billing_periods WHERE ky_thu='2097-01'");
++        sql("DELETE FROM residents WHERE ma_ho='BR02_UI_2981'");
++        sql("DELETE FROM households WHERE ma_ho='BR02_UI_2981'");
++        sql("DELETE FROM apartments WHERE so_can_ho='P2981'");
++        sql("DELETE FROM users WHERE id=880002 AND username='BR02UI880002'");
++    }
++    @BeforeEach void seed() throws Exception {
++        cleanup(); FeeCategorySessionFixture.use(Role.ADMIN);
++        sql("INSERT INTO users(id,username,password_hash,ho_ten,role) VALUES(880002,'BR02UI880002','"
++                +org.mindrot.jbcrypt.BCrypt.hashpw("br02-fixture-password",org.mindrot.jbcrypt.BCrypt.gensalt(4))+"','BR02 UI','ACCOUNTANT')");
++        sql("INSERT INTO apartments VALUES('P2981',29,80.00,'DANG_O')");
++        sql("INSERT INTO households VALUES('BR02_UI_2981','P2981','2024-01-01')");
++        sql("INSERT INTO billing_periods(ky_thu,han_nop,so_hoa_don,tong_tien,created_by,created_at) VALUES('2097-01','2097-01-31',1,123000,880002,NOW(6))");
++        sql("INSERT INTO invoices(ma_hoa_don,ky_thu,ma_ho,so_can_ho,dien_tich,so_nhan_khau,tong_tien,han_nop,created_at) VALUES('HD-209701-P2981','2097-01','BR02_UI_2981','P2981',80,2,123000,'2097-01-31',NOW(6))");
++    }
++    @AfterEach void close() throws Exception {
++        ApartmentHistoryPanelTest.fx(() -> { if(stage!=null)stage.hide(); if(navigator!=null)navigator.close(); });
++        FeeCategorySessionFixture.use(null); cleanup();
++    }
++    @AfterAll static void releaseOwnedTables() throws Exception {
++        for(String table:created)sql("DROP TABLE IF EXISTS " + table); created.clear();
++    }
++    private void fx(Runnable action) throws Exception { ApartmentHistoryPanelTest.fx(action); }
++    private void until(BooleanSupplier condition) throws Exception {
++        long end=System.nanoTime()+TimeUnit.SECONDS.toNanos(15);
++        while(System.nanoTime()<end) { boolean[] done={false}; fx(() -> done[0]=condition.getAsBoolean()); if(done[0])return; Thread.sleep(15); }
++        fail("BR-02 UI did not settle");
++    }
++    private <T extends Node> T node(String id,Class<T> type) { return type.cast(stage.getScene().lookup("#"+id)); }
++    private DialogPane dialog() {
++        return Window.getWindows().stream().filter(w -> w instanceof Stage s && s.getOwner()==stage)
++                .map(w -> w.getScene().getRoot()).filter(DialogPane.class::isInstance).map(DialogPane.class::cast).findFirst().orElse(null);
++    }
++    @Test void productionHouseholdConfirmationCancelApprovalAndHistoryPreserveSnapshot() throws Exception {
++        var before=new BillingDAO(db).findInvoice("HD-209701-P2981").orElseThrow();
++        fx(() -> {
++            var registration=ProductionModules.create(db).stream().filter(m -> m.id().equals("households")).findFirst().orElseThrow();
++            navigator=(HouseholdNavigator)registration.open().get(); stage=new Stage(); stage.setScene(new Scene(navigator.view(),1250,900)); stage.show();
++        });
++        until(() -> !navigator.busyProperty().get());
++        var profile=new HouseholdDAO(db).findByMaHo("BR02_UI_2981").orElseThrow();
++        fx(() -> { navigator.showEdit(profile); stage.getScene().getRoot().applyCss(); stage.getScene().getRoot().layout();
++            node("dienTich",TextField.class).setText("95.50"); node("saveButton",Button.class).fire(); });
++        until(() -> dialog()!=null);
++        fx(() -> { assertTrue(navigator.busyProperty().get()); assertTrue(node("saveButton",Button.class).isDisabled());
++            ((Button)dialog().lookupButton(ButtonType.CANCEL)).fire(); });
++        assertEquals(0,new HouseholdDAO(db).findByMaHo("BR02_UI_2981").orElseThrow().dienTich().compareTo(new java.math.BigDecimal("80")));
++        fx(() -> node("saveButton",Button.class).fire()); until(() -> dialog()!=null);
++        fx(() -> ((Button)dialog().lookupButton(ButtonType.OK)).fire());
++        until(() -> stage.getScene().lookup("#households")!=null && !navigator.busyProperty().get());
++        assertEquals(0,new HouseholdDAO(db).findByMaHo("BR02_UI_2981").orElseThrow().dienTich().compareTo(new java.math.BigDecimal("95.50")));
++        assertEquals(before,new BillingDAO(db).findInvoice(before.maHoaDon()).orElseThrow());
++        fx(() -> navigator.showDetail("BR02_UI_2981"));
++        until(() -> stage.getScene().lookup("#apartmentHistory")!=null && !navigator.busyProperty().get());
++        fx(() -> {
++            var table=node("apartmentHistory",TableView.class); assertEquals(1,table.getItems().size());
++            var snapshot=(MonthlyCharge)table.getItems().get(0); assertEquals("2097-01",snapshot.kyThu());
++            assertEquals(before.dienTich(),snapshot.dienTich()); assertEquals(before.tongTien(),snapshot.tongTien());
++            assertEquals(before.hanNop(),snapshot.hanNop());
++            assertEquals(ChargeStatus.CHUA_DONG,snapshot.trangThai());
++        });
++    }
++    @Test void accountantSeesSnapshotAndResidentCannotOpenHouseholdFromDashboard() throws Exception {
++        FeeCategorySessionFixture.use(Role.ACCOUNTANT);
++        var authorization=new RoleBasedAuthorizationService(null);
++        fx(() -> {
++            navigator=new HouseholdNavigator(new HouseholdServiceImpl(new HouseholdDAO(db),new BillingDAO(db)),
++                    new ResidentServiceImpl(new ResidentDAO(db),new HouseholdDAO(db),authorization),
++                    new BillingServiceImpl(new BillingDAO(db),authorization,Clock.systemUTC()));
++            stage=new Stage(); stage.setScene(new Scene(navigator.view(),1250,900)); stage.show();
++        });
++        until(() -> !navigator.busyProperty().get()); fx(() -> navigator.showDetail("BR02_UI_2981"));
++        until(() -> stage.getScene().lookup("#apartmentHistory")!=null && !navigator.busyProperty().get());
++        fx(() -> { assertEquals(1,node("apartmentHistory",TableView.class).getItems().size()); navigator.close(); });
++        FeeCategorySessionFixture.use(Role.RESIDENT);
++        fx(() -> {
++            var controller=new DashboardController(auth,auth.currentUser().orElseThrow(),()->{},authorization,ProductionModules.create(db));
++            var loader=new javafx.fxml.FXMLLoader(getClass().getResource("/com/bluemoon/views/DashboardView.fxml")); loader.setControllerFactory(t -> controller);
++            try { stage.getScene().setRoot(loader.load()); } catch(Exception e) { throw new RuntimeException(e); }
++            controller.openModule("households"); assertNull(stage.getScene().lookup("#apartmentHistory"));
++            assertFalse(node("householdsButton",Button.class).isVisible()); controller.close();
++        });
++    }
++    @Test void historyShowsCommittedPaymentWithoutChangingBillingInputs() throws Exception {
++        var login=new AuthService(new AccountDAO(db)).login("BR02UI880002","br02-fixture-password");
++        assertTrue(login.isSuccess());
++        var before=new BillingDAO(db).findInvoice("HD-209701-P2981").orElseThrow();
++        var payments=new ReceiptServiceImpl(new ReceiptDAO(db),new RoleBasedAuthorizationService(null),Clock.systemUTC());
++        var paid=payments.recordPayment(new ReceiptForm(java.util.UUID.randomUUID().toString(),before.maHoaDon(),
++                "BR02 fixture","23000",java.time.LocalDate.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")),PaymentMethod.TIEN_MAT,"BR02 UI"));
++        assertTrue(paid.isSuccess(),paid.message());
++        fx(() -> {
++            navigator=(HouseholdNavigator)ProductionModules.create(db).stream().filter(m -> m.id().equals("households"))
++                    .findFirst().orElseThrow().open().get();
++            stage=new Stage(); stage.setScene(new Scene(navigator.view(),1250,900)); stage.show();
++        });
++        until(() -> !navigator.busyProperty().get()); fx(() -> navigator.showDetail("BR02_UI_2981"));
++        until(() -> stage.getScene().lookup("#apartmentHistory")!=null && !navigator.busyProperty().get());
++        fx(() -> {
++            var table=node("apartmentHistory",TableView.class); var row=(MonthlyCharge)table.getItems().get(0);
++            assertEquals(ChargeStatus.DONG_THIEU,row.trangThai());
++            assertEquals(0,row.daThanhToan().compareTo(new java.math.BigDecimal("23000")));
++            assertEquals(0,row.conThieu().compareTo(new java.math.BigDecimal("100000")));
++            assertEquals(before.tongTien(),row.tongTien()); assertEquals(before.dienTich(),row.dienTich());
++            assertEquals(before.soNhanKhau(),row.soNhanKhau()); assertEquals(before.hanNop(),row.hanNop());
++            var status=(TableColumn<?,?>)table.getColumns().stream().filter(c -> ((TableColumn<?,?>)c).getText().equals("Trạng thái thanh toán")).findFirst().orElseThrow();
++            assertEquals("Đóng thiếu",status.getCellData(0));
++        });
++    }
++}
+
+base-commit: 7b6364af6f5cf2cc0e4c8457fa2c5a7b1d9de506
