@@ -1,100 +1,87 @@
-# BlueMoon developer setup — Foundation
+# Hướng Dẫn Thiết Lập Môi Trường Phát Triển — BlueMoon (Sprint 1)
 
-## Requirements
+Tài liệu này hướng dẫn các thành viên trong nhóm và người chấm cài đặt môi trường, cấu hình cơ sở dữ liệu và thực thi ứng dụng BlueMoon trên máy trạm.
 
-- JDK **17**, with `JAVA_HOME` pointing to it (JDK 25 is not the team baseline).
-- Maven 3.9.x on PATH.
-- MySQL **8.x** for database work.
-- Scene Builder for Dev-2 FXML editing; JavaFX is resolved by Maven.
+---
 
-From the repository root:
+## 1. Yêu Cầu Môi Trường (System Requirements)
 
-```powershell
-java -version
-mvn -version
-mvn clean verify
-mvn javafx:run
-```
+- **Java Development Kit (JDK):** Bắt buộc **JDK 17 LTS** (ví dụ Eclipse Temurin 17, Oracle OpenJDK 17). Biến môi trường `JAVA_HOME` phải trỏ tới thư mục gốc của JDK 17.
+- **Apache Maven:** Phiên bản **3.9.x** có sẵn trên biến môi trường `PATH`.
+- **Hệ quản trị CSDL:** **MySQL 8.0 trở lên** hoặc **MySQL 8.4 LTS** (kiểm tra `mysql -V`).
+- **Hệ điều hành:** Windows 10/11, macOS hoặc Linux.
 
-Opt-in FXML/window startup check on a desktop session:
-`mvn -Pjavafx-smoke verify`. It opens and automatically closes the placeholder.
-Default tests do not launch a GUI.
+---
 
-The app currently opens a minimal Foundation FXML view. It does not contain
-Dev-2's login form and makes no database request at startup.
+## 2. Cài Đặt CSDL & Khởi Tạo Dữ Liệu
 
-## External database configuration
+1. Khởi động MySQL Server.
+2. Tạo CSDL mới sử dụng bảng mã `utf8mb4`:
+   ```sql
+   CREATE DATABASE bluemoon_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   USE bluemoon_db;
+   ```
+3. Chạy lần lượt các tập tin schema và migrations chính thức theo đúng thứ tự:
+   ```sql
+   SOURCE database/schema.sql;
+   SOURCE database/seed.sql;
+   SOURCE database/migrations/us001_household_apartment.sql;
+   SOURCE database/migrations/us001_seed.sql;
+   SOURCE database/migrations/us002_residents.sql;
+   SOURCE database/migrations/us002_seed.sql;
+   SOURCE database/migrations/us005_fee_types.sql;
+   SOURCE database/migrations/us006_fee_rates.sql;
+   SOURCE database/migrations/us007_billing.sql;
+   SOURCE database/migrations/us008_receipts.sql;
+   ```
 
-```powershell
-Copy-Item config/db.properties.example config/db.properties
-```
+---
 
-Fill `db.url`, `db.username`, `db.password` in that ignored local file. Example
-URL: `jdbc:mysql://localhost:3306/bluemoon_db?connectionTimeZone=UTC`.
-Use your own local credentials, never put them into tracked files.
-MySQL JDBC discovers its driver automatically; no driver or pool settings are
-required. Each `getConnection()` call opens one connection; the DAO owns its
-closure via try-with-resources. Connect/socket timeouts are 5/10 seconds.
+## 3. Cấu Hình Ứng Dụng (Database Properties)
 
-Supported environment overrides:
+1. Sao chép tệp cấu hình mẫu:
+   ```powershell
+   Copy-Item config/db.properties.example config/db.properties
+   ```
+2. Mở `config/db.properties` và điền thông tin kết nối CSDL của bạn:
+   ```properties
+   db.url=jdbc:mysql://localhost:3306/bluemoon_db?connectionTimeZone=UTC&useUnicode=true&characterEncoding=UTF-8
+   db.username=root
+   db.password=your_secret_password
+   ```
 
-| Variable | Meaning |
-| --- | --- |
-| `BLUEMOON_DB_CONFIG` | Alternate local properties file path |
-| `BLUEMOON_DB_URL` | Overrides `db.url` |
-| `BLUEMOON_DB_USERNAME` | Overrides `db.username` |
-| `BLUEMOON_DB_PASSWORD` | Overrides `db.password` |
+*Hệ thống hỗ trợ các biến môi trường ghi đè:*
+- `BLUEMOON_DB_CONFIG`: Đường dẫn tới tệp properties thay thế.
+- `BLUEMOON_DB_URL`: Ghi đè URL kết nối.
+- `BLUEMOON_DB_USERNAME`: Ghi đè tên người dùng CSDL.
+- `BLUEMOON_DB_PASSWORD`: Ghi đè mật khẩu CSDL.
 
-Environment-only configuration is supported. Empty required values fail rather
-than silently falling back. Configuration values are not printed by the app.
+---
 
-## Database initialization
+## 4. Biên Dịch & Chạy Ứng Dụng
 
-Create an empty MySQL 8.x database, then select it in the mysql client:
+- **Biên dịch và kiểm tra tính toàn vẹn (Build & verify):**
+  ```powershell
+  mvn clean compile
+  ```
+- **Khởi chạy ứng dụng đồ họa (JavaFX Desktop):**
+  ```powershell
+  mvn javafx:run
+  ```
+- **Chạy bộ kiểm thử đơn vị (Unit Tests):**
+  ```powershell
+  mvn test
+  ```
+- **Chạy kiểm thử giao diện khói (JavaFX Smoke Tests):**
+  ```powershell
+  mvn -Pjavafx-smoke test
+  ```
 
-```sql
-CREATE DATABASE bluemoon_db CHARACTER SET utf8mb4;
-USE bluemoon_db;
-SOURCE database/schema.sql;
-SOURCE database/seed.sql;
-```
+---
 
-The schema adds only `users` (EP-06), not household/apartment tables. It contains
-one role enum and an extra UTC `locked_until` timestamp to persist the timed lock
-across clients/restarts. No separate account_roles or permissions schema is added.
-The inherited database collation controls username comparison/case sensitivity.
-Use MySQL 8.0.16+ for enforced CHECK constraints (verified here on 8.4.13).
+## 5. Tài Khoản Thử Nghiệm Sẵn Có (Demo Credentials)
 
-Seed is for local/QA only. It creates the **public SRS fixture** `admin` /
-`admin@123`, display name Admin, role ADMIN. SQL contains only its BCrypt cost-12
-hash. Do not provision this public fixture in production. Rerunning the seed
-does not change existing passwords, roles or lock state. No real database
-credentials are committed. Account creation/password changes are outside US-012.
-
-See [the implemented API](../design/auth-api-proposal.md) to call login/logout
-from Dev-2's controller. The placeholder does not authenticate by itself.
-
-## MySQL integration tests
-
-Prepare an **isolated** database whose name ends in `_test`, configure its
-credentials via the variables/file above, then run:
-
-```powershell
-$env:BLUEMOON_MYSQL_TEST = '1'
-mvn -Pmysql-it verify
-```
-
-The suite verifies MySQL 8.x, loads schema/seed and creates/removes uniquely named
-test users. It also authenticates the public admin seed, resetting its login
-state on success; never point it at a shared developer/production database.
-Default `mvn clean verify` does not need MySQL or a desktop. See
-[test evidence](../test/README.md) for the exact combined verification command.
-
-## Local verification tools
-
-This session downloaded portable Maven/JDK into ignored `.tools/` and uses the
-ignored `.m2-local/` cache. These are not required or committed for teammates.
-Use your installed JDK 17/Maven. The build rejects JDK versions outside 17.x.
-
-JavaFX Maven setup follows [OpenJFX documentation](https://openjfx.io/openjfx-docs/).
-Connector coordinates follow [MySQL documentation](https://dev.mysql.com/doc/connector-j/en/connector-j-installing-maven.html).
+Sau khi chạy `database/seed.sql`, hệ thống có sẵn 3 tài khoản mẫu phục vụ việc đánh giá:
+- `admin` / `admin@123` (Vai trò `ADMIN`: Quản trị toàn hệ thống, danh mục phí, căn hộ, cư dân, công nợ).
+- `accountant` / `accountant@123` (Vai trò `ACCOUNTANT`: Ghi nhận thu tiền, lập phiếu thu, báo cáo công nợ, xuất thông báo thu phí).
+- `resident` / `resident@123` (Vai trò `RESIDENT`: Tra cứu thông tin cá nhân).

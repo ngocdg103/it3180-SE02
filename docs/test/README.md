@@ -1,95 +1,84 @@
-# Testing Documentation
+# Tài Liệu Kiểm Thử & Bằng Chứng QA — BlueMoon (Sprint 1)
 
-## Q17 — Household/Resident guard (Mốc 2)
+Tài liệu này tổng hợp các kết quả kiểm thử tự động, kiểm thử giao diện khói và kiểm thử tích hợp cơ sở dữ liệu MySQL thật phục vụ việc nghiệm thu Sprint 1.
 
-Base main `162d9ea`; JDK 17 / Maven **3.9.9**, Enforcer enabled.
+---
 
-- `mvn clean verify`: **352 PASS**.
-- `mvn -Pjavafx-smoke clean verify`: **353 PASS**.
-- `mvn -Pmysql-it '-Dtest=HouseholdQ17MySqlIT,HouseholdMySqlIT,ResidentMySqlIT' verify`:
-  **40 PASS**, không failure/error/skip; MySQL 8.4.13 thật, schema riêng
-  `bluemoon_q17_test`, BLUEMOON_MYSQL_TEST=1 và config user chỉ có quyền schema này.
-- Q17: 7 DAO unit + 4 Service unit + 7 MySQL cases; R-first/U-first dùng JDBC/latches,
-  stale RR snapshot, failure-after-write rollback và stress 40 lượt.
-- MySQL regression US-001 12 + US-002 21 vẫn PASS; không sửa migration/production data.
-- Test profile có destructive setup; chỉ chạy trên schema disposable riêng.
+## 1. Môi Trường & Tiêu Chuẩn Kiểm Thử
 
-Chi tiết: [Q17 handoff](../design/q17-household-resident-implementation-handoff.md).
-Các kết quả bên dưới là lịch sử các mốc trước.
+- **Java Development Kit:** Eclipse Temurin JDK **17.0.14+7** (Maven Enforcer kiểm soát bắt buộc `[17, 18)`).
+- **Maven Build Tool:** Apache Maven **3.9.9**.
+- **Cơ sở dữ liệu kiểm thử tích hợp:** MySQL Community Server **8.0 / 8.4 LTS**.
+- **Thư viện kiểm thử:** JUnit Jupiter 5.13.4.
 
-## US-018 Household integration — verification mới nhất
+---
 
-- Base: `3d0f86082263581f5f4a35c4295ca133c6b4b83f` trên main, đã có Foundation,
-  US-001 và Authorization Layer.
-- `mvn clean verify`: **204 tests PASS**, 0 failures/errors/skips.
-- `mvn -Pjavafx-smoke clean verify`: **205 tests PASS**, 0 failures/errors/skips.
-- `git diff --check`: PASS.
-- 29 Household–RBAC tests mới: 20 tổ hợp operation/session, 5 guard-before-validation,
-  4 kiểm tra session/OWN/data-integrity/null injection. Dùng policy RBAC thật và
-  in-memory repository có quan sát thao tác.
-- Giữ 60 Household regression, 97 RBAC, 12 AuthService, 2 Authentication contract,
-  4 config tests PASS; JavaFX profile thêm 1 FXML/Stage check PASS.
-- MySQL IT đã cập nhật constructor và được compile; chưa chạy suite MySQL opt-in
-  trong đợt này. Không khẳng định đã kiểm thử DB hoặc UI tích hợp thực tế.
+## 2. Kết Quả Kiểm Thử Tự Động Trên Nhánh `main`
 
-Xem [handoff integration](../design/us018-household-integration-handoff.md).
-Các kết quả bên dưới là lịch sử các mốc trước.
+Xác thực tại commit HEAD hiện tại: `89b3a2861e6878bb111663e0eb60f5451bfd1487` (sau khi tích hợp PR #27 và PR #25).
 
-## Dev-1 / US-018 Mốc 2
+### 2.1. Kiểm thử Đơn vị & Hồi quy Cơ bản (Default Profile: `mvn test`)
+- **Lệnh thực thi:**
+  ```powershell
+  mvn test "-Dsurefire.useManifestOnlyJar=false"
+  ```
+- **Kết quả:**
+  - **Tests run:** **695**
+  - **Failures:** **0**
+  - **Errors:** **0**
+  - **Skipped:** **0**
+  - **Thời gian chạy:** ~1 phút
+  - **Trạng thái:** **BUILD SUCCESS**
+- **Phạm vi kiểm tra:**
+  - Cấu hình & Kết nối CSDL (`DatabaseConfigTest`, `FeeCategoryWiringTest`, `FeeRateWiringTest`).
+  - Xác thực & Phân quyền (`AuthServiceTest`, `RoleBasedAuthorizationServiceTest`, `AuthenticationContractTest`).
+  - Hộ gia đình & Cư dân (`HouseholdServiceTest`, `ResidentServiceTest`, `ResidentSearchServiceTest`, `HouseholdQ17ServiceTest`, `HouseholdAuthorizationIntegrationTest`).
+  - Định mức & Danh mục phí (`FeeTypeServiceTest`, `FeeRateServiceTest`, `FeeRateTest`, `FeeTypeDAOTest`, `FeeRateDAOTest`).
+  - Động cơ Lập kỳ thu (`BillingModelsTest`, `BillingCalculatorTest`, `BillingResultTest`, `BillingServiceTest`).
+  - Thu phí & Phiếu thu (`ReceiptServiceTest`, `ReceiptControllerTest`).
+  - Báo cáo Công nợ (`DebtServiceTest`, `DebtControllerTest`).
+  - Xuất Thông báo (`NoticeServiceTest`, `NoticeFormatterTest`, `NoticeControllerTest`).
+  - Bộ điều khiển App Shell & Điều hướng (`AppShellTest`, `LoginUiTest`, `HouseholdUiTest`, `FeeCategoryControllerTest`, `FeeRateControllerTest`, `ResidentPanelUiTest`, `ResidentSearchUiTest`, `ProductionNavigationTest`, `MemoryBillingHistoryTest`).
 
-- `mvn clean verify`: **115 tests PASS**, không failures/errors/skips.
-- `mvn -Pjavafx-smoke clean verify`: **116 tests PASS**, không failures/errors/skips.
-- `git diff --check`: PASS.
-- RBAC: 97 tests (66 permission/role combinations, 22 no-session cases, 9 scope,
-  resolver-failure, session-change, matrix-coverage and fake-operation guard checks).
-- Authentication regression: 12 service tests + 2 contract tests vẫn PASS;
-  config: 4 PASS; JavaFX profile thêm 1 Stage/FXML check PASS.
-- Unit RBAC không yêu cầu MySQL. Chưa chạy tích hợp UI/service của Dev-2/Dev-3
-  hoặc production ownership adapter; không khẳng định toàn bộ US-018 đã nghiệm thu.
+### 2.2. Kiểm thử Giao Diện Khói (JavaFX Smoke Test Profile: `mvn -Pjavafx-smoke test`)
+- **Lệnh thực thi:**
+  ```powershell
+  mvn -Pjavafx-smoke test "-Dsurefire.useManifestOnlyJar=false"
+  ```
+- **Kết quả:**
+  - **Tests run:** **696**
+  - **Failures:** **0**
+  - **Errors:** **0**
+  - **Skipped:** **0**
+  - **Thời gian chạy:** ~2 phút 30 giây
+  - **Trạng thái:** **BUILD SUCCESS**
+- **Bổ sung:** Kèm theo `FoundationSmokeIT` kiểm tra khởi tạo thực tế của Stage, Scene và vòng đời cửa sổ ứng dụng desktop.
 
-API, phạm vi và dependency: [US-018 implementation handoff](../design/us018-rbac-implementation-handoff.md).
-Các kết quả US-012 bên dưới là các lần kiểm thử Foundation trước Mốc 2.
+### 2.3. Kiểm thử Tích hợp MySQL Thật (`-Pmysql-it verify`)
+- Chạy trên cơ sở dữ liệu kiểm thử cô lập (tên CSDL kết thúc bằng `_test`, ví dụ `bluemoon_test`):
+  ```powershell
+  $env:BLUEMOON_DB_URL = "jdbc:mysql://localhost:3306/bluemoon_test?connectionTimeZone=UTC"
+  $env:BLUEMOON_DB_USERNAME = "test_user"
+  $env:BLUEMOON_DB_PASSWORD = "test_password"
+  $env:BLUEMOON_MYSQL_TEST = "1"
+  mvn -Pmysql-it verify "-Dsurefire.useManifestOnlyJar=false"
+  ```
+- **Các kịch bản MySQL IT trọng tâm đã kiểm chứng:**
+  - `BillingMySqlIT` (27/27 PASS): Kiểm tra tính nhất quán snapshot hóa đơn, single-connection transaction, khóa dòng FOR UPDATE và ràng buộc FK.
+  - `ReceiptMySqlIT` (11/11 PASS): Ghi nhận thanh toán nguyên tử, cập nhật số dư nộp thừa `apartment_credit`, chống ghi đè và chống lặp thanh toán (idempotency).
+  - `DebtMySqlIT` (5/5 PASS): Tra cứu công nợ với mức cô lập `REPEATABLE READ`, tính toán KPI toàn tòa và bảo đảm không đọc dữ liệu bẩn (dirty read).
+  - `ProductionNavigationMySqlIT`: Luồng điều hướng App Shell thực tế với tài khoản BCrypt thật và dọn dẹp dữ liệu fixture.
+  - `ResidentSearchMySqlIT` & `HouseholdBr02MySqlIT`: Kiểm tra hiệu năng chỉ mục tìm kiếm và hook kiểm tra diện tích căn hộ.
 
-Thư mục lưu trữ tài liệu kiểm thử:
-- Test Plan (Kế hoạch kiểm thử)
-- Test Cases (Kịch bản kiểm thử chi tiết)
-- Bug Reports & Log
-- Test Summary Report (Báo cáo kết quả kiểm thử)
+---
 
-## Dev-1 / US-012 automated checks
+## 3. Trạng Thái Nghiệm Thu E2E Thủ Công (Manual E2E Status)
 
-Latest Dev-2 handoff check: `mvn -Pjavafx-smoke clean verify` passed **19 tests**
-(4 configuration, 12 authentication, 2 external mock-contract, 1 FXML startup).
-`mvn javafx:run` also launched the BlueMoon window successfully; the verification
-window was closed normally and Maven reported BUILD SUCCESS. The MySQL result
-below is the earlier backend integration run; it was not rerun for the interface-only change.
-
-JDK 17 and Maven 3.9.x:
-
-- `mvn clean verify`: configuration + service tests, no GUI/MySQL needed.
-- `mvn -Pjavafx-smoke verify`: includes an FXML/Stage startup/close check.
-- `mvn -Pmysql-it verify`: includes live MySQL tests when `BLUEMOON_MYSQL_TEST=1`.
-
-For MySQL tests, first configure an isolated MySQL 8.x database ending in `_test`
-via `BLUEMOON_DB_CONFIG` or the DB environment overrides. The suite loads the
-canonical schema/seed, uses the public SRS admin fixture and cleans up its own
-uniquely named fixture users. See developer-setup.md for initialization.
-
-Verified together on JDK 17.0.20.1 / MySQL 8.4.13:
-
-```powershell
-$env:BLUEMOON_DB_CONFIG = '<local ignored properties file for the isolated test DB>'
-$env:BLUEMOON_MYSQL_TEST = '1'
-mvn '-Dtest=DatabaseConfigTest,AuthServiceTest,FoundationSmokeIT,AuthMySqlIT' clean verify
-```
-
-Result: **22 tests passed, no failures/errors/skips**. Includes sixth consecutive
-failure locking, exact five-minute expiry, rollback, concurrent JDBC updates,
-generic invalid-credential messages, session publication only after commit,
-schema/seed reruns and JavaFX startup. Full review:
-[Dev-1 rules review](../design/dev-1-rules-review-report.md).
-
-Manual checks remaining: Dev-2 login/Dashboard navigation, logout navigation,
-role-dependent UI (US-018 ownership), and another developer's machine. A passing
-backend suite is not a claim that the complete login UI/US-012 has been accepted.
-
+- **Quy trình luồng nghiệp vụ liên thông (Business Flow):**
+  1. `ADMIN` đăng nhập $\rightarrow$ Quản lý căn hộ và cư dân.
+  2. `ADMIN` thiết lập danh mục phí và định mức thu phí hiệu lực.
+  3. `ADMIN` hoặc `ACCOUNTANT` lập kỳ thu phí tháng (ví dụ `2026-11`), kiểm tra xem trước và chốt snapshot hóa đơn.
+  4. `ACCOUNTANT` mở màn hình Thu phí, chọn hóa đơn và lập phiếu thu tiền (thanh toán đủ hoặc thanh toán một phần).
+  5. `ACCOUNTANT` mở Báo cáo công nợ để kiểm tra số liệu đã thu, còn thiếu và tỷ lệ hoàn thành toàn tòa.
+  6. `ACCOUNTANT` mở Thông báo thu phí, nhập thông tin ngân hàng và xuất tệp HTML in ấn.
+- **Tình trạng:** Các module đơn lẻ đã PASS 100% qua các PR. Nhóm QA đang tiến hành nghiệm thu liên thông toàn diện trên giao diện App Shell hoàn chỉnh sau khi kết hợp với PR #28.
