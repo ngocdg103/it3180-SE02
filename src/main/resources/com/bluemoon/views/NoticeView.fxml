@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.bluemoon.controllers.NoticeController" spacing="12"
+      prefWidth="1100" prefHeight="700" styleClass="fee-root" stylesheets="@fee-category.css">
+    <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+    <Label text="Thông báo thu phí theo hộ" styleClass="page-title"/>
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label text="Kỳ thu (YYYY-MM):"/>
+        <TextField fx:id="periodField" prefWidth="110"/>
+        <ComboBox fx:id="periodBox" promptText="Kỳ đã lập" prefWidth="130"/>
+        <Button fx:id="loadButton" text="Tải hóa đơn của kỳ" styleClass="primary-button"/>
+        <ProgressIndicator fx:id="loadingIndicator" prefWidth="22" prefHeight="22" visible="false" managed="false"/>
+    </HBox>
+    <Label fx:id="periodError" styleClass="error-text" wrapText="true"/>
+    <HBox spacing="16" VBox.vgrow="ALWAYS">
+        <VBox spacing="8" prefWidth="260" minWidth="220">
+            <Label text="Căn hộ trong kỳ" styleClass="section-title"/>
+            <ListView fx:id="apartmentList" VBox.vgrow="ALWAYS"/>
+        </VBox>
+        <VBox spacing="8" HBox.hgrow="ALWAYS">
+            <Label text="Thông tin tài khoản nhận (bắt buộc khi xuất)" styleClass="section-title"/>
+            <TextArea fx:id="bankField" prefRowCount="2" wrapText="true"
+                      promptText="Tên ngân hàng, Số tài khoản, Chủ tài khoản Ban quản trị"/>
+            <Label fx:id="bankError" styleClass="error-text" wrapText="true"/>
+            <HBox spacing="10">
+                <Button fx:id="viewButton" text="Xem thông báo thu phí"/>
+                <Button fx:id="exportOneButton" text="Xuất phiếu đang xem (HTML)"/>
+                <Button fx:id="exportAllButton" text="Xuất hàng loạt cả kỳ (HTML)"/>
+            </HBox>
+            <TextArea fx:id="previewArea" editable="false" wrapText="false" VBox.vgrow="ALWAYS"
+                      style="-fx-font-family: 'Consolas', 'Monospaced';"/>
+        </VBox>
+    </HBox>
+    <Label fx:id="messageLabel" wrapText="true"/>
+</VBox>
