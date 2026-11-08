@@ -23,6 +23,9 @@ public record ChargeLine(String maKhoanThu, String tenKhoanThu, ChargeMethod hin
         if (hinhThuc == ChargeMethod.THEO_CAN_HO && soLuong.compareTo(BigDecimal.ONE) != 0) {
             throw new IllegalArgumentException("THEO_CAN_HO requires soLuong = 1");
         }
+        if (hinhThuc == ChargeMethod.THEO_NHAN_KHAU && soLuong.stripTrailingZeros().scale() > 0) {
+            throw new IllegalArgumentException("THEO_NHAN_KHAU requires a whole number of people");
+        }
         Objects.requireNonNull(donGia, "donGia");
         if (donGia.signum() <= 0) { throw new IllegalArgumentException("donGia must be greater than 0"); }
         Objects.requireNonNull(ngayApDungGia, "ngayApDungGia");

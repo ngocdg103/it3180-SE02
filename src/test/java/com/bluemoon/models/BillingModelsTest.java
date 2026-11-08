@@ -107,6 +107,86 @@ class BillingModelsTest {
                 () -> new ChargeLine("PHI_DV", "Phi", ChargeMethod.THEO_CAN_HO, d("1"), d("1"), null, d("1")));
     }
 
+    // ---- ChargeLine: THEO_NHAN_KHAU needs whole people (Revision 03) ----
+    @ParameterizedTest @ValueSource(strings = {"0", "1", "2", "2.00", "0.00"})
+    void peopleQuantityAcceptsWholeNumbers(String people) {
+        var rate = d("6000");
+        var amount = d(people).multiply(rate).setScale(0).toPlainString();
+        assertDoesNotThrow(() -> line("PHI_VS", ChargeMethod.THEO_NHAN_KHAU, people, "6000", amount));
+    }
+
+    @ParameterizedTest @ValueSource(strings = {"0.5", "1.5", "2.01", "-1", "-0.5"})
+    void peopleQuantityRejectsFractionsAndNegatives(String people) {
+        assertThrows(IllegalArgumentException.class,
+                () -> new ChargeLine("PHI_VS", "Phi ve sinh", ChargeMethod.THEO_NHAN_KHAU, d(people), d("6000"),
+                        EFFECTIVE, BillingMoney.toStored(d(people).multiply(d("6000")).max(BigDecimal.ZERO))));
+    }
+
+    @Test void areaQuantityStillAllowsDecimals() {
+        // 75.55 m2 x 7000 = 528850: THEO_DIEN_TICH is not forced to a whole number.
+        assertDoesNotThrow(() -> line("PHI_QL", ChargeMethod.THEO_DIEN_TICH, "75.55", "7000", "528850"));
+        assertDoesNotThrow(() -> line("PHI_QL", ChargeMethod.THEO_DIEN_TICH, "0.5", "7000", "3500"));
+    }
+
+    @Test void fixedFeeRulesUnchanged() {
+        assertDoesNotThrow(() -> line("PHI_CH", ChargeMethod.THEO_CAN_HO, "1", "50000", "50000"));
+        assertDoesNotThrow(() -> line("PHI_CH", ChargeMethod.THEO_CAN_HO, "1.00", "50000", "50000"));
+        assertThrows(IllegalArgumentException.class,
+                () -> line("PHI_CH", ChargeMethod.THEO_CAN_HO, "0", "50000", "0"));
+    }
+
+    // ---- MonthlyCharge: status vs amounts (EP-03 BR-13) ----
+    private static MonthlyCharge status(ChargeStatus status, String total, String paid, String owed,
+                                        List<ChargeLine> lines) {
+        return new MonthlyCharge("HD-202611-P1204", "2026-11", "HK-1204", "P1204", d("80.00"), 4,
+                d(total), d(paid), d(owed), status, DUE, lines);
+    }
+
+    @Test void statusAcceptsConsistentCombinations() {
+        assertDoesNotThrow(() -> status(ChargeStatus.CHUA_DONG, "1384000", "0", "1384000", List.of()));
+        assertDoesNotThrow(() -> status(ChargeStatus.DONG_THIEU, "1384000", "1000000", "384000", List.of()));
+        assertDoesNotThrow(() -> status(ChargeStatus.DA_DONG_DU, "1384000", "1384000", "0", List.of()));
+        assertDoesNotThrow(() -> status(ChargeStatus.DONG_THUA, "1384000", "1400000", "-16000", List.of()));
+        // header-only and full invoice both work
+        assertDoesNotThrow(() -> status(ChargeStatus.DA_DONG_DU, "1384000", "1384000", "0", ac01Lines()));
+        assertDoesNotThrow(() -> status(ChargeStatus.CHUA_DONG, "1384000", "0", "1384000", ac01Lines()));
+    }
+
+    @Test void paidInFullRequiresNothingOwing() {
+        // DA_DONG_DU with nothing paid and 100 still owed is contradictory.
+        assertThrows(IllegalArgumentException.class,
+                () -> status(ChargeStatus.DA_DONG_DU, "100", "0", "100", List.of()));
+        assertThrows(IllegalArgumentException.class,
+                () -> status(ChargeStatus.DA_DONG_DU, "1384000", "1000000", "384000", List.of()));
+        assertThrows(IllegalArgumentException.class,
+                () -> status(ChargeStatus.DA_DONG_DU, "1384000", "1400000", "-16000", List.of()));
+    }
+
+    @Test void unpaidRequiresNothingPaid() {
+        assertThrows(IllegalArgumentException.class,
+                () -> status(ChargeStatus.CHUA_DONG, "1384000", "1000", "1383000", List.of()));
+        assertThrows(IllegalArgumentException.class,
+                () -> status(ChargeStatus.CHUA_DONG, "1384000", "1384000", "0", List.of()));
+    }
+
+    @Test void partiallyPaidRequiresSomePaidAndSomeOwing() {
+        assertThrows(IllegalArgumentException.class,
+                () -> status(ChargeStatus.DONG_THIEU, "1384000", "0", "1384000", List.of()));
+        assertThrows(IllegalArgumentException.class,
+                () -> status(ChargeStatus.DONG_THIEU, "1384000", "1384000", "0", List.of()));
+        assertThrows(IllegalArgumentException.class,
+                () -> status(ChargeStatus.DONG_THIEU, "1384000", "1400000", "-16000", List.of()));
+    }
+
+    @Test void overpaidRequiresNegativeOwed() {
+        assertThrows(IllegalArgumentException.class,
+                () -> status(ChargeStatus.DONG_THUA, "1384000", "1384000", "0", List.of()));
+        assertThrows(IllegalArgumentException.class,
+                () -> status(ChargeStatus.DONG_THUA, "1384000", "1000000", "384000", List.of()));
+        assertThrows(IllegalArgumentException.class,
+                () -> status(ChargeStatus.DONG_THUA, "1384000", "0", "1384000", List.of()));
+    }
+
     // ---- MonthlyCharge ----
     @Test void monthlyChargeAc01Snapshot() {
         var charge = charge(ac01Lines(), "1384000", "0", "1384000");

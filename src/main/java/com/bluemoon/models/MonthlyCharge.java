@@ -31,6 +31,7 @@ public record MonthlyCharge(String maHoaDon, String kyThu, String maHo, String s
         }
         conThieu = conThieu.setScale(2);
         Objects.requireNonNull(trangThai, "trangThai");
+        requireStatusConsistent(trangThai, daThanhToan, conThieu);
         Objects.requireNonNull(hanNop, "hanNop");
         lines = List.copyOf(Objects.requireNonNull(lines, "lines"));
         if (!lines.isEmpty()) {
@@ -38,6 +39,22 @@ public record MonthlyCharge(String maHoaDon, String kyThu, String maHo, String s
             if (sum.compareTo(tongTien) != 0) {
                 throw new IllegalArgumentException("tongTien must equal the sum of line amounts");
             }
+        }
+    }
+
+    /**
+     * EP-03 BR-13 and the ChargeStatus definitions: CHUA_DONG = nothing paid; DONG_THIEU = something paid and
+     * still owing; DA_DONG_DU = nothing owing; DONG_THUA = overpaid (conThieu below 0).
+     */
+    private static void requireStatusConsistent(ChargeStatus status, BigDecimal daThanhToan, BigDecimal conThieu) {
+        boolean consistent = switch (status) {
+            case CHUA_DONG -> daThanhToan.signum() == 0;
+            case DONG_THIEU -> daThanhToan.signum() > 0 && conThieu.signum() > 0;
+            case DA_DONG_DU -> conThieu.signum() == 0;
+            case DONG_THUA -> conThieu.signum() < 0;
+        };
+        if (!consistent) {
+            throw new IllegalArgumentException("trangThai " + status + " is inconsistent with daThanhToan/conThieu");
         }
     }
 }
