@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.bluemoon.controllers.BillingController" spacing="12"
+      prefWidth="1150" prefHeight="720" styleClass="fee-root" stylesheets="@fee-category.css">
+    <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+    <Label text="Lập kỳ thu và tính phí tự động" styleClass="page-title"/>
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label text="Kỳ thu hiện tại (được lập):"/>
+        <Label fx:id="currentPeriodLabel" styleClass="section-title"/>
+        <Button fx:id="previewButton" text="Xem trước (Preview)"/>
+        <Button fx:id="generateButton" text="Phát hành kỳ thu" styleClass="primary-button"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label text="Xem kỳ đã lập:"/>
+        <ComboBox fx:id="periodBox" prefWidth="140"/>
+        <Button fx:id="refreshButton" text="Tải lại"/>
+        <ProgressIndicator fx:id="loadingIndicator" prefWidth="22" prefHeight="22" visible="false" managed="false"/>
+    </HBox>
+    <Label fx:id="periodError" styleClass="error-text" wrapText="true"/>
+    <Label fx:id="bannerLabel" styleClass="section-title" wrapText="true"/>
+    <Label fx:id="summaryLabel" wrapText="true"/>
+    <HBox spacing="16" VBox.vgrow="ALWAYS">
+        <VBox spacing="8" HBox.hgrow="ALWAYS">
+            <Label text="Hóa đơn theo căn hộ" styleClass="section-title"/>
+            <TableView fx:id="chargeTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="apartmentColumn" text="Căn hộ" prefWidth="80"/>
+                    <TableColumn fx:id="householdColumn" text="Hộ" prefWidth="90"/>
+                    <TableColumn fx:id="areaColumn" text="Diện tích (m²)" prefWidth="100"/>
+                    <TableColumn fx:id="peopleColumn" text="Nhân khẩu" prefWidth="85"/>
+                    <TableColumn fx:id="totalColumn" text="Tổng phải thu" prefWidth="120"/>
+                    <TableColumn fx:id="paidColumn" text="Đã nộp" prefWidth="100"/>
+                    <TableColumn fx:id="owedColumn" text="Còn thiếu" prefWidth="110"/>
+                    <TableColumn fx:id="statusColumn" text="Trạng thái" prefWidth="100"/>
+                    <TableColumn fx:id="dueColumn" text="Hạn nộp" prefWidth="95"/>
+                </columns>
+            </TableView>
+        </VBox>
+        <VBox spacing="8" prefWidth="420" minWidth="360">
+            <Label text="Chi tiết các khoản phí" styleClass="section-title"/>
+            <TableView fx:id="lineTable" prefHeight="220">
+                <columns>
+                    <TableColumn fx:id="lineFeeColumn" text="Khoản thu" prefWidth="130"/>
+                    <TableColumn fx:id="lineQuantityColumn" text="Số lượng" prefWidth="70"/>
+                    <TableColumn fx:id="lineRateColumn" text="Đơn giá" prefWidth="80"/>
+                    <TableColumn fx:id="lineAmountColumn" text="Thành tiền" prefWidth="100"/>
+                </columns>
+            </TableView>
+            <Label text="Cảnh báo / hộ không lập / đơn giá áp dụng" styleClass="section-title"/>
+            <ListView fx:id="issuesList" VBox.vgrow="ALWAYS"/>
+        </VBox>
+    </HBox>
+    <Label fx:id="messageLabel" wrapText="true"/>
+</VBox>
