@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.bluemoon.controllers.FeeRateController" spacing="12"
+      prefWidth="1050" prefHeight="660" styleClass="fee-root" stylesheets="@fee-category.css">
+    <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+    <Label text="Đơn giá theo ngày hiệu lực" styleClass="page-title"/>
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label text="Khoản thu bắt buộc"/>
+        <ComboBox fx:id="feeBox" prefWidth="450" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+        <Button fx:id="refreshButton" text="Tải lại"/>
+        <ProgressIndicator fx:id="loadingIndicator" prefWidth="22" prefHeight="22" visible="false" managed="false"/>
+    </HBox>
+    <Label fx:id="codeError" styleClass="error-text" wrapText="true"/>
+    <HBox spacing="20" VBox.vgrow="ALWAYS">
+        <VBox spacing="10" HBox.hgrow="ALWAYS">
+            <Label text="Lịch sử đơn giá" styleClass="section-title"/>
+            <TableView fx:id="historyTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="dateColumn" text="Ngày hiệu lực" prefWidth="140"/>
+                    <TableColumn fx:id="priceColumn" text="Đơn giá (VNĐ)" prefWidth="170"/>
+                    <TableColumn fx:id="noteColumn" text="Quyết định / Ghi chú" prefWidth="260"/>
+                </columns>
+            </TableView>
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Label text="Tra giá tại ngày"/>
+                <DatePicker fx:id="lookupDate"/>
+            </HBox>
+            <Label fx:id="effectiveLabel" wrapText="true"/>
+        </VBox>
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" prefWidth="330" minWidth="280">
+          <content>
+          <VBox spacing="10" styleClass="form-panel">
+            <padding><Insets top="14" right="14" bottom="14" left="14"/></padding>
+            <Label text="Thêm đơn giá mới" styleClass="section-title"/>
+            <Label fx:id="statusLabel" wrapText="true"/>
+            <Label text="Đơn giá (VNĐ)"/>
+            <TextField fx:id="priceField" promptText="VD: 7000.50"/>
+            <Label text="Tối đa 2 chữ số thập phân; dùng dấu chấm, không có dấu phân nhóm." wrapText="true"/>
+            <Label fx:id="priceError" styleClass="error-text" wrapText="true"/>
+            <Label text="Ngày bắt đầu áp dụng"/>
+            <DatePicker fx:id="effectiveDate" maxWidth="Infinity"/>
+            <Label fx:id="dateError" styleClass="error-text" wrapText="true"/>
+            <Label text="Quyết định / Ghi chú (không bắt buộc)"/>
+            <TextArea fx:id="noteField" prefRowCount="3" wrapText="true"/>
+            <Label fx:id="noteError" styleClass="error-text" wrapText="true"/>
+            <Button fx:id="saveButton" text="Lưu đơn giá mới" styleClass="primary-button" defaultButton="true"/>
+          </VBox>
+          </content>
+        </ScrollPane>
+    </HBox>
+    <Label fx:id="messageLabel" wrapText="true"/>
+</VBox>
