@@ -12,8 +12,9 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Requires an exclusively assigned disposable *_test schema; never runs in parallel with US-005 fixtures. */
+/** Disposable *_test only; owns US006_IT parent/rate rows, not the shared fee_types table. */
 @EnabledIfEnvironmentVariable(named="BLUEMOON_MYSQL_TEST", matches="1")
+@org.junit.jupiter.api.parallel.ResourceLock("fee-fixture-lifecycle")
 class FeeRateMySqlIT {
     private static DatabaseConnection connections;
     private final String code="US006_IT";
@@ -61,6 +62,26 @@ class FeeRateMySqlIT {
         execute("DELETE FROM fee_types WHERE ma_loai_thu = ?",code);
     }
     private FeeRate rate(String price,LocalDate date) { return new FeeRate(null,code,new BigDecimal(price),date,"Quyết định 😀"); }
+    @Test void feeCategoryFixturePreservesExistingRateAndParentAcrossRepeatedCleanup() throws Exception {
+        var saved=dao.insert(rate("7000.50",day));
+        var types=new FeeTypeDAO(connections);
+        var parent=types.findByCode(code).orElseThrow();
+        FeeTypeMySqlIT.connect();
+        var categoryFixture=new FeeTypeMySqlIT();
+        try {
+            for (int round=0;round<2;round++) {
+                // Exercise the actual US-005 lifecycle, not a copy of its cleanup SQL.
+                categoryFixture.migrate();
+                types.insert(new com.bluemoon.models.FeeType("US005_IT_PHI_QL", "Lifecycle fixture",
+                    com.bluemoon.models.FeeKind.BAT_BUOC, com.bluemoon.models.ChargeMethod.THEO_CAN_HO,
+                    BigDecimal.ONE, com.bluemoon.models.FeeStatus.DANG_AP_DUNG));
+                categoryFixture.cleanup();
+                assertTrue(types.findByCode("US005_IT_PHI_QL").isEmpty());
+                assertEquals(parent,types.findByCode(code).orElseThrow());
+                assertEquals(List.of(saved),dao.findHistory(code));
+            }
+        } finally { categoryFixture.cleanup(); }
+    }
     @Test void migrationRepeatConstraintsAndCollation() throws Exception {
         var saved=dao.insert(rate("7000",day));
         migrate("us006_fee_rates.sql"); migrate("us006_fee_rates.sql");
