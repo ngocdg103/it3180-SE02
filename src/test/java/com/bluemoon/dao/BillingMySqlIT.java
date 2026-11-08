@@ -44,28 +44,14 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 /**
  * US-007 on a real MySQL. Disposable *_test schema only.
- * fee_rates: uses database/migrations/us006_fee_rates.sql when it exists in the repository; otherwise a
- * test-only mirror of the US-006 PR #13 DDL, which means integration with the REAL US-006 schema is NOT verified
- * (see usingFixtureFeeRates). The tables are dropped again in AfterAll so other ITs are not blocked by foreign keys.
+ * fee_rates comes ONLY from the official database/migrations/us006_fee_rates.sql (US-006, merged); there is no
+ * fixture mirror. The billing tables are dropped again in AfterAll so other ITs are not blocked by foreign keys.
  */
 @EnabledIfEnvironmentVariable(named = "BLUEMOON_MYSQL_TEST", matches = "1")
 @Timeout(120)
 class BillingMySqlIT {
     private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-11-15T03:00:00Z"), ZoneOffset.UTC);
-    private static final String FEE_RATES_FIXTURE = """
-            CREATE TABLE IF NOT EXISTS fee_rates (
-                id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                ma_loai_thu VARCHAR(20) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-                don_gia DECIMAL(19,2) NOT NULL,
-                ngay_ap_dung DATE NOT NULL,
-                ghi_chu VARCHAR(255) NULL,
-                CONSTRAINT ck_fee_rates_amount CHECK (don_gia > 0),
-                CONSTRAINT uq_fee_rates_type_date UNIQUE (ma_loai_thu, ngay_ap_dung),
-                CONSTRAINT fk_fee_rates_fee_type FOREIGN KEY (ma_loai_thu)
-                    REFERENCES fee_types (ma_loai_thu) ON UPDATE RESTRICT ON DELETE RESTRICT
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4""";
     private static final List<String> MY_TABLES = List.of("invoice_lines", "invoices", "billing_periods", "fee_rates");
-    static boolean usingFixtureFeeRates;
     private static final AtomicInteger CCCD_SEQUENCE = new AtomicInteger();
 
     private static DatabaseConnection connections;
@@ -93,13 +79,7 @@ class BillingMySqlIT {
         script("database/migrations/us001_household_apartment.sql");
         script("database/migrations/us002_residents.sql");
         script("database/migrations/us005_fee_types.sql");
-        if (Files.exists(Path.of("database/migrations/us006_fee_rates.sql"))) {
-            usingFixtureFeeRates = false;
-            script("database/migrations/us006_fee_rates.sql");
-        } else {
-            usingFixtureFeeRates = true;
-            sql(FEE_RATES_FIXTURE);
-        }
+        script("database/migrations/us006_fee_rates.sql"); // official US-006 migration, no mirror
         script("database/migrations/us007_billing.sql");
         sql("INSERT IGNORE INTO users (id, username, password_hash, ho_ten, role) "
                 + "VALUES (7, 'billing-it-7', 'x', 'Billing IT', 'ACCOUNTANT')");
@@ -275,6 +255,34 @@ class BillingMySqlIT {
         assertEquals(money("8000.00"), line.donGia());
         assertEquals(LocalDate.of(2026, 11, 1), line.ngayApDungGia());
         assertEquals(money("640000.00"), line.thanhTien());
+    }
+
+    @Test void ratesCreatedThroughTheRealUs006DaoAreBilled() throws Exception {
+        var rates = new FeeRateDAO(connections);
+        rates.insert(new com.bluemoon.models.FeeRate(null, "PHI_QL", money("8000"), LocalDate.of(2026, 11, 1), "US-006"));
+        rates.insert(new com.bluemoon.models.FeeRate(null, "PHI_QL", money("9000"), LocalDate.of(2027, 1, 1), "later"));
+        var result = service().generatePeriod("2026-11");
+        assertEquals(SUCCESS, result.status());
+        var line = dao.findInvoice("HD-202611-P1204").orElseThrow().lines().stream()
+                .filter(l -> l.maKhoanThu().equals("PHI_QL")).findFirst().orElseThrow();
+        assertEquals(money("8000.00"), line.donGia());
+        assertEquals(LocalDate.of(2026, 11, 1), line.ngayApDungGia());
+        assertEquals(money("1464000.00"), result.data().orElseThrow().tongTien());
+    }
+
+    @Test void billingInputsAgreeWithTheUs006EffectiveRateQuery() throws Exception {
+        rate("PHI_QL", "6500", "2025-06-01");
+        rate("PHI_QL", "8000", "2026-11-01");
+        rate("PHI_QL", "9000", "2026-12-01");
+        var rates = new FeeRateDAO(connections);
+        for (String month : List.of("2026-10", "2026-11", "2026-12", "2027-01")) {
+            var ym = java.time.YearMonth.parse(month);
+            var loaded = dao.inReadOnlyTransaction(tx -> tx.loadInputs(ym)).fees().stream()
+                    .filter(f -> f.maKhoanThu().equals("PHI_QL")).findFirst().orElseThrow().rate().orElseThrow();
+            var expected = rates.findEffectiveRate("PHI_QL", ym.atDay(1)).orElseThrow();
+            assertEquals(expected.donGia().compareTo(loaded.donGia()), 0, month);
+            assertEquals(expected.ngayApDung(), loaded.ngayApDung(), month);
+        }
     }
 
     @Test void missingRateRollsBackEverythingAndReleasesTheKey() throws Exception {

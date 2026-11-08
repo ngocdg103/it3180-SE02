@@ -23,7 +23,7 @@
 
 ## Kiểm thử
 
-Xem báo cáo trong PR. MySQL IT dùng schema `*_test` riêng. `fee_rates` trong IT: dùng `database/migrations/us006_fee_rates.sql` nếu file tồn tại trong repo, nếu không dùng bản mirror DDL của PR #13 đặt trong test (`usingFixtureFeeRates`). Vì US-006 PR #13 chưa merge, **tích hợp với schema US-006 thật chưa được xác minh**.
+Xem báo cáo trong PR. MySQL IT dùng schema `*_test` riêng và chỉ dùng migration chính thức `database/migrations/us006_fee_rates.sql` (US-006 đã merge, không còn bản mirror trong test). Có thêm test tạo rate qua `FeeRateDAO` thật và test đối chiếu `loadInputs` với `FeeRateDAO.findEffectiveRate`.
 
 ## Giới hạn / rủi ro đã biết
 
