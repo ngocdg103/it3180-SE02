@@ -23,11 +23,11 @@ permission service; RESIDENT remains denied. Payment entry remains ACCOUNTANT-on
 
 Main contains the source commits of #18/#19/#21/#24 and Fee Rate hotfix (verified Git ancestry). GitHub's API still
 reported #18/#19 open during inspection, despite their commits being contained in main. #25 source
-`6dbd78402cec4e5c9862385a31e8b54eedf92682` is NOT in this base.
+`6339cf2e10a9090a39bab3461aa2d85f9d240a94` is NOT in this base.
 
 This clean PR contains no #25/backend/module source, migration, or BR-02 production UI. BR-02 is implemented and
-verified independently in local `integration/final-shell-local` at `c8485290a1c1b0cf4ef1ca08a27915933b944e9b`:
-real BillingDAO area guard, snapshot history panel, busy confirmation/Cancel, background Service calls, RBAC/cleanup.
+verified independently in local `integration/final-shell-local` at `a61d85b248cbb93496e573472f019f3710499dcf`:
+real BillingDAO area guard, snapshot/committed Payment history panel, busy confirmation/Cancel, background Service calls, RBAC/cleanup.
 After PO merges #25, transfer only that Household UI/navigation/composition delta to a fresh branch from main.
 Do not push the local composite history. Until then, main's Household composition still uses ApartmentChargeLookup.NONE;
 this PR does not claim to remove the BR-02 blocker by itself.
@@ -66,7 +66,7 @@ The real navigation case uses a disposable BCrypt account with owned-row cleanup
 explicitly asserted as empty data, not mistaken for DB success after a system error. Schema guards precede DDL;
 only billing/payment tables absent on fixture entry are removed child-first. FK checks remain enabled.
 
-Results from the separate BR-02 composite (699 normal / 700 smoke / 830 MySQL) are NOT this clean PR's test counts.
+Results from the separate BR-02 composite (699 normal / 700 smoke / 832 MySQL) are NOT this clean PR's test counts.
 
 ## QA / gate
 
