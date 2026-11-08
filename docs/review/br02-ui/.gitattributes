@@ -1,2 +1,3 @@
 # Literal patch context includes space-only lines. Applied source is checked separately by prepare-review.ps1.
-*.patch -whitespace
+# Preserve exact patch bytes/checksum across Windows autocrlf checkouts.
+*.patch -text -whitespace
