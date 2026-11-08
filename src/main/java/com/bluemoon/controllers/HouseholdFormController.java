@@ -20,6 +20,7 @@ public final class HouseholdFormController extends HouseholdController {
     @FXML private GridPane fields;
     @FXML private Button saveButton, cancelButton;
     private Map<String, Label> errors;
+    private boolean confirmationPending;
     public HouseholdFormController(HouseholdService service, HouseholdNavigator navigator, HouseholdProfile original) {
         super(service, navigator); this.original = original;
     }
@@ -42,7 +43,7 @@ public final class HouseholdFormController extends HouseholdController {
         }
     }
     @FXML private void save() {
-        if (busy) return;
+        if (busy || confirmationPending) return;
         errors.values().forEach(label -> label.setText(""));
         // Keep the editor text, including malformed dates, for backend validation.
         String date = ngayNhanNha.getEditor().getText();
@@ -66,7 +67,9 @@ public final class HouseholdFormController extends HouseholdController {
             alert(Alert.AlertType.WARNING, result.message()).show();
         } else if (result.status() == HouseholdResult.Status.CONFIRMATION_REQUIRED && payload != null && !confirmed) {
             Alert confirmation = alert(Alert.AlertType.CONFIRMATION, result.message());
+            confirmationPending=true; navigator.busy(true); busyChanged(true);
             confirmation.setOnHidden(event -> {
+                confirmationPending=false; navigator.busy(false); busyChanged(false);
                 if (confirmation.getResult() == ButtonType.OK) update(payload, true);
             });
             confirmation.show();
@@ -80,7 +83,7 @@ public final class HouseholdFormController extends HouseholdController {
         return alert;
     }
     @FXML private void cancel() {
-        if (!busy) { if (original == null) navigator.showList(); else navigator.showDetail(original.maHo()); }
+        if (!busy && !confirmationPending) { if (original == null) navigator.showList(); else navigator.showDetail(original.maHo()); }
     }
     @Override protected void busyChanged(boolean value) {
         fields.setDisable(value); saveButton.setDisable(value); cancelButton.setDisable(value);
