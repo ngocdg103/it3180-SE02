@@ -3,7 +3,9 @@
 ## Branch / dependency / scope
 
 - Branch riêng `feature/us009-debt-report`, worktree `.tools/us009-debt-report`, bắt đầu sau khi US-008 đã push và mở PR #21 độc lập.
-- Stacked base `fef5703558a73fca829cb6ff25cce1604dac7178` (feature/us008-payment); upstream main `1123219ed4244853ba4593c7cab284998dae0043` sau PR #16. Pending Billing PR #14 exact `7b4ac366242796575ddacdfc27ae7b6e2d9e36c5` là dependency đã có qua branch Payment. Không cherry-pick/copy schema.
+- Stacked base khởi đầu `fef5703558a73fca829cb6ff25cce1604dac7178` (feature/us008-payment); upstream main lúc bắt đầu `1123219ed4244853ba4593c7cab284998dae0043` sau PR #16. Billing PR #14 ban đầu `7b4ac366242796575ddacdfc27ae7b6e2d9e36c5`, đã cập nhật như dưới. Không cherry-pick/copy schema.
+- Sync mới qua Payment merge `96e951f` chứa Billing HEAD `fb54296874ffa96fdbb58bca814bf4fe69084756` + main `4c4833c4284ca666ba94237a7bf319bd26b5cc57` (hotfix fixture #17), Debt merge `557090f2fbdc2e9969657c4063ac0623ed9655eb`. Không thay API/schema production của dependency. PR stacked vẫn chỉ có 16 file US-009.
+- Base Payment cuối đã đồng bộ `fb80bee6f85d01b12724b399c9f0ccdb318d670e`; merge cuối chỉ cập nhật docs Payment, không thay source đã test. Không merge PR #21/main; đây là đồng bộ ancestry của stacked branch.
 - PR Debt target branch Payment để reviewer chỉ thấy phần US-009. Không merge vào Payment/main; sau khi các dependency được merge và PO điều phối thì retarget main + sync/regression. PR #21 không phải chờ US-009.
 - Không sửa ProductionModules, Billing/Receipt DAO, Auth/RBAC hoặc schema; US-009 chỉ đọc, không tạo bảng/cache tổng công nợ. Root branch PR #15 và hai tài liệu untracked giữ nguyên.
 
@@ -39,8 +41,8 @@ QA sau khi apply migrations chính thức đến US-008 và PO host hai module:
 
 ## Verification / gate
 
-Temurin17.0.20.1/Maven3.9.9, Enforcer bật: `mvn clean verify` **581 PASS**, `mvn -Pjavafx-smoke clean verify` **582 PASS**. `mvn -Pmysql-it '-Dtest=DebtMySqlIT,ReceiptMySqlIT' verify` **16/16 PASS** (5 Debt + 11 Payment), đều 0 failures/errors/skips. MySQL8.4.13/schema mới `bluemoon_debt_00277a2c_test`, user chỉ có quyền đúng schema, kiểm cross-schema denial PASS; config/credentials nằm ngoài source trong `.tools/` ignored. Staged diff check PASS. Không có thay đổi production sau các checks này.
+Temurin17.0.20.1/Maven3.9.9, Enforcer bật, sau sync hotfix: `mvn clean verify` **581 PASS**, `mvn -Pjavafx-smoke clean verify` **582 PASS**. Targeted `mvn -Pmysql-it '-Dtest=DebtMySqlIT,ReceiptMySqlIT' verify` **16/16 PASS** (5 Debt + 11 Payment); **full `mvn -Pmysql-it clean verify` 677/677 PASS**, đều 0 failures/errors/skips. MySQL8.4.13/schema mới `bluemoon_debt_00277a2c_test`, user chỉ có quyền đúng schema, kiểm cross-schema denial PASS; config/credentials nằm ngoài source trong `.tools/` ignored. Staged diff check PASS. Không có thay đổi production sau các checks này.
 
-Tests mới: 21 Service, 7 controller; MySQL Debt kiểm payment partial/full, KPI/filter/footer, household credit, không đọc write chưa commit rồi đọc thấy receipt/balance cùng lúc sau commit, snapshot area/people + owner hiện tại, RBAC. Target MySQL runs trên schema *_test mới/user chỉ quyền schema. Không production fake hoặc credentials trong Git; không tuyên bố full mysql-it profile xanh khi fixture chung đang chờ hotfix.
+Tests mới: 21 Service, 7 controller; MySQL Debt kiểm payment partial/full, KPI/filter/footer, household credit, không đọc write chưa commit rồi đọc thấy receipt/balance cùng lúc sau commit, snapshot area/people + owner hiện tại, RBAC. Full profile sau hotfix kiểm cả Billing27, FeeRate6/FeeType2, Household/Resident/Q17/Auth, Payment11 và Debt5. Không production fake hoặc credentials trong Git. Không sửa/nới/skip fixtures để làm xanh.
 
 AC-01 backend/filter/footer và controller PASS theo tests trên; UI E2E sau khi PO nối module còn PENDING. Draft chờ dependency PR #21/#14, peer review và QA; không merge hoặc mở rộng US-016/Sprint2. Các open questions mã phiếu/precision/carry-forward trong US-008 vẫn phải được PO/Lead chốt, report không tự thay chính sách đó.
