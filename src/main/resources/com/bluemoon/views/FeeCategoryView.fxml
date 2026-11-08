@@ -34,11 +34,12 @@
                     <TableColumn fx:id="statusColumn" text="Trạng thái" prefWidth="110"/>
                 </columns>
             </TableView>
+            <HBox spacing="8"><Button fx:id="editFeeButton" text="Sửa khoản thu"/><Button fx:id="deactivateFeeButton" text="Ngừng áp dụng"/></HBox>
             <Button fx:id="retryButton" text="Tải lại" visible="false" managed="false"/>
         </VBox>
         <VBox spacing="8" prefWidth="320" minWidth="320" styleClass="form-panel">
             <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
-            <Label text="Tạo khoản thu mới" styleClass="section-title"/>
+            <Label fx:id="formTitle" text="Tạo khoản thu mới" styleClass="section-title"/>
             <GridPane hgap="8" vgap="2">
                 <columnConstraints><ColumnConstraints percentWidth="100"/></columnConstraints>
                 <Label text="Mã khoản thu" GridPane.rowIndex="0"/>

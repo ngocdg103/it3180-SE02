@@ -83,6 +83,12 @@ public final class FeeCategoryController {
     private int pending;
     private final java.util.Set<Task<?>> tasks = new java.util.HashSet<>();
     private final java.util.Set<Task<?>> writes = new java.util.HashSet<>();
+    private final com.bluemoon.services.AuthorizationService authorization = new com.bluemoon.services.RoleBasedAuthorizationService(null);
+    private String editingCode;
+    private FeeStatus editingStatus;
+    private javafx.scene.control.Alert confirmation;
+    @FXML private Button editFeeButton, deactivateFeeButton;
+    @FXML private Label formTitle;
 
     @FXML private TableView<FeeType> feeTable;
     @FXML private TableColumn<FeeType, String> codeColumn;
@@ -131,6 +137,7 @@ public final class FeeCategoryController {
     public void dispose() {
         if (disposed) { return; }
         disposed = true;
+        if(confirmation!=null) { confirmation.setOnHidden(null); confirmation.close(); confirmation=null; }
         listRequest++;
         for (Task<?> task : java.util.List.copyOf(tasks)) { if (!writes.contains(task)) task.cancel(true); }
         if (ownsExecutor && executor instanceof ExecutorService pool) { pool.shutdown(); }
@@ -186,6 +193,9 @@ public final class FeeCategoryController {
         retryButton.setOnAction(event -> reload());
         saveButton.setOnAction(event -> save());
         cancelButton.setOnAction(event -> resetForm());
+        editFeeButton.setOnAction(event -> editSelected());
+        deactivateFeeButton.setOnAction(event -> deactivateSelected());
+        feeTable.getSelectionModel().selectedItemProperty().addListener((o,old,value) -> updateActions());
         resetForm();
         reload();
     }
@@ -244,6 +254,7 @@ public final class FeeCategoryController {
     }
 
     private void resetForm() {
+        editingCode=null; editingStatus=null; codeField.setEditable(true); formTitle.setText("Tạo khoản thu mới"); saveButton.setText("Lưu");
         codeField.clear();
         nameField.clear();
         kindBox.getSelectionModel().clearSelection();
@@ -255,19 +266,57 @@ public final class FeeCategoryController {
         amountField.setDisable(denied);
         clearErrors();
         showMessage("", false);
+        updateActions();
+    }
+    private boolean canUpdate() { return authorization.canAccess(com.bluemoon.models.Permission.FEE_CATEGORY_UPDATE); }
+    private void updateActions() {
+        var selected=feeTable.getSelectionModel().getSelectedItem();
+        boolean blocked=disposed || saving || pending>0 || confirmation!=null || denied || !canUpdate() || selected==null;
+        editFeeButton.setDisable(blocked);
+        deactivateFeeButton.setDisable(blocked || selected!=null && selected.trangThai()==FeeStatus.NGUNG_AP_DUNG);
+    }
+    private void editSelected() {
+        if(saving || pending>0 || disposed || !canUpdate()) return;
+        var selected=feeTable.getSelectionModel().getSelectedItem(); if(selected==null)return;
+        resetForm(); editingCode=selected.maKhoanThu(); editingStatus=selected.trangThai();
+        codeField.setText(editingCode); codeField.setEditable(false); nameField.setText(selected.tenKhoanThu());
+        kindBox.setValue(selected.loai()); methodBox.setValue(selected.hinhThuc()); amountField.setText(selected.soTienMacDinh().toPlainString()); statusBox.setValue(selected.trangThai());
+        formTitle.setText("Sửa khoản thu "+editingCode); saveButton.setText("Lưu thay đổi");
+    }
+    private void deactivateSelected() {
+        if(saving || pending>0 || disposed || !canUpdate())return;
+        var selected=feeTable.getSelectionModel().getSelectedItem();
+        if(selected==null || selected.trangThai()==FeeStatus.NGUNG_AP_DUNG)return;
+        confirm("Ngừng áp dụng khoản thu "+selected.maKhoanThu()+"?",() -> {
+            setSaving(true); run(() -> service.deactivateFeeType(selected.maKhoanThu()),this::onSaved,this::onSaveFailed);
+        });
+    }
+    private void confirm(String message,Runnable approved) {
+        if(confirmation!=null || disposed)return;
+        confirmation=new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION,message,
+            javafx.scene.control.ButtonType.OK,javafx.scene.control.ButtonType.CANCEL);
+        confirmation.initOwner(saveButton.getScene().getWindow()); confirmation.setHeaderText(null);
+        confirmation.setOnHidden(e -> {
+            boolean ok=confirmation.getResult()==javafx.scene.control.ButtonType.OK; confirmation=null;
+            busy.set(pending>0); updateActions();
+            if(ok && !disposed && canUpdate())approved.run();
+        }); confirmation.show(); busy.set(true); updateActions();
     }
 
     // ---- save ----
 
     private void save() {
-        if (saving || denied || disposed) { return; }
+        if (saving || denied || disposed || confirmation!=null) { return; }
+        if(editingCode!=null && !canUpdate()) { showMessage(MSG_DENIED,true); return; }
         clearErrors();
         showMessage("", false);
         FeeTypeForm form = readForm();
         Map<String, String> errors = validate(form);
         if (!errors.isEmpty()) { showFieldErrors(errors); return; }
-        setSaving(true);
-        run(() -> service.createFeeType(form), this::onSaved, this::onSaveFailed);
+        String code=editingCode;
+        Runnable submit=() -> { setSaving(true); run(() -> code==null ? service.createFeeType(form) : service.updateFeeType(code,form),this::onSaved,this::onSaveFailed); };
+        if(code!=null && form.trangThai()!=editingStatus)confirm("Đổi trạng thái khoản thu "+code+" sang "+form.trangThai().label()+"?",submit);
+        else submit.run();
     }
 
     private FeeTypeForm readForm() {
@@ -303,7 +352,9 @@ public final class FeeCategoryController {
         setSaving(false);
         if (result.isSuccess()) {
             resetForm();
-            showMessage(result.message(), false);
+            showMessage("OK".equals(result.message())
+                ? "Cập nhật khoản thu " + result.data().orElseThrow().maKhoanThu() + " thành công"
+                : result.message(), false);
             reload();
             return;
         }
@@ -322,6 +373,7 @@ public final class FeeCategoryController {
         saving = value;
         saveButton.setDisable(value || denied);
         cancelButton.setDisable(value);
+        updateActions();
     }
 
     private void denyAccess() {
@@ -381,6 +433,6 @@ public final class FeeCategoryController {
     }
     private void finish(Task<?> task) {
         writes.remove(task);
-        if (tasks.remove(task)) { pending--; busy.set(pending > 0); }
+        if (tasks.remove(task)) { pending--; busy.set(pending > 0 || confirmation!=null); updateActions(); }
     }
 }
