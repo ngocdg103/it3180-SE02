@@ -14,6 +14,10 @@ public final class LoginController {
     private final AuthenticationService auth;
     private final Consumer<Account> onSuccess;
     private boolean busy;
+    private volatile boolean disposed;
+    public boolean isBusy() { return busy; }
+    /** Ignore completion after a forced window hide; the worker clears any late session. */
+    public void dispose() { disposed = true; if (password != null) password.clear(); }
     @FXML private TextField username;
     @FXML private PasswordField password;
     @FXML private Button loginButton;
@@ -34,7 +38,7 @@ public final class LoginController {
     }
 
     @FXML private void login() {
-        if (busy) return;
+        if (busy || disposed) return;
         String user = username.getText();
         String secret = password.getText();
         if (user.isBlank() || secret.isBlank()) {
@@ -44,9 +48,14 @@ public final class LoginController {
         setBusy(true);
         status.setText("Đang đăng nhập…");
         Task<AuthResult> task = new Task<>() {
-            @Override protected AuthResult call() { return auth.login(user, secret); }
+            @Override protected AuthResult call() {
+                AuthResult result = auth.login(user, secret);
+                if (disposed) auth.logout();
+                return result;
+            }
         };
         task.setOnSucceeded(event -> {
+            if (disposed) { auth.logout(); return; }
             password.clear();
             setBusy(false);
             AuthResult result = task.getValue();
@@ -72,6 +81,7 @@ public final class LoginController {
             }
         });
         task.setOnFailed(event -> {
+            if (disposed) { auth.logout(); return; }
             password.clear();
             setBusy(false);
             status.setText(SYSTEM);

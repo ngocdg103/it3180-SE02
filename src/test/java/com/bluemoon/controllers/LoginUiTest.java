@@ -170,6 +170,19 @@ class LoginUiTest {
         assertEquals(" tester ", auth.receivedUser);
         assertEquals(" secret123 ", auth.receivedPassword);
     }
+    @Test void forcedHideDuringLoginDropsLateDashboardAndClearsLateSession() throws Exception {
+        auth.block = true; auth.result = AuthResult.success(ACCOUNT);
+        fx(this::submit);
+        assertTrue(auth.entered.await(5, TimeUnit.SECONDS));
+        fx(() -> stage.hide());
+        auth.release.countDown();
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        while (auth.logouts.get() == 0 && System.nanoTime() < deadline) { fx(() -> {}); Thread.sleep(10); }
+        fx(() -> {
+            assertTrue(auth.logouts.get() > 0); assertTrue(auth.currentUser().isEmpty());
+            assertFalse(stage.isShowing()); assertNull(stage.getScene().lookup("#greeting"));
+        });
+    }
     @Test void unexpectedExceptionIsSanitizedAndCanRetry() throws Exception {
         auth.throwError = true;
         fx(this::submit); settled();
