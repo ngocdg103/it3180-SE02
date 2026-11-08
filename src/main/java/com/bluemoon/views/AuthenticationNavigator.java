@@ -9,24 +9,51 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.List;
+import com.bluemoon.services.RoleBasedAuthorizationService;
 
 /** Replaces the view root while preserving the window scene and user-selected geometry. */
 public final class AuthenticationNavigator {
     private final Stage stage;
     private final AuthenticationService auth;
+    private final List<ModuleRegistration> modules;
+    private DashboardController dashboard;
+    private LoginController login;
     public AuthenticationNavigator(Stage stage, AuthenticationService auth) {
+        this(stage, auth, List.of());
+    }
+    public AuthenticationNavigator(Stage stage, AuthenticationService auth, List<ModuleRegistration> modules) {
         this.stage = stage;
         this.auth = auth;
+        this.modules = List.copyOf(modules);
+        stage.setOnCloseRequest(event -> {
+            if (dashboard != null && dashboard.isBusy() || login != null && login.isBusy()) { event.consume(); return; }
+            if (dashboard != null) { dashboard.close(); dashboard = null; }
+            if (auth != null) auth.logout();
+        });
+        stage.setOnHidden(event -> {
+            if (dashboard != null) { dashboard.close(); dashboard = null; }
+            boolean authenticating = login != null && login.isBusy();
+            if (login != null) { login.dispose(); login = null; }
+            if (auth != null && !authenticating) auth.logout();
+        });
     }
     public static void showUnavailable(Stage stage) {
         new AuthenticationNavigator(stage, null).show("LoginView.fxml", LoginController.unavailable());
     }
     public void showLogin() {
-        show("LoginView.fxml", new LoginController(auth, this::showDashboard));
+        if (dashboard != null && dashboard.isBusy()) return;
+        if (dashboard != null) { dashboard.close(); dashboard = null; }
+        if (login != null) login.dispose();
+        login = new LoginController(auth, this::showDashboard);
+        show("LoginView.fxml", login);
     }
     private void showDashboard(Account account) {
         if (auth.currentUser().filter(account::equals).isEmpty()) { showLogin(); return; }
-        show("DashboardView.fxml", new DashboardController(auth, account, this::showLogin));
+        if (login != null) { login.dispose(); login = null; }
+        dashboard = new DashboardController(auth, account, this::showLogin,
+            new RoleBasedAuthorizationService(null), modules);
+        show("DashboardView.fxml", dashboard);
     }
     private void show(String name, Object controller) {
         try {

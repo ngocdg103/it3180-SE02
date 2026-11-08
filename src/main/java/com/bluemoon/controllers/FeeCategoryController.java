@@ -79,6 +79,10 @@ public final class FeeCategoryController {
     private boolean saving;
     private boolean denied;
     private long listRequest; // only the newest list response may update the table
+    private final javafx.beans.property.ReadOnlyBooleanWrapper busy = new javafx.beans.property.ReadOnlyBooleanWrapper();
+    private int pending;
+    private final java.util.Set<Task<?>> tasks = new java.util.HashSet<>();
+    private final java.util.Set<Task<?>> writes = new java.util.HashSet<>();
 
     @FXML private TableView<FeeType> feeTable;
     @FXML private TableColumn<FeeType, String> codeColumn;
@@ -128,10 +132,12 @@ public final class FeeCategoryController {
         if (disposed) { return; }
         disposed = true;
         listRequest++;
-        if (ownsExecutor && executor instanceof ExecutorService pool) { pool.shutdown(); } // lets in-flight work finish
+        for (Task<?> task : java.util.List.copyOf(tasks)) { if (!writes.contains(task)) task.cancel(true); }
+        if (ownsExecutor && executor instanceof ExecutorService pool) { pool.shutdown(); }
     }
 
     public boolean isDisposed() { return disposed; }
+    public javafx.beans.property.ReadOnlyBooleanProperty busyProperty() { return busy.getReadOnlyProperty(); }
 
     /** Loads FeeCategoryView.fxml with this controller. Call on the FX thread. */
     public static Parent load(FeeTypeService service) { return load(new FeeCategoryController(service)); }
@@ -366,9 +372,15 @@ public final class FeeCategoryController {
         Task<T> task = new Task<>() {
             @Override protected T call() throws Exception { return call.call(); }
         };
-        task.setOnSucceeded(event -> { if (!disposed) { onSuccess.accept(task.getValue()); } });
-        task.setOnFailed(event -> { if (!disposed) { onFailure.accept(task.getException()); } });
+        tasks.add(task); if (saving) writes.add(task); pending++; busy.set(true);
+        task.setOnSucceeded(event -> { finish(task); if (!disposed) { onSuccess.accept(task.getValue()); } });
+        task.setOnFailed(event -> { finish(task); if (!disposed) { onFailure.accept(task.getException()); } });
+        task.setOnCancelled(event -> finish(task));
         try { executor.execute(task); }
-        catch (RejectedExecutionException rejected) { if (!disposed) { onFailure.accept(rejected); } }
+        catch (RejectedExecutionException rejected) { finish(task); if (!disposed) { onFailure.accept(rejected); } }
+    }
+    private void finish(Task<?> task) {
+        writes.remove(task);
+        if (tasks.remove(task)) { pending--; busy.set(pending > 0); }
     }
 }
