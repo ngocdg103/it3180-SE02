@@ -15,7 +15,9 @@ public final class ProductionModules {
         return List.of(
             new ModuleRegistration("households", "Hộ gia đình / Căn hộ", Permission.HOUSEHOLD_VIEW,
                 () -> new HouseholdNavigator(new HouseholdServiceImpl(new HouseholdDAO(connections),
-                    ApartmentChargeLookup.NONE))),
+                    ApartmentChargeLookup.NONE),
+                    new com.bluemoon.services.ResidentServiceImpl(new com.bluemoon.dao.ResidentDAO(connections),
+                        new HouseholdDAO(connections),new com.bluemoon.services.RoleBasedAuthorizationService(null)))),
             new ModuleRegistration("feeCategories", "Danh mục khoản thu", Permission.FEE_CATEGORY_VIEW,
                 () -> FeeCategoryModule.open(connections)));
     }
