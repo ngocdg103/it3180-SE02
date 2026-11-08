@@ -22,12 +22,13 @@ public final class HouseholdNavigator implements DashboardModule {
     private final Consumer<Parent> host;
     private HouseholdController current;
     private com.bluemoon.services.ResidentService residents;
+    private com.bluemoon.services.BillingService billing;
+    private boolean householdBusy, residentBusy, historyBusy;
     private com.bluemoon.services.ResidentSearchService searchService;
     private ResidentSearchController searchController;
     public HouseholdNavigator(HouseholdService service, com.bluemoon.services.ResidentService residents,
                               com.bluemoon.services.ResidentSearchService searchService) {
-        this.service=Objects.requireNonNull(service);this.residents=Objects.requireNonNull(residents);
-        this.searchService=Objects.requireNonNull(searchService);this.host=root -> content.getChildren().setAll(root);showList();
+        this(service, residents, searchService, null);
     }
     public boolean canSearch(){return searchService!=null && can(com.bluemoon.models.Permission.RESIDENT_PROFILE_VIEW);}
     public void showSearch(){
@@ -36,12 +37,22 @@ public final class HouseholdNavigator implements DashboardModule {
         searchController=new ResidentSearchController(searchService,this::residentBusy,this::showDetail,this::showList);
         host.accept(searchController.view());
     }
-    private boolean householdBusy, residentBusy;
     public HouseholdNavigator(HouseholdService service, com.bluemoon.services.ResidentService residents) {
+        this(service, residents, null, null);
+    }
+    public HouseholdNavigator(HouseholdService service, com.bluemoon.services.ResidentService residents,
+                              com.bluemoon.services.BillingService billing) {
+        this(service, residents, null, billing);
+    }
+    public HouseholdNavigator(HouseholdService service, com.bluemoon.services.ResidentService residents,
+                              com.bluemoon.services.ResidentSearchService searchService,
+                              com.bluemoon.services.BillingService billing) {
         this.service=Objects.requireNonNull(service); this.residents=Objects.requireNonNull(residents);
+        this.billing=billing; this.searchService=searchService;
         this.host=root -> content.getChildren().setAll(root); showList();
     }
     public com.bluemoon.services.ResidentService residents() { return residents; }
+    public com.bluemoon.services.BillingService billing() { return billing; }
     private final List<Dialog<?>> dialogs = new ArrayList<>();
     private final javafx.scene.layout.StackPane content = new javafx.scene.layout.StackPane();
     private final javafx.beans.property.ReadOnlyBooleanWrapper busy = new javafx.beans.property.ReadOnlyBooleanWrapper();
@@ -66,8 +77,10 @@ public final class HouseholdNavigator implements DashboardModule {
     }
     public void trackDialog(Dialog<?> dialog) { dialogs.add(dialog); }
     public boolean can(com.bluemoon.models.Permission permission) { return authorization.canAccess(permission); }
-    public void busy(boolean value) { householdBusy=value; busy.set(householdBusy || residentBusy); }
-    public void residentBusy(boolean value) { residentBusy=value; busy.set(householdBusy || residentBusy); }
+    public void busy(boolean value) { householdBusy=value; refreshBusy(); }
+    public void residentBusy(boolean value) { residentBusy=value; refreshBusy(); }
+    public void historyBusy(boolean value) { historyBusy=value; refreshBusy(); }
+    private void refreshBusy() { busy.set(householdBusy || residentBusy || historyBusy); }
     @Override public javafx.beans.value.ObservableBooleanValue busyProperty() { return busy.getReadOnlyProperty(); }
     @Override public Parent view() { return content; }
     @Override public void close() { dispose(); content.getChildren().clear(); }

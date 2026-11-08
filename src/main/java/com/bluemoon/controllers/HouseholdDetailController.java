@@ -13,11 +13,15 @@ public final class HouseholdDetailController extends HouseholdController {
     @FXML private Button editButton, backButton;
     @FXML private javafx.scene.layout.VBox residentContent;
     private ResidentPanelController residents;
+    private ApartmentHistoryPanel history;
+    @FXML private javafx.scene.layout.VBox historyContent;
+    private final javafx.beans.value.ChangeListener<Boolean> busyListener = (o, old, value) -> busyChanged(value);
     public HouseholdDetailController(HouseholdService service, HouseholdNavigator navigator, String maHo) {
         super(service, navigator); this.maHo = maHo;
     }
     @FXML private void initialize() {
         clearData();
+        navigator.busyProperty().addListener(busyListener);
         execute(() -> service.getHouseholdById(maHo), result -> {
             if (result.isSuccess()) {
                 profile = result.data().orElseThrow();
@@ -29,6 +33,10 @@ public final class HouseholdDetailController extends HouseholdController {
                     residents=new ResidentPanelController(navigator.residents(),maHo,navigator::residentBusy);
                     residentContent.getChildren().setAll(residents.view());
                 }
+                if(navigator.billing()!=null && navigator.can(com.bluemoon.models.Permission.DEBT_REPORT_VIEW)) {
+                    history=new ApartmentHistoryPanel(navigator.billing(), profile.soCanHo(), navigator::historyBusy);
+                    historyContent.getChildren().setAll(history.view());
+                }
             }
         });
     }
@@ -38,6 +46,9 @@ public final class HouseholdDetailController extends HouseholdController {
         backButton.setDisable(value); editButton.setDisable(value || profile == null || !navigator.can(com.bluemoon.models.Permission.HOUSEHOLD_UPDATE));
     }
     @Override protected void clearData() {
+        navigator.busyProperty().removeListener(busyListener);
+        if(history!=null) { history.close(); history=null; }
+        if(historyContent!=null) historyContent.getChildren().clear();
         if(residents!=null) { residents.close(); residents=null; }
         if(residentContent!=null) residentContent.getChildren().clear();
         profile = null;

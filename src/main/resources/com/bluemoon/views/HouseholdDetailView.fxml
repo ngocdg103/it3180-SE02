@@ -13,6 +13,7 @@
 <Label text="Trạng thái" GridPane.rowIndex="5"/><Label fx:id="trangThai" wrapText="true" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
  </GridPane>
  <VBox fx:id="residentContent" spacing="10"/>
+ <VBox fx:id="historyContent" spacing="10"/>
  <HBox spacing="12"><ProgressIndicator fx:id="progress" visible="false" managed="false" prefWidth="24" prefHeight="24"/><Label fx:id="message" wrapText="true"/></HBox>
  <HBox spacing="12"><Button fx:id="editButton" text="Cập nhật" onAction="#edit" disable="true"/><Button fx:id="backButton" text="Quay lại" onAction="#back"/></HBox>
 </VBox>

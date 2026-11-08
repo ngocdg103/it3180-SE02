@@ -7,7 +7,7 @@ import com.bluemoon.controllers.BillingModule;
 import com.bluemoon.controllers.NoticeModule;
 import com.bluemoon.controllers.ReceiptModule;
 import com.bluemoon.controllers.DebtModule;
-import com.bluemoon.dao.ApartmentChargeLookup;
+import com.bluemoon.dao.BillingDAO;
 import com.bluemoon.dao.HouseholdDAO;
 import com.bluemoon.models.Permission;
 import com.bluemoon.services.HouseholdServiceImpl;
@@ -20,11 +20,13 @@ public final class ProductionModules {
         return List.of(
             new ModuleRegistration("households", "Hộ gia đình / Căn hộ", Permission.HOUSEHOLD_VIEW,
                 () -> new HouseholdNavigator(new HouseholdServiceImpl(new HouseholdDAO(connections),
-                    ApartmentChargeLookup.NONE),
+                    new BillingDAO(connections)),
                     new com.bluemoon.services.ResidentServiceImpl(new com.bluemoon.dao.ResidentDAO(connections),
                         new HouseholdDAO(connections),new com.bluemoon.services.RoleBasedAuthorizationService(null)),
                     new com.bluemoon.services.ResidentSearchServiceImpl(new com.bluemoon.dao.ResidentDAO(connections),
-                        new com.bluemoon.services.RoleBasedAuthorizationService(null)))),
+                        new com.bluemoon.services.RoleBasedAuthorizationService(null)),
+                    new com.bluemoon.services.BillingServiceImpl(new BillingDAO(connections),
+                        new com.bluemoon.services.RoleBasedAuthorizationService(null),java.time.Clock.systemUTC()))),
             new ModuleRegistration("feeCategories", "Danh mục khoản thu", Permission.FEE_CATEGORY_VIEW,
                 () -> FeeCategoryModule.open(connections)),
             FeeRateModule.registration(connections),
