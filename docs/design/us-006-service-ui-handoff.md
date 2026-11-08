@@ -6,7 +6,8 @@ Ngày: 08/11/2026. Phạm vi: Service, RBAC, adapter standalone, UI xem lịch s
 
 - Branch: `feature/us006-service-ui`, khởi tạo từ `origin/main` tại `ba9080c5413af86088e68e15aa0f51fb932e9c72`.
 - PR #13 chưa merge khi bắt đầu. Branch tích hợp này chứa nguyên commit `3adaf4cb1136bded4d642c0848d68b3d30a02333`, đưa vào bằng merge commit `405b36b`, không copy/chỉnh sửa code DAO. Chín file của PR #13 là dependency Dev-2, không phải implementation mới của Dev-1.
-- PR Service/UI là draft chờ PR #13 được QA xác minh và merge. Không merge branch này trước dependency. Sau đó cập nhật branch với main mới, giải quyết dependency và chạy lại regression; không ép push hoặc sửa branch Dev-2.
+- PR #13 đã merge tại `ac43254bf76da329c6f4eab235325bc2260a49d9` (QA DAO 5/5 PASS theo bàn giao Lead). Đã merge main mới vào feature branch bằng `76a19ab3a53967fa03940071675da10f6d3955e0`, không conflict, không rebase/cherry-pick/force-push. Main là ancestor của HEAD; diff vào main không còn DAO/model FeeRate hoặc migration US-006.
+- PR #15 vẫn Draft, chưa được phép merge. Đã gỡ dependency chờ PR #13; còn peer review và nghiệm thu integration gate của Lead/PO. Không sửa branch Dev-2 hoặc push main.
 - US-007 shared contract và Q17 đã có trong base main. Hai tài liệu local US-007 sơ bộ và QA environment chưa commit được giữ nguyên, không đưa vào PR này.
 
 ## 2. Public contract
@@ -92,7 +93,7 @@ Dev-1 thêm:
 - `models/FeeRateForm.java`.
 - `services/FeeRateService.java`, `FeeRateServiceImpl.java`, `FeeRateResult.java`, `RepositoryFeeRateLookup.java`.
 - `controllers/FeeRateController.java`, `FeeRateModule.java`, resources `views/FeeRateView.fxml` (tái sử dụng CSS US-005).
-- `FeeRateServiceTest`, `FeeRateControllerTest`, `FeeRateWiringTest` và tài liệu này.
+- `FeeRateServiceTest`, `FeeRateControllerTest`, `FeeRateWiringTest`, opt-in `FeeRateServiceMySqlIT` và tài liệu này.
 
 Tests dùng repository kiểm soát **chỉ trong test sources**. Bao gồm role matrix + logout/no session, validation/precision/ngày/Unicode, SQLState/vendor mapping, missing-vs-error, adapter, immutable result, real FXML/Service/RBAC, lịch sử thành công/duplicate, các lỗi lưu, UI không chặn FX thread, late/stale callbacks, lifecycle module/Scene và wiring JDBC không vượt RBAC. Không cần MySQL cho các tests này.
 
@@ -104,11 +105,33 @@ mvn -Pjavafx-smoke clean verify
 git diff --check
 ```
 
-Kết quả bản cuối: normal verify **482 tests**, JavaFX smoke **483 tests**, đều BUILD SUCCESS, 0 failures/errors/skips. Có **53 tests mới**: 35 Service/adapter, 17 controller/module, 1 wiring. Enforcer bật, JDK Temurin 17.0.20.1 và Apache Maven 3.9.9. Staged diff check PASS. Fixture FXML đã tạo Scene/CSS/skin cho ScrollPane; một lần chạy trước khi sửa fixture bị lỗi lookup controls, không tính là PASS; kết quả trên là lần chạy lại bản cuối. Không chạy FeeRateMySqlIT/E2E DB trong nhiệm vụ này; QA đang phụ trách xác minh PR #13. Không sửa migration/DAO Dev-2, không App Shell, không BillingServiceImpl, không merge main.
+Kết quả sau sync main: normal verify **482 tests**, JavaFX smoke **483 tests**, đều BUILD SUCCESS, 0 failures/errors/skips. Có **53 tests mới** thuộc normal: 35 Service/adapter, 17 controller/module, 1 wiring. Enforcer bật, JDK Temurin 17.0.20.1 và Apache Maven 3.9.9. Fixture FXML tạo Scene/CSS/skin cho ScrollPane. MySQL verification bổ sung được ghi ở mục 9; không tuyên bố UI E2E. Không sửa migration/DAO Dev-2, không App Shell, không BillingServiceImpl, không merge main.
 
 ## 8. Readiness / việc còn lại
 
-- Phần độc lập Service/UI/adapter sẵn sàng review khi checks cuối PASS.
-- **Integration gate:** QA PR #13, merge DAO vào main, cập nhật base và chạy regression trước merge PR này.
+- Service/UI/adapter đã sync main có DAO PR #13, sẵn sàng peer review sau checks nêu trong báo cáo cuối.
+- **Integration gate:** peer review PR #15 và Lead/PO xác nhận; vẫn Draft, không tự merge. Dependency PR #13 và sync main đã hoàn tất.
 - **Dependency:** host App Shell gắn module và đóng đúng lifecycle; DB config/migrations US-005 rồi US-006 trên môi trường test; PO chốt ngày seed BR-08 nếu cần. Không hardcode credentials hoặc ngày seed.
-- **Giới hạn:** chưa có E2E DB/App Shell; cross-story billing snapshot IT thuộc Dev-3. Direct SQL/admin vẫn có thể sửa dữ liệu ngoài append-only application API như handoff DAO đã nêu.
+- **Giới hạn:** chưa có UI E2E/App Shell; cross-story billing snapshot IT thuộc Dev-3. Direct SQL/admin vẫn có thể sửa dữ liệu ngoài append-only application API như handoff DAO đã nêu.
+
+## 9. Integration verification sau main ac43254 (08/11/2026)
+
+- HEAD trước sync: `0b98922a925857dca41f299a9fa68800b4a02a06`; merge main: `76a19ab3a53967fa03940071675da10f6d3955e0`. Commit verification tiếp theo chỉ thêm test và cập nhật tài liệu này; không sửa production code.
+- `3adaf4c` là ancestor của cả branch và main (branch đưa vào bằng 405b36b; main đưa vào bằng ac43254). Merge main giữ nguyên hai lịch sử, không cherry-pick lại DAO. `git merge-base --is-ancestor origin/main HEAD` PASS. Diff PR sau sync chỉ gồm 13 file Service/UI/docs/tests, không đưa lại 9 file dependency của PR #13. So sánh toàn bộ DAO, migrations và FeeRate model với main: không có diff.
+- MySQL Community **8.4.13**, chỉ bind `127.0.0.1:33317`, REPEATABLE READ, InnoDB + strict mode. Schema mới độc lập `bluemoon_us006_sync_9ff36e98_test`, user riêng có quyền DDL/DML chỉ trên tên schema đã escape `_` trong GRANT; không có quyền global. Đã xác nhận SELECT sang schema QA khác bị từ chối. Không dùng production/shared DB hoặc root để chạy tests.
+- Áp dụng hai migration **chính thức** `us005_fee_types.sql`, `us006_fee_rates.sql`. Mỗi fixture chỉ xóa mã riêng, child trước parent; không DROP bảng, không tắt FK checks. Schema/account/config chỉ dành cho lần verification này, không đưa credentials vào Git. MySQL portable được khởi động cho verification và dừng sau khi kiểm tra; data/config giữ trong `.tools/` ignored.
+- `mvn -Pmysql-it "-Dtest=FeeRateMySqlIT,FeeRateServiceMySqlIT" verify`: **9/9 PASS**, 0 failures/errors/skips, BUILD SUCCESS. Trong đó 5 DAO IT gốc của Dev-2 (migration/constraints/history/concurrency/rollback/locking) và 4 Service IT mới dùng composition production FeeRateModule -> FeeRateServiceImpl -> FeeRateDAO/FeeTypeDAO thật.
+- Service IT kiểm bốn API; ADMIN/ACCOUNTANT đọc/thêm; RESIDENT/no session bị chặn; BigDecimal round-trip + lịch sử bất biến; missing rate trả empty; adapter giữ đúng AppliedRate/ngày hiệu lực; duplicate thật 1062; precheck thật 02000/45000; validation trước ghi; trạng thái parent đổi sau lúc chọn vẫn bị từ chối và lịch sử cũ giữ nguyên.
+- Mapping 1213/1205 và lỗi hệ thống được regression unit kiểm bằng SQLException kiểm soát; không tuyên bố đã gây deadlock/timeout thật trong Service IT mới. Background Task/stale/late callbacks/cleanup được kiểm qua controller/module tests trong normal/smoke. Controller/FXML không import java.sql hoặc dùng Connection/DAO trực tiếp.
+- Kết quả regression sau merge: **482 normal / 483 JavaFX smoke PASS**, JDK17/Maven3.9.9, Enforcer bật. `git diff --check` PASS. Logs cục bộ ignored: `.tools/us006-sync/{verify,javafx,mysql}.log`.
+
+Tái hiện MySQL IT: cấp schema disposable `*_test` và user chỉ có quyền trên schema đó, cấu hình ngoài source theo Foundation; không dùng credentials từ máy khác. Ví dụ PowerShell:
+
+```powershell
+$env:BLUEMOON_MYSQL_TEST = '1'
+$env:BLUEMOON_DB_CONFIG = '<absolute path to private test db.properties>'
+# BLUEMOON_DB_URL/USERNAME/PASSWORD override the properties file: unset stale values first.
+mvn -Pmysql-it '-Dtest=FeeRateMySqlIT,FeeRateServiceMySqlIT' verify
+```
+
+Không chạy toàn profile cùng schema với FeeTypeMySqlIT có DROP fee_types. Kết quả trên xác nhận backend Service/DAO integration; **không** xác nhận UI E2E/App Shell hoặc billing snapshot toàn tuyến. Không có blocker kỹ thuật phát hiện trong phạm vi sync; PR #15 vẫn Draft chờ peer review/Lead gate.
