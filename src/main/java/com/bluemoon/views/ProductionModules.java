@@ -17,7 +17,9 @@ public final class ProductionModules {
                 () -> new HouseholdNavigator(new HouseholdServiceImpl(new HouseholdDAO(connections),
                     ApartmentChargeLookup.NONE),
                     new com.bluemoon.services.ResidentServiceImpl(new com.bluemoon.dao.ResidentDAO(connections),
-                        new HouseholdDAO(connections),new com.bluemoon.services.RoleBasedAuthorizationService(null)))),
+                        new HouseholdDAO(connections),new com.bluemoon.services.RoleBasedAuthorizationService(null)),
+                    new com.bluemoon.services.ResidentSearchServiceImpl(new com.bluemoon.dao.ResidentDAO(connections),
+                        new com.bluemoon.services.RoleBasedAuthorizationService(null)))),
             new ModuleRegistration("feeCategories", "Danh mục khoản thu", Permission.FEE_CATEGORY_VIEW,
                 () -> FeeCategoryModule.open(connections)));
     }
