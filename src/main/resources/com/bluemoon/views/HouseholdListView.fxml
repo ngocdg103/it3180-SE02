@@ -6,6 +6,7 @@
  <HBox spacing="12" alignment="CENTER_LEFT">
   <Label text="Trạng thái"/><ComboBox fx:id="statusFilter" onAction="#reload" prefWidth="180"/>
   <Button fx:id="reloadButton" text="Tải lại" onAction="#reload"/>
+  <Button fx:id="residentSearchButton" text="Tra cứu cư dân"/>
   <Pane HBox.hgrow="ALWAYS"/>
   <Button fx:id="createButton" text="Tạo mới" onAction="#create"/>
   <Button fx:id="detailButton" text="Xem chi tiết" onAction="#details" disable="true"/>
