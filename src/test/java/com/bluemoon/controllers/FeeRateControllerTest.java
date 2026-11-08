@@ -30,6 +30,7 @@ class FeeRateControllerTest {
         ready.get(10, TimeUnit.SECONDS);
     }
     @AfterEach void cleanup() throws Exception {
+        types.release.countDown();
         rates.release.countDown();
         if (controller != null) {
             fx(() -> { controller.dispose(); return null; });
@@ -143,13 +144,16 @@ class FeeRateControllerTest {
     @Test void slowWriteDoesNotBlockFxOrDoubleSubmitAndCloseDropsCallback() throws Exception {
         open(Role.ADMIN); ready(); rates.blockWrite = true; save("8000");
         assertTrue(rates.entered.await(5, TimeUnit.SECONDS));
+        assertTrue(fx(() -> controller.busyProperty().get()));
         assertEquals(42, fx(() -> 42));
         assertTrue(fx(() -> this.<ComboBox<FeeType>>node("feeBox").isDisabled()));
         fx(() -> { this.<Button>node("saveButton").fire(); controller.dispose(); controller.dispose(); return null; });
+        assertTrue(fx(() -> controller.busyProperty().get()), "closing must not report an active write as idle");
         rates.release.countDown(); assertTrue(pool().awaitTermination(5, TimeUnit.SECONDS)); fx(() -> null);
         assertEquals(1, rates.inserts); assertEquals(2, rates.rows.size());
         assertEquals("", fx(this::message));
         assertEquals("8000", fx(() -> this.<TextField>node("priceField").getText()));
+        assertFalse(fx(() -> controller.busyProperty().get()));
     }
     @Test void selectionChangeDiscardsStaleHistoryAndLogoutDiscardsPendingData() throws Exception {
         rates.blockHistory = true; open(Role.ADMIN);
@@ -186,6 +190,7 @@ class FeeRateControllerTest {
         FeeCategorySessionFixture.use(Role.ADMIN);
         var authorization = new RoleBasedAuthorizationService(null);
         var module = fx(() -> new FeeRateModule(new FeeRateServiceImpl(rates, types, authorization), authorization));
+        com.bluemoon.views.DashboardModule contract = module;
         try {
             view = module.view();
             fx(() -> {
@@ -193,9 +198,68 @@ class FeeRateControllerTest {
                 view.applyCss(); view.layout(); return null;
             });
             ready();
+            until(() -> !contract.busyProperty().get());
+            assertSame(view, contract.view());
             assertTrue(fx(() -> this.<TableView<FeeRate>>node("historyTable").getHeight() > 100));
             assertThrows(IllegalStateException.class, module::close);
         } finally { fx(() -> { module.close(); module.close(); return null; }); }
+    }
+    @Test void busyStaysTrueAcrossChainedLoadsAndQueuedRefreshes() throws Exception {
+        types.block = true; rates.blockHistory = true;
+        open(Role.ADMIN);
+        assertTrue(types.entered.await(5, TimeUnit.SECONDS));
+        assertTrue(fx(() -> controller.busyProperty().get()));
+        var changes = new ArrayList<Boolean>();
+        var fxOnly = new java.util.concurrent.atomic.AtomicBoolean(true);
+        fx(() -> {
+            controller.busyProperty().addListener((o, old, value) -> {
+                fxOnly.compareAndSet(true, Platform.isFxApplicationThread()); changes.add(value);
+            }); return null;
+        });
+        types.release.countDown();
+        assertTrue(rates.entered.await(5, TimeUnit.SECONDS));
+        assertTrue(fx(() -> controller.busyProperty().get()));
+        assertTrue(fx(changes::isEmpty), "no idle gap between choices and history");
+        fx(() -> { this.<DatePicker>node("lookupDate").setValue(LocalDate.of(2026, 2, 1)); return null; });
+        assertTrue(fx(() -> controller.busyProperty().get()));
+        rates.release.countDown();
+        until(() -> !controller.busyProperty().get());
+        assertEquals(List.of(false), fx(() -> List.copyOf(changes)));
+        assertTrue(fxOnly.get());
+    }
+    @Test void busySettlesOnServiceFailureAndRejectedSubmission() throws Exception {
+        types.failure = true; open(Role.ADMIN);
+        until(() -> message().contains("Lỗi hệ thống") && !controller.busyProperty().get());
+        types.failure = false;
+        fx(() -> { this.<Button>node("refreshButton").fire(); return null; }); ready();
+        until(() -> !controller.busyProperty().get());
+        pool().shutdown(); assertTrue(pool().awaitTermination(5, TimeUnit.SECONDS));
+        fx(() -> { this.<Button>node("refreshButton").fire(); return null; });
+        assertFalse(fx(() -> controller.busyProperty().get()));
+        assertEquals(FeeRateController.SYSTEM, fx(this::message));
+    }
+    @Test void deniedSessionNeverStartsTasksAndModuleCloseDuringLoadDropsUiCallback() throws Exception {
+        open(Role.RESIDENT);
+        until(() -> FeeRateController.DENIED.equals(message()));
+        assertFalse(fx(() -> controller.busyProperty().get()));
+        assertEquals(0, types.calls + rates.calls);
+        fx(() -> { controller.dispose(); return null; }); assertTrue(pool().awaitTermination(5, TimeUnit.SECONDS));
+        controller = null;
+        rates.blockHistory = true; FeeCategorySessionFixture.use(Role.ACCOUNTANT);
+        var authorization = new RoleBasedAuthorizationService(null);
+        com.bluemoon.views.DashboardModule module = fx(() -> new FeeRateModule(new FeeRateServiceImpl(rates, types, authorization), authorization));
+        try {
+            view = module.view();
+            fx(() -> { new javafx.scene.Scene(view, 1050, 660); view.applyCss(); view.layout(); return null; });
+            assertTrue(rates.entered.await(5, TimeUnit.SECONDS));
+            assertTrue(fx(() -> module.busyProperty().get()));
+            String before = fx(this::message);
+            fx(() -> { module.close(); module.close(); return null; });
+            assertTrue(fx(() -> module.busyProperty().get()));
+            rates.release.countDown(); until(() -> !module.busyProperty().get());
+            assertTrue(fx(() -> this.<TableView<FeeRate>>node("historyTable").getItems().isEmpty()));
+            assertEquals(before, fx(this::message));
+        } finally { rates.release.countDown(); fx(() -> { module.close(); return null; }); }
     }
     private static final class Repository implements FeeRateRepository {
         final List<FeeRate> rows = new CopyOnWriteArrayList<>(List.of(new FeeRate(1L, "PHI_QL", new BigDecimal("7000.00"), LocalDate.of(2026, 1, 1), "Giá cũ")));
@@ -231,8 +295,15 @@ class FeeRateControllerTest {
         static final FeeType ACTIVE = type("PHI_QL", FeeKind.BAT_BUOC, FeeStatus.DANG_AP_DUNG);
         static final FeeType OLD = type("OLD", FeeKind.BAT_BUOC, FeeStatus.NGUNG_AP_DUNG);
         volatile int calls; volatile boolean fxAccess, failure;
+        volatile boolean block;
+        final CountDownLatch entered = new CountDownLatch(1), release = new CountDownLatch(1);
         static FeeType type(String code, FeeKind kind, FeeStatus state) { return new FeeType(code, code, kind, ChargeMethod.THEO_DIEN_TICH, BigDecimal.ZERO, state); }
         public List<FeeType> findAll(FeeStatus filter) throws SQLException {
+            if (block) {
+                entered.countDown();
+                try { if (!release.await(8, TimeUnit.SECONDS)) { throw new SQLException("gate timeout"); } }
+                catch (InterruptedException failure) { Thread.currentThread().interrupt(); throw new SQLException(failure); }
+            }
             calls++; fxAccess |= Platform.isFxApplicationThread(); if (failure) { throw new SQLException("secret"); }
             return List.of(ACTIVE, OLD, type("QUY", FeeKind.DONG_GOP, FeeStatus.DANG_AP_DUNG));
         }

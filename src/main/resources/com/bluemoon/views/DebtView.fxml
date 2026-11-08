@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bluemoon.controllers.DebtController" spacing="12" prefWidth="1150" prefHeight="650" stylesheets="@fee-category.css" styleClass="fee-root">
+ <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+ <Label text="Công nợ theo kỳ" styleClass="page-title"/>
+ <HBox spacing="10" alignment="CENTER_LEFT">
+  <Label text="Kỳ thu"/><TextField fx:id="periodField" promptText="YYYY-MM; trống: kỳ mới nhất" prefWidth="210"/>
+  <ComboBox fx:id="statusBox" prefWidth="220"/>
+  <Label text="Tầng từ"/><TextField fx:id="fromField" prefWidth="60"/>
+  <Label text="đến"/><TextField fx:id="toField" prefWidth="60"/><Button fx:id="filterButton" text="Lọc / Tải lại"/>
+ </HBox>
+ <Label fx:id="periodLabel"/>
+ <Label text="Tổng hợp toàn tòa trong kỳ (không đổi theo bộ lọc danh sách)"/>
+ <HBox spacing="20">
+  <VBox spacing="4"><Label text="Tổng phải thu (VNĐ)"/><Label fx:id="billedLabel" styleClass="section-title"/></VBox>
+  <VBox spacing="4"><Label text="Đã thu (VNĐ)"/><Label fx:id="paidLabel" styleClass="section-title"/></VBox>
+  <VBox spacing="4"><Label text="Nợ còn lại (VNĐ)"/><Label fx:id="debtLabel" styleClass="section-title"/></VBox>
+  <VBox spacing="4"><Label text="Tỷ lệ thu"/><Label fx:id="ratioLabel" styleClass="section-title"/></VBox>
+  <VBox spacing="4"><Label text="Hộ đã xong / Tổng hộ"/><Label fx:id="completedLabel" styleClass="section-title"/></VBox>
+ </HBox>
+ <TableView fx:id="debtTable" VBox.vgrow="ALWAYS"><columns>
+  <TableColumn fx:id="apartmentColumn" text="Căn hộ" prefWidth="90"/>
+  <TableColumn fx:id="ownerColumn" text="Chủ hộ" prefWidth="145"/>
+  <TableColumn fx:id="areaColumn" text="Diện tích" prefWidth="90"/>
+  <TableColumn fx:id="peopleColumn" text="Số người" prefWidth="80"/>
+  <TableColumn fx:id="billedColumn" text="Phải thu" prefWidth="120"/>
+  <TableColumn fx:id="paidColumn" text="Đã thu" prefWidth="120"/>
+  <TableColumn fx:id="debtColumn" text="Còn thiếu" prefWidth="120"/>
+  <TableColumn fx:id="statusColumn" text="Trạng thái" prefWidth="120"/>
+  <TableColumn fx:id="lastColumn" text="Lần nộp cuối" prefWidth="120"/>
+ </columns></TableView>
+ <Label fx:id="footerLabel" styleClass="section-title"/><Label fx:id="messageLabel" wrapText="true"/>
+</VBox>

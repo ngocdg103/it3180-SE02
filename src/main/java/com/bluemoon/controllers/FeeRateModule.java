@@ -3,14 +3,24 @@ package com.bluemoon.controllers;
 import com.bluemoon.config.DatabaseConnection;
 import com.bluemoon.dao.*;
 import com.bluemoon.services.*;
+import com.bluemoon.models.Permission;
+import com.bluemoon.views.DashboardModule;
+import com.bluemoon.views.ModuleRegistration;
 import javafx.application.Platform;
+import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.Parent;
 import java.util.Objects;
 
 /** Embeddable production composition; the navigation host owns Stage/Scene and closes the module on logout. */
-public final class FeeRateModule implements AutoCloseable {
+public final class FeeRateModule implements DashboardModule {
     private final FeeRateController controller;
     private final Parent view;
+    /** Lazy production registration; constructs no view and performs no configuration/JDBC I/O. */
+    public static ModuleRegistration registration(DatabaseConnection connections) {
+        Objects.requireNonNull(connections);
+        return new ModuleRegistration("feeRates", "Đơn giá theo ngày hiệu lực", Permission.FEE_RATE_VIEW,
+                () -> open(connections));
+    }
     public static FeeRateModule open(DatabaseConnection connections) {
         requireFx();
         var authorization = new RoleBasedAuthorizationService(null);
@@ -30,7 +40,8 @@ public final class FeeRateModule implements AutoCloseable {
         try { view = FeeRateController.load(controller); }
         catch (RuntimeException | Error failure) { controller.dispose(); throw failure; }
     }
-    public Parent view() { return view; }
+    @Override public Parent view() { return view; }
+    @Override public ObservableBooleanValue busyProperty() { return controller.busyProperty(); }
     @Override public void close() { requireFx(); controller.dispose(); }
     private static void requireFx() {
         if (!Platform.isFxApplicationThread()) { throw new IllegalStateException("Fee rate lifecycle requires FX thread"); }

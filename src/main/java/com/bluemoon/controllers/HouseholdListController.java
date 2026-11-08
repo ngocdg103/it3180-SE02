@@ -15,6 +15,7 @@ public final class HouseholdListController extends HouseholdController {
     @FXML private ComboBox<String> statusFilter;
     @FXML private Button reloadButton, createButton, detailButton;
     private final String notice;
+    @FXML private Button residentSearchButton;
     public HouseholdListController(HouseholdService service, HouseholdNavigator navigator, String notice) {
         super(service, navigator); this.notice = notice;
     }
@@ -29,6 +30,8 @@ public final class HouseholdListController extends HouseholdController {
         statusFilter.getItems().add("Tất cả");
         for (ApartmentStatus status : ApartmentStatus.values()) statusFilter.getItems().add(status.label());
         statusFilter.getSelectionModel().selectFirst();
+        residentSearchButton.setVisible(navigator.canSearch());residentSearchButton.setManaged(navigator.canSearch());
+        residentSearchButton.setOnAction(e -> {if(!busy)navigator.showSearch();});
         households.getSelectionModel().selectedItemProperty().addListener((o, old, value) ->
                 detailButton.setDisable(busy || value == null));
         reload();
@@ -56,6 +59,7 @@ public final class HouseholdListController extends HouseholdController {
     }
     @Override protected void busyChanged(boolean value) {
         reloadButton.setDisable(value); createButton.setDisable(value || !navigator.can(Permission.HOUSEHOLD_CREATE)); statusFilter.setDisable(value);
+        residentSearchButton.setDisable(value || !navigator.canSearch());
         detailButton.setDisable(value || households.getSelectionModel().getSelectedItem() == null);
     }
     @Override protected void clearData() { households.getItems().clear(); }

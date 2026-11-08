@@ -21,6 +21,27 @@ public final class HouseholdNavigator implements DashboardModule {
     private final HouseholdService service;
     private final Consumer<Parent> host;
     private HouseholdController current;
+    private com.bluemoon.services.ResidentService residents;
+    private com.bluemoon.services.ResidentSearchService searchService;
+    private ResidentSearchController searchController;
+    public HouseholdNavigator(HouseholdService service, com.bluemoon.services.ResidentService residents,
+                              com.bluemoon.services.ResidentSearchService searchService) {
+        this.service=Objects.requireNonNull(service);this.residents=Objects.requireNonNull(residents);
+        this.searchService=Objects.requireNonNull(searchService);this.host=root -> content.getChildren().setAll(root);showList();
+    }
+    public boolean canSearch(){return searchService!=null && can(com.bluemoon.models.Permission.RESIDENT_PROFILE_VIEW);}
+    public void showSearch(){
+        if(busy.get() || !canSearch())return;
+        authorization.requirePermission(com.bluemoon.models.Permission.RESIDENT_PROFILE_VIEW);dispose();
+        searchController=new ResidentSearchController(searchService,this::residentBusy,this::showDetail,this::showList);
+        host.accept(searchController.view());
+    }
+    private boolean householdBusy, residentBusy;
+    public HouseholdNavigator(HouseholdService service, com.bluemoon.services.ResidentService residents) {
+        this.service=Objects.requireNonNull(service); this.residents=Objects.requireNonNull(residents);
+        this.host=root -> content.getChildren().setAll(root); showList();
+    }
+    public com.bluemoon.services.ResidentService residents() { return residents; }
     private final List<Dialog<?>> dialogs = new ArrayList<>();
     private final javafx.scene.layout.StackPane content = new javafx.scene.layout.StackPane();
     private final javafx.beans.property.ReadOnlyBooleanWrapper busy = new javafx.beans.property.ReadOnlyBooleanWrapper();
@@ -45,12 +66,14 @@ public final class HouseholdNavigator implements DashboardModule {
     }
     public void trackDialog(Dialog<?> dialog) { dialogs.add(dialog); }
     public boolean can(com.bluemoon.models.Permission permission) { return authorization.canAccess(permission); }
-    public void busy(boolean value) { busy.set(value); }
+    public void busy(boolean value) { householdBusy=value; busy.set(householdBusy || residentBusy); }
+    public void residentBusy(boolean value) { residentBusy=value; busy.set(householdBusy || residentBusy); }
     @Override public javafx.beans.value.ObservableBooleanValue busyProperty() { return busy.getReadOnlyProperty(); }
     @Override public Parent view() { return content; }
     @Override public void close() { dispose(); content.getChildren().clear(); }
     /** Host calls dispose on module exit/logout; ignores late task callbacks and clears detached data. */
     public void dispose() {
+        if(searchController!=null){searchController.close();searchController=null;}
         if (current != null) { current.deactivate(); current = null; }
         for (Dialog<?> dialog : dialogs) { dialog.setResult(null); dialog.close(); }
         dialogs.clear();

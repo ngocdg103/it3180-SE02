@@ -11,6 +11,8 @@ public final class HouseholdDetailController extends HouseholdController {
     private HouseholdProfile profile;
     @FXML private Label soCanHo, householdCode, tang, dienTich, ngayNhanNha, trangThai;
     @FXML private Button editButton, backButton;
+    @FXML private javafx.scene.layout.VBox residentContent;
+    private ResidentPanelController residents;
     public HouseholdDetailController(HouseholdService service, HouseholdNavigator navigator, String maHo) {
         super(service, navigator); this.maHo = maHo;
     }
@@ -23,15 +25,21 @@ public final class HouseholdDetailController extends HouseholdController {
                 tang.setText(Integer.toString(profile.tang())); dienTich.setText(profile.dienTich().toPlainString());
                 ngayNhanNha.setText(profile.ngayNhanNha().toString()); trangThai.setText(profile.trangThai().label());
                 message.setText(""); editButton.setDisable(!navigator.can(com.bluemoon.models.Permission.HOUSEHOLD_UPDATE));
+                if(navigator.residents()!=null && navigator.can(com.bluemoon.models.Permission.RESIDENT_PROFILE_VIEW)) {
+                    residents=new ResidentPanelController(navigator.residents(),maHo,navigator::residentBusy);
+                    residentContent.getChildren().setAll(residents.view());
+                }
             }
         });
     }
-    @FXML private void edit() { if (!busy && profile != null && navigator.can(com.bluemoon.models.Permission.HOUSEHOLD_UPDATE)) navigator.showEdit(profile); }
-    @FXML private void back() { if (!busy) navigator.showList(); }
+    @FXML private void edit() { if (!navigator.busyProperty().get() && profile != null && navigator.can(com.bluemoon.models.Permission.HOUSEHOLD_UPDATE)) navigator.showEdit(profile); }
+    @FXML private void back() { if (!navigator.busyProperty().get()) navigator.showList(); }
     @Override protected void busyChanged(boolean value) {
         backButton.setDisable(value); editButton.setDisable(value || profile == null || !navigator.can(com.bluemoon.models.Permission.HOUSEHOLD_UPDATE));
     }
     @Override protected void clearData() {
+        if(residents!=null) { residents.close(); residents=null; }
+        if(residentContent!=null) residentContent.getChildren().clear();
         profile = null;
         for (Label label : new Label[]{soCanHo, householdCode, tang, dienTich, ngayNhanNha, trangThai}) label.setText("");
         editButton.setDisable(true);
