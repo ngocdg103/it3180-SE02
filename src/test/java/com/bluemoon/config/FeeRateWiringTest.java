@@ -15,6 +15,17 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class FeeRateWiringTest {
+    @Test void registrationIsLazyUsesViewPermissionAndRequiresFxOnlyWhenOpened() throws Exception {
+        var config = DatabaseConfig.load(Path.of("missing-feerate-registration.properties"), Map.of(
+                "BLUEMOON_DB_URL", "jdbc:mysql://127.0.0.1:1/unavailable_test",
+                "BLUEMOON_DB_USERNAME", "test-only", "BLUEMOON_DB_PASSWORD", "test-only"));
+        var registration = FeeRateModule.registration(new DatabaseConnection(config));
+        assertEquals("feeRates", registration.id());
+        assertEquals(Permission.FEE_RATE_VIEW, registration.permission());
+        assertFalse(registration.title().isBlank());
+        assertThrows(IllegalStateException.class, () -> registration.open().get());
+        assertThrows(NullPointerException.class, () -> FeeRateModule.registration(null));
+    }
     @Test void productionGraphReachesJdbcOnlyAfterSessionAuthorization() throws Exception {
         var attempts = new AtomicInteger();
         String url = "jdbc:mysql:us006-composition-test";
