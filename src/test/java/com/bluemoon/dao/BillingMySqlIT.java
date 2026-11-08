@@ -389,6 +389,37 @@ class BillingMySqlIT {
         assertEquals(NOT_FOUND, service().getInvoice("x' OR '1'='1").status(), "injection literal is just data");
     }
 
+    @Test void apartmentHistoryReadsOnlyTheStoredSnapshot() throws Exception {
+        assertTrue(service().getApartmentHistory("P1204").data().orElseThrow().isEmpty());
+        service().generatePeriod("2026-11");
+        sql("UPDATE apartments SET dien_tich = 120.00 WHERE so_can_ho = 'P1204'");
+        var history = service().getApartmentHistory("P1204").data().orElseThrow();
+        assertEquals(1, history.size());
+        var row = history.get(0);
+        assertEquals("2026-11", row.kyThu());
+        assertEquals(ChargeStatus.CHUA_DONG, row.trangThai());
+        assertEquals(dao.findInvoice("HD-202611-P1204").orElseThrow().tongTien(), row.tongTien());
+        assertEquals(0, row.dienTich().compareTo(new java.math.BigDecimal("80")), "snapshot area, not today's");
+        assertTrue(row.lines().isEmpty());
+        assertTrue(service().getApartmentHistory("P1204' OR '1'='1").data().orElseThrow().isEmpty());
+        assertEquals(1, count("invoices"));
+    }
+
+    @Test void br02RealLookupAsksForConfirmationOnlyAfterBilling() throws Exception {
+        var households = new com.bluemoon.services.HouseholdServiceImpl(new HouseholdDAO(connections), dao,
+                HouseholdTestAuthorization.admin(), java.time.Clock.systemDefaultZone());
+        var change = new com.bluemoon.models.HouseholdUpdateForm("12", "95", "2024-03-15",
+                com.bluemoon.models.ApartmentStatus.DANG_O);
+        var before = households.updateHousehold("HK-1204", change, false);
+        assertEquals(com.bluemoon.services.HouseholdResult.Status.SUCCESS, before.status());
+        sql("UPDATE apartments SET dien_tich = 80.00 WHERE so_can_ho = 'P1204'");
+        service().generatePeriod("2026-11");
+        var guarded = households.updateHousehold("HK-1204", change, false);
+        assertEquals(com.bluemoon.services.HouseholdResult.Status.CONFIRMATION_REQUIRED, guarded.status());
+        assertEquals(com.bluemoon.services.HouseholdResult.Status.SUCCESS,
+                households.updateHousehold("HK-1204", change, true).status());
+    }
+
     // ---- rollback ----
     @Test void failureWhileWritingLinesRollsBackPeriodAndInvoices() throws Exception {
         var failing = new BillingDAO(() -> failAfter(connections.getConnection(), "INSERT INTO invoice_lines"));

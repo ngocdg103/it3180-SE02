@@ -69,7 +69,8 @@ class BillingResultTest {
         assertSignature("listPeriods", List.class);
         assertSignature("getPeriod", BillingPeriodDetail.class, String.class);
         assertSignature("getInvoice", MonthlyCharge.class, String.class);
-        assertEquals(5, BillingService.class.getDeclaredMethods().length);
+        assertSignature("getApartmentHistory", List.class, String.class);
+        assertEquals(6, BillingService.class.getDeclaredMethods().length);
     }
 
     private static void assertSignature(String name, Class<?> payload, Class<?>... params) throws Exception {
