@@ -74,6 +74,7 @@ class BillingServiceTest {
         CALLS.put("list", BillingServiceImpl::listPeriods);
         CALLS.put("getPeriod", s -> s.getPeriod("2026-11"));
         CALLS.put("getInvoice", s -> s.getInvoice("HD-202611-P1204"));
+        CALLS.put("history", s -> s.getApartmentHistory("P1204"));
     }
 
     @Test void adminAndAccountantAreAllowedEverywhere() {
@@ -390,6 +391,21 @@ class BillingServiceTest {
         assertEquals(VALIDATION_ERROR, s.getInvoice(null).status());
     }
 
+    @Test void apartmentHistoryReturnsStoredHeadersOnly() {
+        standardData();
+        var s = service();
+        assertTrue(s.getApartmentHistory("P1204").data().orElseThrow().isEmpty());
+        s.generatePeriod("2026-11");
+        var history = s.getApartmentHistory(" P1204 ").data().orElseThrow();
+        assertEquals(1, history.size());
+        assertEquals("2026-11", history.get(0).kyThu());
+        assertEquals(com.bluemoon.models.ChargeStatus.CHUA_DONG, history.get(0).trangThai());
+        assertTrue(history.get(0).lines().isEmpty());
+        assertTrue(s.getApartmentHistory("P9999").data().orElseThrow().isEmpty());
+        assertEquals(VALIDATION_ERROR, s.getApartmentHistory(" ").status());
+        assertEquals(VALIDATION_ERROR, s.getApartmentHistory(null).status());
+    }
+
     @Test void readsOfOlderPeriodsAreAllowedEvenThoughGenerateIsCurrentMonthOnly() {
         repo.periods.put("2026-10", new BillingPeriod("2026-10", LocalDate.of(2026, 11, 15), 1, 0,
                 d("100"), Instant.EPOCH));
@@ -401,6 +417,7 @@ class BillingServiceTest {
         assertEquals(SYSTEM_ERROR, service().listPeriods().status());
         assertEquals(SYSTEM_ERROR, service().getPeriod("2026-11").status());
         assertEquals(SYSTEM_ERROR, service().getInvoice("HD-202611-P1204").status());
+        assertEquals(SYSTEM_ERROR, service().getApartmentHistory("P1204").status());
     }
 
     // ---- fake ----
@@ -466,6 +483,15 @@ class BillingServiceTest {
         @Override public Optional<MonthlyCharge> findInvoice(String maHoaDon) throws SQLException {
             calls.add("findInvoice"); failIfRequested();
             return invoices.stream().filter(c -> c.maHoaDon().equals(maHoaDon)).findFirst();
+        }
+
+        @Override public List<MonthlyCharge> findChargesByApartment(String soCanHo) throws SQLException {
+            calls.add("findByApartment"); failIfRequested();
+            return invoices.stream().filter(c -> c.soCanHo().equals(soCanHo))
+                    .sorted(java.util.Comparator.comparing(MonthlyCharge::kyThu).reversed())
+                    .map(c -> new MonthlyCharge(c.maHoaDon(), c.kyThu(), c.maHo(), c.soCanHo(), c.dienTich(),
+                            c.soNhanKhau(), c.tongTien(), c.daThanhToan(), c.conThieu(), c.trangThai(), c.hanNop(),
+                            List.of())).toList();
         }
 
         @Override public boolean hasCharges(String soCanHo) throws SQLException {

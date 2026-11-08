@@ -33,6 +33,9 @@ public interface BillingRepository {
     /** Always with lines. */
     Optional<MonthlyCharge> findInvoice(String maHoaDon) throws SQLException;
 
+    /** Header-level invoices (no lines) of one apartment, newest period first. Empty if never billed. */
+    List<MonthlyCharge> findChargesByApartment(String soCanHo) throws SQLException;
+
     /** BR-02 hook: has this apartment ever been billed? */
     boolean hasCharges(String soCanHo) throws SQLException;
 }

@@ -27,7 +27,7 @@ import java.util.Optional;
  * Prepared JDBC for US-007. Only inserts, plus finalizing the period row inside the creating transaction;
  * there is no update or delete of lines or periods. Timestamps are stored as UTC.
  */
-public final class BillingDAO implements BillingRepository {
+public final class BillingDAO implements BillingRepository, ApartmentChargeLookup {
     private static final int DUPLICATE_KEY = 1062;
     private static final String PERIOD_COLUMNS = "ky_thu, han_nop, so_hoa_don, so_ho_bo_qua, tong_tien, created_at";
     private static final String INVOICE_COLUMNS = "ma_hoa_don, ky_thu, ma_ho, so_can_ho, dien_tich, so_nhan_khau, "
@@ -136,6 +136,19 @@ public final class BillingDAO implements BillingRepository {
                     return Optional.of(withLines(header, lines));
                 }
             }
+        }
+    }
+
+    @Override
+    public List<MonthlyCharge> findChargesByApartment(String soCanHo) throws SQLException {
+        try (var c = connections.open(); var s = c.prepareStatement(
+                "SELECT " + INVOICE_COLUMNS + " FROM invoices WHERE so_can_ho = ? ORDER BY ky_thu DESC")) {
+            s.setString(1, soCanHo);
+            var result = new ArrayList<MonthlyCharge>();
+            try (var rows = s.executeQuery()) {
+                while (rows.next()) { result.add(charge(rows, List.of())); }
+            }
+            return List.copyOf(result);
         }
     }
 

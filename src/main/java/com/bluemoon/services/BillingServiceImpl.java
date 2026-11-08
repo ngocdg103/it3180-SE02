@@ -39,6 +39,7 @@ public final class BillingServiceImpl implements BillingService {
     static final String MSG_NOTHING = "Không có khoản thu bắt buộc đang áp dụng hoặc không có hộ nào để lập kỳ thu.";
     static final String MSG_NOT_FOUND = "Không tìm thấy dữ liệu yêu cầu.";
     static final String MSG_MA_HOA_DON = "Vui lòng nhập mã hóa đơn!";
+    static final String MSG_SO_CAN_HO = "Vui lòng nhập số căn hộ!";
     static final String MSG_BUSY = "Hệ thống đang bận, vui lòng thử lại sau.";
     static final String MSG_SYSTEM = "Lỗi hệ thống, vui lòng thử lại sau.";
     private static final int LOCK_WAIT_TIMEOUT = 1205;
@@ -178,6 +179,19 @@ public final class BillingServiceImpl implements BillingService {
         try {
             return repository.findInvoice(maHoaDon.trim()).map(c -> BillingResult.success("OK", c))
                     .orElseGet(BillingServiceImpl::notFound);
+        } catch (SQLException | RuntimeException failure) {
+            return systemOrBusy(failure);
+        }
+    }
+
+    @Override
+    public BillingResult<List<MonthlyCharge>> getApartmentHistory(String soCanHo) {
+        authorization.requirePermission(Permission.DEBT_REPORT_VIEW);
+        if (soCanHo == null || soCanHo.isBlank()) {
+            return fieldFailure(Status.VALIDATION_ERROR, MSG_SO_CAN_HO, "so_can_ho", MSG_SO_CAN_HO);
+        }
+        try {
+            return BillingResult.success("OK", repository.findChargesByApartment(soCanHo.trim()));
         } catch (SQLException | RuntimeException failure) {
             return systemOrBusy(failure);
         }

@@ -30,6 +30,14 @@ public interface BillingService {
     /** NOT_FOUND if the period does not exist. Charges are header level (no lines). */
     BillingResult<BillingPeriodDetail> getPeriod(String kyThu);
 
+    /**
+     * Stored invoices of one apartment, newest period first (US-001 BR-02 / Household detail). Header level, no lines,
+     * read from the issued snapshot only: nothing is recomputed. daThanhToan/conThieu/trangThai are the stored values
+     * (CHUA_DONG until US-008 records payments); they are not inferred here. An apartment never billed is SUCCESS with
+     * an empty list. Blank soCanHo is VALIDATION_ERROR. Needs DEBT_REPORT_VIEW (ADMIN, ACCOUNTANT).
+     */
+    BillingResult<List<MonthlyCharge>> getApartmentHistory(String soCanHo);
+
     /** NOT_FOUND if the invoice does not exist. Includes all lines. */
     BillingResult<MonthlyCharge> getInvoice(String maHoaDon);
 }

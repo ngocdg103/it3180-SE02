@@ -51,7 +51,8 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 @Timeout(120)
 class BillingMySqlIT {
     private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-11-15T03:00:00Z"), ZoneOffset.UTC);
-    private static final List<String> MY_TABLES = List.of("invoice_lines", "invoices", "billing_periods", "fee_rates");
+    private static final List<String> MY_TABLES = List.of("phieu_thu", "apartment_credit", "invoice_lines", "invoices",
+            "billing_periods", "fee_rates");
     private static final AtomicInteger CCCD_SEQUENCE = new AtomicInteger();
 
     private static DatabaseConnection connections;
@@ -81,6 +82,7 @@ class BillingMySqlIT {
         script("database/migrations/us005_fee_types.sql");
         script("database/migrations/us006_fee_rates.sql"); // official US-006 migration, no mirror
         script("database/migrations/us007_billing.sql");
+        script("database/migrations/us008_receipts.sql"); // Payment is merged: history must reflect committed receipts
         sql("INSERT IGNORE INTO users (id, username, password_hash, ho_ten, role) "
                 + "VALUES (7, 'billing-it-7', 'x', 'Billing IT', 'ACCOUNTANT')");
         dao = new BillingDAO(connections);
@@ -389,6 +391,63 @@ class BillingMySqlIT {
         assertEquals(NOT_FOUND, service().getInvoice("x' OR '1'='1").status(), "injection literal is just data");
     }
 
+    @Test void apartmentHistoryReadsOnlyTheStoredSnapshot() throws Exception {
+        assertTrue(service().getApartmentHistory("P1204").data().orElseThrow().isEmpty());
+        service().generatePeriod("2026-11");
+        sql("UPDATE apartments SET dien_tich = 120.00 WHERE so_can_ho = 'P1204'");
+        var history = service().getApartmentHistory("P1204").data().orElseThrow();
+        assertEquals(1, history.size());
+        var row = history.get(0);
+        assertEquals("2026-11", row.kyThu());
+        assertEquals(ChargeStatus.CHUA_DONG, row.trangThai());
+        assertEquals(dao.findInvoice("HD-202611-P1204").orElseThrow().tongTien(), row.tongTien());
+        assertEquals(0, row.dienTich().compareTo(new java.math.BigDecimal("80")), "snapshot area, not today's");
+        assertTrue(row.lines().isEmpty());
+        assertTrue(service().getApartmentHistory("P1204' OR '1'='1").data().orElseThrow().isEmpty());
+        assertEquals(1, count("invoices"));
+    }
+
+    @Test void apartmentHistoryShowsCommittedPaymentStateAndKeepsTheSnapshot() throws Exception {
+        service().generatePeriod("2026-11");
+        var before = dao.findInvoice("HD-202611-P1204").orElseThrow();
+        var receipts = new ReceiptDAO(connections);
+        pay(receipts, "1000000", "11111111-1111-4111-8111-111111111111");
+        var partial = service().getApartmentHistory("P1204").data().orElseThrow().get(0);
+        assertEquals(ChargeStatus.DONG_THIEU, partial.trangThai());
+        assertEquals(0, partial.daThanhToan().compareTo(new java.math.BigDecimal("1000000")));
+        assertEquals(0, partial.conThieu().compareTo(new java.math.BigDecimal("384000")));
+        pay(receipts, "384000", "22222222-2222-4222-8222-222222222222");
+        var full = service().getApartmentHistory("P1204").data().orElseThrow().get(0);
+        assertEquals(ChargeStatus.DA_DONG_DU, full.trangThai());
+        assertEquals(0, full.conThieu().signum());
+        var after = dao.findInvoice("HD-202611-P1204").orElseThrow();
+        assertEquals(before.lines(), after.lines(), "payments never touch the billing snapshot");
+        assertEquals(before.tongTien(), full.tongTien());
+        assertEquals(before.dienTich(), after.dienTich());
+        assertEquals(1, count("invoices"));
+    }
+
+    private static void pay(ReceiptDAO receipts, String amount, String requestId) throws Exception {
+        receipts.record(new com.bluemoon.models.Receipt("PENDING", requestId, "HD-202611-P1204", "Nguyen A",
+                new java.math.BigDecimal(amount), java.time.LocalDate.of(2026, 11, 8),
+                com.bluemoon.models.PaymentMethod.TIEN_MAT, null, 7, java.time.Instant.parse("2026-11-08T05:00:00Z")));
+    }
+
+    @Test void br02RealLookupAsksForConfirmationOnlyAfterBilling() throws Exception {
+        var households = new com.bluemoon.services.HouseholdServiceImpl(new HouseholdDAO(connections), dao,
+                HouseholdTestAuthorization.admin(), java.time.Clock.systemDefaultZone());
+        var change = new com.bluemoon.models.HouseholdUpdateForm("12", "95", "2024-03-15",
+                com.bluemoon.models.ApartmentStatus.DANG_O);
+        var before = households.updateHousehold("HK-1204", change, false);
+        assertEquals(com.bluemoon.services.HouseholdResult.Status.SUCCESS, before.status());
+        sql("UPDATE apartments SET dien_tich = 80.00 WHERE so_can_ho = 'P1204'");
+        service().generatePeriod("2026-11");
+        var guarded = households.updateHousehold("HK-1204", change, false);
+        assertEquals(com.bluemoon.services.HouseholdResult.Status.CONFIRMATION_REQUIRED, guarded.status());
+        assertEquals(com.bluemoon.services.HouseholdResult.Status.SUCCESS,
+                households.updateHousehold("HK-1204", change, true).status());
+    }
+
     // ---- rollback ----
     @Test void failureWhileWritingLinesRollsBackPeriodAndInvoices() throws Exception {
         var failing = new BillingDAO(() -> failAfter(connections.getConnection(), "INSERT INTO invoice_lines"));
@@ -409,7 +468,7 @@ class BillingMySqlIT {
     @Test void manyThreadsGeneratingTheSamePeriodProduceExactlyOne() throws Exception {
         home("P1301", "HK-1301", "60.00", "DANG_O", 2);
         for (int round = 0; round < 5; round++) {
-            for (String table : MY_TABLES.subList(0, 3)) { sql("DELETE FROM " + table); }
+            for (String table : List.of("invoice_lines", "invoices", "billing_periods")) { sql("DELETE FROM " + table); }
             int threads = 8;
             var pool = Executors.newFixedThreadPool(threads);
             try {
