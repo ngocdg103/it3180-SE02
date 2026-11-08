@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bluemoon.controllers.ReceiptController" spacing="10" prefWidth="1060" prefHeight="700" stylesheets="@fee-category.css" styleClass="fee-root">
+ <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+ <Label text="Ghi nhận thanh toán" styleClass="page-title"/>
+ <HBox spacing="10"><ComboBox fx:id="invoiceBox" prefWidth="700" HBox.hgrow="ALWAYS"/><Button fx:id="reloadButton" text="Tải hóa đơn"/></HBox>
+ <HBox spacing="16" VBox.vgrow="ALWAYS">
+  <VBox spacing="10" HBox.hgrow="ALWAYS">
+   <HBox spacing="8"><Label text="Mã hộ"/><TextField fx:id="householdField"/><Button fx:id="historyButton" text="Xem phiếu thu"/></HBox>
+   <TableView fx:id="receiptTable" VBox.vgrow="ALWAYS"><columns>
+    <TableColumn fx:id="codeColumn" text="Phiếu thu" prefWidth="240"/>
+    <TableColumn fx:id="amountColumn" text="Số tiền (VNĐ)" prefWidth="130"/>
+    <TableColumn fx:id="payerColumn" text="Người nộp" prefWidth="140"/>
+    <TableColumn fx:id="dateColumn" text="Ngày nộp" prefWidth="110"/>
+    <TableColumn fx:id="methodColumn" text="Hình thức" prefWidth="130"/>
+   </columns></TableView>
+  </VBox>
+  <ScrollPane fitToWidth="true" prefWidth="330" minWidth="280"><content><VBox spacing="9" styleClass="form-panel">
+   <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
+   <Label text="Người nộp"/><TextField fx:id="payerField"/>
+   <Label text="Số tiền nộp (VNĐ nguyên)"/><TextField fx:id="amountField"/>
+   <Label text="Ngày nộp"/><DatePicker fx:id="paymentDate"/>
+   <Label text="Hình thức thanh toán"/><ComboBox fx:id="methodBox" maxWidth="Infinity"/>
+   <Label text="Ghi chú"/><TextArea fx:id="noteField" prefRowCount="3" wrapText="true"/>
+   <Button fx:id="saveButton" text="Ghi nhận thanh toán" styleClass="primary-button"/>
+   <Label text="Mã đối soát (giữ lại nếu kết quả chưa xác định)" wrapText="true"/><TextField fx:id="requestField"/>
+   <Button fx:id="reconcileButton" text="Kiểm tra mã đối soát"/>
+   <Button fx:id="newButton" text="Yêu cầu mới"/>
+  </VBox></content></ScrollPane>
+ </HBox>
+ <Label fx:id="errorLabel" styleClass="error-text" wrapText="true"/>
+ <Label fx:id="messageLabel" wrapText="true"/>
+</VBox>
