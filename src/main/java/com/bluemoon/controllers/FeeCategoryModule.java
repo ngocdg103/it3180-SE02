@@ -13,7 +13,7 @@ import java.util.Objects;
  * Load DatabaseConfig before entering the FX thread; constructing the DAO opens no connection.
  * The host must close this module on the FX thread when leaving, logging out, or closing its window.
  */
-public final class FeeCategoryModule implements AutoCloseable {
+public final class FeeCategoryModule implements com.bluemoon.views.DashboardModule {
     private final FeeCategoryController controller;
     private final Parent view;
 
@@ -36,6 +36,7 @@ public final class FeeCategoryModule implements AutoCloseable {
     }
 
     public Parent view() { return view; }
+    @Override public javafx.beans.value.ObservableBooleanValue busyProperty() { return controller.busyProperty(); }
 
     /** Idempotent. In-flight writes may still commit; subsequent UI callbacks are discarded. */
     @Override public void close() {
