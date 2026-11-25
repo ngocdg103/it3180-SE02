@@ -1,0 +1,713 @@
+{
+  "audit_date": "2026-11-26",
+  "timezone": "Asia/Saigon",
+  "production_commit": "eb369f738cb413c7e0a778f98fd613b449771354",
+  "production_tree": "80b85b96e64971289e5743c5afe81f641e44bebd",
+  "parents": [
+    "c8df66e0829fde17f290c1269b82365ed60e23b2",
+    "1aca7eafbaa87d5a4889d5f6bb260f40dd2143b2",
+    "576663f99d3b355d4ef6c0e65cb4ab8d45e80685"
+  ],
+  "pull_requests": {
+    "30": {
+      "merged": false,
+      "state": "open"
+    },
+    "31": {
+      "merged": false,
+      "state": "open"
+    }
+  },
+  "environment": {
+    "jdk": "Temurin 17.0.17",
+    "maven": "3.9.9",
+    "javafx": "17.0.18",
+    "mysql": "8.4.0",
+    "mysql_host": "127.0.0.1",
+    "mysql_port": 33317,
+    "schemas": [
+      "bluemoon_audit28_test",
+      "bluemoon_audit28_probe_test"
+    ]
+  },
+  "totals": {
+    "tests": 228,
+    "passed": 227,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0
+  },
+  "matrix": {
+    "PASS": 26,
+    "FAIL": 1,
+    "NEEDS VERIFICATION": 0,
+    "REQUIREMENT AMBIGUITY": 1
+  },
+  "runs": [
+    {
+      "id": "U",
+      "selector": "HouseholdServiceTest#createsValidHouseholdAndLinksItToItsApartment+everyMissingFieldIsReportedTogether+rejectsNonPositiveOrMalformedArea+updatesStatusAndLeavesOtherDataUntouchedAc03+invalidUpdateIsRejectedAndOldDataIsKept,HouseholdUiTest#createAc01RefreshesListWithExactMessage+validationKeepsRawInputAndDisplaysAllBackendFieldErrors+detailLoadsAndEditAc03KeepsIdentifiersReadOnly,ResidentServiceTest#ac01AddsFirstHeadAndHouseholdShowsHimWithCount+missingHouseholdChoiceIsAValidationError+allErrorsAreReportedTogether+genderAndRelationAreRequired+ac02AdultWithoutCccdIsRejected,ResidentPanelUiTest#createRefreshesListAndDuplicateClickDoesNotInsertTwice+adultWithoutCccdRetainsInputAndDisplaysFieldError,FeeTypeServiceTest#lifecycleAndBothAcceptanceCriteria+nullFormReportsAllFieldsTogether+validatesNameBoundariesAndEnums,FeeCategoryControllerTest#tooShortOrTooLongNameIsRejected+mandatoryKindOffersOnlyTheThreeCalculationMethods+contributionForcesVoluntaryMethodAndZeroAndLocksFields,FeeCategoryCompletionUiTest#editsAllowedFieldsKeepsCodeImmutableAndRefreshes+deactivateRequiresConfirmationCancelDoesNothingThenRefreshes,FeeRateServiceTest#creationIsAppendOnlyAndKeepsExactDecimalDateAndUnicode+invalidPricesAreFieldErrorsBeforeIo+nullFormInvalidCodeDateAndNoteAreReportedTogether,FeeRateControllerTest#invalidPriceDateAndLongNoteReachFieldErrorsWithoutInsert+successAppendsHistoryAndDuplicateRetainsInputAndShowsDateError,BillingCalculatorTest#ac01P1204+missingOrInvalidAreaSkipsOnlyThatHousehold+missingRateAbortsWholePeriodAndListsCodes,BillingControllerTest#previewShowsServiceNumbersLinesAndWritesNothing+missingRateBlocksPublishingAndNamesTheFee+zeroTotalAndWarningsAreListedAndSkippedHouseholdsAreNotBilled,ReceiptServiceTest#onlyAccountantMayRecordButStaffCanRead+invalidFieldsAndUnicodeAreValidatedTogether+invalidAmountNeverCallsRepository,ReceiptControllerTest#successRefreshesReceiptsAndCreatesNewIntentWithoutFxJdbc+validationKeepsIntentAndInputWithoutWrite+adminCannotRecordAndResidentCannotLoad,DebtControllerTest#initialLatestAndOutstandingFloorFiltersShowWholePeriodKpisAndFilteredFooter+invalidFloorAndPeriodDoNotQueryAndNoDataClearsOldKpis,NoticeControllerTest#ac01ShowsTheFullNoticeThatMatchesTheInvoice+periodNotGeneratedIsRefusedWithTheSrsMessage+exportNeedsBankInfoThenWritesEscapedPrintableHtml,AuthServiceTest#validLoginPublishesSafeGlobalSessionAndLogoutClearsIt+wrongPasswordAndUnknownAccountHaveSameErrorAndNoIdentity+missingAndMalformedInputsNeverQueryDatabase,LoginUiTest#fxmlAndMissingFields+invalidCredentialsShowsOwnedWarningAndStaysOnLoginAfterDismissal+successAndLogoutClearSessionAndFields,RoleBasedAuthorizationServiceTest#allPermissionsAcrossAllRoles+missingSessionDeniesEveryPermissionWithoutCallingResolver,HouseholdAuthorizationIntegrationTest#everyEntryPointUsesApprovedPermissionAndStopsDaoWhenDenied+deniedUpdateDoesNotAlterExistingData,ProductionNavigationTest#registrationsUseRequiredPermissionsAndUniqueIds+residentCannotOpenEitherModuleEvenThroughDirectControllerCall",
+      "tests": 195,
+      "passed": 195,
+      "failures": 0,
+      "suites": [
+        {
+          "suite": "com.bluemoon.controllers.BillingControllerTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            "missingRateBlocksPublishingAndNamesTheFee",
+            "zeroTotalAndWarningsAreListedAndSkippedHouseholdsAreNotBilled",
+            "previewShowsServiceNumbersLinesAndWritesNothing"
+          ]
+        },
+        {
+          "suite": "com.bluemoon.controllers.DebtControllerTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            "invalidFloorAndPeriodDoNotQueryAndNoDataClearsOldKpis",
+            "initialLatestAndOutstandingFloorFiltersShowWholePeriodKpisAndFilteredFooter"
+          ]
+        },
+        {
+          "suite": "com.bluemoon.controllers.FeeCategoryCompletionUiTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            "editsAllowedFieldsKeepsCodeImmutableAndRefreshes",
+            "deactivateRequiresConfirmationCancelDoesNothingThenRefreshes"
+          ]
+        },
+        {
+          "suite": "com.bluemoon.controllers.FeeCategoryControllerTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            "contributionForcesVoluntaryMethodAndZeroAndLocksFields",
+            "tooShortOrTooLongNameIsRejected",
+            "mandatoryKindOffersOnlyTheThreeCalculationMethods"
+          ]
+        },
+        {
+          "suite": "com.bluemoon.controllers.FeeRateControllerTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            "successAppendsHistoryAndDuplicateRetainsInputAndShowsDateError",
+            "invalidPriceDateAndLongNoteReachFieldErrorsWithoutInsert"
+          ]
+        },
+        {
+          "suite": "com.bluemoon.controllers.HouseholdUiTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            "createAc01RefreshesListWithExactMessage",
+            "detailLoadsAndEditAc03KeepsIdentifiersReadOnly",
+            "validationKeepsRawInputAndDisplaysAllBackendFieldErrors"
+          ]
+        },
+        {
+          "suite": "com.bluemoon.controllers.LoginUiTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            "invalidCredentialsShowsOwnedWarningAndStaysOnLoginAfterDismissal",
+            "successAndLogoutClearSessionAndFields",
+            "fxmlAndMissingFields"
+          ]
+        },
+        {
+          "suite": "com.bluemoon.controllers.NoticeControllerTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            "ac01ShowsTheFullNoticeThatMatchesTheInvoice",
+            "exportNeedsBankInfoThenWritesEscapedPrintableHtml(Path)",
+            "periodNotGeneratedIsRefusedWithTheSrsMessage"
+          ]
+        },
+        {
+          "suite": "com.bluemoon.controllers.ProductionNavigationTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            "residentCannotOpenEitherModuleEvenThroughDirectControllerCall",
+            "registrationsUseRequiredPermissionsAndUniqueIds"
+          ]
+        },
+        {
+          "suite": "com.bluemoon.controllers.ReceiptControllerTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            "successRefreshesReceiptsAndCreatesNewIntentWithoutFxJdbc",
+            "adminCannotRecordAndResidentCannotLoad",
+            "validationKeepsIntentAndInputWithoutWrite"
+          ]
+        },
+        {
+          "suite": "com.bluemoon.controllers.ResidentPanelUiTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            "createRefreshesListAndDuplicateClickDoesNotInsertTwice",
+            "adultWithoutCccdRetainsInputAndDisplaysFieldError"
+          ]
+        },
+        {
+          "suite": "com.bluemoon.services.AuthServiceTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            "missingAndMalformedInputsNeverQueryDatabase",
+            "wrongPasswordAndUnknownAccountHaveSameErrorAndNoIdentity",
+            "validLoginPublishesSafeGlobalSessionAndLogoutClearsIt"
+          ]
+        },
+        {
+          "suite": "com.bluemoon.services.BillingCalculatorTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            "ac01P1204",
+            "missingOrInvalidAreaSkipsOnlyThatHousehold",
+            "missingRateAbortsWholePeriodAndListsCodes"
+          ]
+        },
+        {
+          "suite": "com.bluemoon.services.FeeRateServiceTest",
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            "invalidPricesAreFieldErrorsBeforeIo(String)[1]",
+            "invalidPricesAreFieldErrorsBeforeIo(String)[2]",
+            "invalidPricesAreFieldErrorsBeforeIo(String)[3]",
+            "invalidPricesAreFieldErrorsBeforeIo(String)[4]",
+            "invalidPricesAreFieldErrorsBeforeIo(String)[5]",
+            "invalidPricesAreFieldErrorsBeforeIo(String)[6]",
+            "invalidPricesAreFieldErrorsBeforeIo(String)[7]",
+            "invalidPricesAreFieldErrorsBeforeIo(String)[8]",
+            "invalidPricesAreFieldErrorsBeforeIo(String)[9]",
+            "invalidPricesAreFieldErrorsBeforeIo(String)[10]",
+            "invalidPricesAreFieldErrorsBeforeIo(String)[11]",
+            "invalidPricesAreFieldErrorsBeforeIo(String)[12]",
+            "invalidPricesAreFieldErrorsBeforeIo(String)[13]",
+            "nullFormInvalidCodeDateAndNoteAreReportedTogether",
+            "creationIsAppendOnlyAndKeepsExactDecimalDateAndUnicode"
+          ]
+        },
+        {
+          "suite": "com.bluemoon.services.FeeTypeServiceTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            "validatesNameBoundariesAndEnums",
+            "lifecycleAndBothAcceptanceCriteria",
+            "nullFormReportsAllFieldsTogether"
+          ]
+        },
+        {
+          "suite": "com.bluemoon.services.HouseholdAuthorizationIntegrationTest",
+          "tests": 21,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            "deniedUpdateDoesNotAlterExistingData",
+            "everyEntryPointUsesApprovedPermissionAndStopsDaoWhenDenied(Operation, String, boolean)[1]",
+            "everyEntryPointUsesApprovedPermissionAndStopsDaoWhenDenied(Operation, String, boolean)[2]",
+            "everyEntryPointUsesApprovedPermissionAndStopsDaoWhenDenied(Operation, String, boolean)[3]",
+            "everyEntryPointUsesApprovedPermissionAndStopsDaoWhenDenied(Operation, String, boolean)[4]",
+            "everyEntryPointUsesApprovedPermissionAndStopsDaoWhenDenied(Operation, String, boolean)[5]",
+            "everyEntryPointUsesApprovedPermissionAndStopsDaoWhenDenied(Operation, String, boolean)[6]",
+            "everyEntryPointUsesApprovedPermissionAndStopsDaoWhenDenied(Operation, String, boolean)[7]",
+            "everyEntryPointUsesApprovedPermissionAndStopsDaoWhenDenied(Operation, String, boolean)[8]",
+            "everyEntryPointUsesApprovedPermissionAndStopsDaoWhenDenied(Operation, String, boolean)[9]",
+            "everyEntryPointUsesApprovedPermissionAndStopsDaoWhenDenied(Operation, String, boolean)[10]",
+            "everyEntryPointUsesApprovedPermissionAndStopsDaoWhenDenied(Operation, String, boolean)[11]",
+            "everyEntryPointUsesApprovedPermissionAndStopsDaoWhenDenied(Operation, String, boolean)[12]",
+            "everyEntryPointUsesApprovedPermissionAndStopsDaoWhenDenied(Operation, String, boolean)[13]",
+            "everyEntryPointUsesApprovedPermissionAndStopsDaoWhenDenied(Operation, String, boolean)[14]",
+            "everyEntryPointUsesApprovedPermissionAndStopsDaoWhenDenied(Operation, String, boolean)[15]",
+            "everyEntryPointUsesApprovedPermissionAndStopsDaoWhenDenied(Operation, String, boolean)[16]",
+            "everyEntryPointUsesApprovedPermissionAndStopsDaoWhenDenied(Operation, String, boolean)[17]",
+            "everyEntryPointUsesApprovedPermissionAndStopsDaoWhenDenied(Operation, String, boolean)[18]",
+            "everyEntryPointUsesApprovedPermissionAndStopsDaoWhenDenied(Operation, String, boolean)[19]",
+            "everyEntryPointUsesApprovedPermissionAndStopsDaoWhenDenied(Operation, String, boolean)[20]"
+          ]
+        },
+        {
+          "suite": "com.bluemoon.services.HouseholdServiceTest",
+          "tests": 14,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            "everyMissingFieldIsReportedTogether",
+            "rejectsNonPositiveOrMalformedArea(String)[1]",
+            "rejectsNonPositiveOrMalformedArea(String)[2]",
+            "rejectsNonPositiveOrMalformedArea(String)[3]",
+            "rejectsNonPositiveOrMalformedArea(String)[4]",
+            "rejectsNonPositiveOrMalformedArea(String)[5]",
+            "rejectsNonPositiveOrMalformedArea(String)[6]",
+            "rejectsNonPositiveOrMalformedArea(String)[7]",
+            "rejectsNonPositiveOrMalformedArea(String)[8]",
+            "rejectsNonPositiveOrMalformedArea(String)[9]",
+            "rejectsNonPositiveOrMalformedArea(String)[10]",
+            "updatesStatusAndLeavesOtherDataUntouchedAc03",
+            "createsValidHouseholdAndLinksItToItsApartment",
+            "invalidUpdateIsRejectedAndOldDataIsKept"
+          ]
+        },
+        {
+          "suite": "com.bluemoon.services.ReceiptServiceTest",
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            "invalidFieldsAndUnicodeAreValidatedTogether",
+            "invalidAmountNeverCallsRepository(String)[1]",
+            "invalidAmountNeverCallsRepository(String)[2]",
+            "invalidAmountNeverCallsRepository(String)[3]",
+            "invalidAmountNeverCallsRepository(String)[4]",
+            "invalidAmountNeverCallsRepository(String)[5]",
+            "invalidAmountNeverCallsRepository(String)[6]",
+            "invalidAmountNeverCallsRepository(String)[7]",
+            "invalidAmountNeverCallsRepository(String)[8]",
+            "invalidAmountNeverCallsRepository(String)[9]",
+            "invalidAmountNeverCallsRepository(String)[10]",
+            "invalidAmountNeverCallsRepository(String)[11]",
+            "onlyAccountantMayRecordButStaffCanRead(Role)[1]",
+            "onlyAccountantMayRecordButStaffCanRead(Role)[2]",
+            "onlyAccountantMayRecordButStaffCanRead(Role)[3]"
+          ]
+        },
+        {
+          "suite": "com.bluemoon.services.ResidentServiceTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            "allErrorsAreReportedTogether",
+            "ac02AdultWithoutCccdIsRejected",
+            "missingHouseholdChoiceIsAValidationError",
+            "ac01AddsFirstHeadAndHouseholdShowsHimWithCount",
+            "genderAndRelationAreRequired"
+          ]
+        },
+        {
+          "suite": "com.bluemoon.services.RoleBasedAuthorizationServiceTest",
+          "tests": 88,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[1]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[2]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[3]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[4]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[5]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[6]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[7]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[8]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[9]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[10]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[11]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[12]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[13]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[14]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[15]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[16]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[17]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[18]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[19]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[20]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[21]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[22]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[23]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[24]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[25]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[26]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[27]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[28]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[29]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[30]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[31]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[32]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[33]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[34]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[35]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[36]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[37]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[38]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[39]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[40]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[41]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[42]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[43]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[44]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[45]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[46]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[47]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[48]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[49]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[50]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[51]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[52]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[53]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[54]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[55]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[56]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[57]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[58]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[59]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[60]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[61]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[62]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[63]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[64]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[65]",
+            "allPermissionsAcrossAllRoles(Permission, Role, boolean)[66]",
+            "missingSessionDeniesEveryPermissionWithoutCallingResolver(Permission)[1]",
+            "missingSessionDeniesEveryPermissionWithoutCallingResolver(Permission)[2]",
+            "missingSessionDeniesEveryPermissionWithoutCallingResolver(Permission)[3]",
+            "missingSessionDeniesEveryPermissionWithoutCallingResolver(Permission)[4]",
+            "missingSessionDeniesEveryPermissionWithoutCallingResolver(Permission)[5]",
+            "missingSessionDeniesEveryPermissionWithoutCallingResolver(Permission)[6]",
+            "missingSessionDeniesEveryPermissionWithoutCallingResolver(Permission)[7]",
+            "missingSessionDeniesEveryPermissionWithoutCallingResolver(Permission)[8]",
+            "missingSessionDeniesEveryPermissionWithoutCallingResolver(Permission)[9]",
+            "missingSessionDeniesEveryPermissionWithoutCallingResolver(Permission)[10]",
+            "missingSessionDeniesEveryPermissionWithoutCallingResolver(Permission)[11]",
+            "missingSessionDeniesEveryPermissionWithoutCallingResolver(Permission)[12]",
+            "missingSessionDeniesEveryPermissionWithoutCallingResolver(Permission)[13]",
+            "missingSessionDeniesEveryPermissionWithoutCallingResolver(Permission)[14]",
+            "missingSessionDeniesEveryPermissionWithoutCallingResolver(Permission)[15]",
+            "missingSessionDeniesEveryPermissionWithoutCallingResolver(Permission)[16]",
+            "missingSessionDeniesEveryPermissionWithoutCallingResolver(Permission)[17]",
+            "missingSessionDeniesEveryPermissionWithoutCallingResolver(Permission)[18]",
+            "missingSessionDeniesEveryPermissionWithoutCallingResolver(Permission)[19]",
+            "missingSessionDeniesEveryPermissionWithoutCallingResolver(Permission)[20]",
+            "missingSessionDeniesEveryPermissionWithoutCallingResolver(Permission)[21]",
+            "missingSessionDeniesEveryPermissionWithoutCallingResolver(Permission)[22]"
+          ]
+        }
+      ],
+      "log_sha256": "f2974e13b2e171595c4eb29f39d1f411da3da25e6d80c82c79b30fa45a762f32"
+    },
+    {
+      "id": "M",
+      "selector": "HouseholdMySqlIT#serviceOnRealDatabaseCoversAcceptanceCriteria,ResidentMySqlIT#serviceOnRealDatabaseCoversTheAcceptanceCriteriaRbacAndDatabaseErrors,FeeTypeMySqlIT#lifecycleDuplicateFilterAndNoHardDelete+constraintsProtectDirectJdbcWritesAndRollback,FeeRateMySqlIT#effectiveHistoryBackdateAndExactDecimals,InitialFeeRateUiMySqlIT,BillingMySqlIT#ac01EndToEndOnRealMySql+rateInForceAtFirstDayOfPeriodIsUsed+missingRateRollsBackEverythingAndReleasesTheKey+closedPeriodNeverChangesWhenInputsChangeLater,ReceiptMySqlIT#partialThenFullAc01Ac02AndSnapshotNeverChanges+overpaymentPersistsCreditAtomically+concurrentFullSettlementRefusesSecondPaymentAndRbacStillApplies,DebtMySqlIT#partialAndFullPaymentsUpdateDebtAndWholePeriodKpis+floorAndStatusFilterEmptyPeriodAndHouseholdBalance,BillingNoticeModulesMySqlIT#noticeFromTheInvoicePublishedByTheBillingModuleAndExport+noticeRefusesAPeriodThatWasNeverGenerated+missingRateIsShownAndNothingIsWrittenOnRealMySql,ResidentSearchMySqlIT#apartmentPrefixAndEmptyApartmentIncludeHouseholdAndHead+accentsCaseCccdFloorAndWildcardLiterals+realUiEnterSearchEmptyMessageAndDetailNavigation+deniedRoleCannotQueryEvenWithValidInput,HouseholdBr02MySqlIT#productionHouseholdConfirmationCancelApprovalAndHistoryPreserveSnapshot,AuthMySqlIT#schemaAndSeedCanBeReappliedAndSrsAdminCanLogin+jdbcLoginLockPersistsAcrossServicesAndExpiresAtDeadline",
+      "tests": 25,
+      "passed": 24,
+      "failures": 1,
+      "suites": [
+        {
+          "suite": "com.bluemoon.controllers.BillingNoticeModulesMySqlIT",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            {
+              "name": "missingRateIsShownAndNothingIsWrittenOnRealMySql",
+              "failure": null
+            },
+            {
+              "name": "noticeRefusesAPeriodThatWasNeverGenerated",
+              "failure": null
+            },
+            {
+              "name": "noticeFromTheInvoicePublishedByTheBillingModuleAndExport(Path)",
+              "failure": null
+            }
+          ]
+        },
+        {
+          "suite": "com.bluemoon.controllers.HouseholdBr02MySqlIT",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            {
+              "name": "productionHouseholdConfirmationCancelApprovalAndHistoryPreserveSnapshot",
+              "failure": null
+            }
+          ]
+        },
+        {
+          "suite": "com.bluemoon.controllers.InitialFeeRateUiMySqlIT",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            {
+              "name": "createRequiresDateAndUs006ShowsOneCommittedInitialThenPreservesItOnAppend",
+              "failure": null
+            }
+          ]
+        },
+        {
+          "suite": "com.bluemoon.controllers.ResidentSearchMySqlIT",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            {
+              "name": "deniedRoleCannotQueryEvenWithValidInput",
+              "failure": null
+            },
+            {
+              "name": "accentsCaseCccdFloorAndWildcardLiterals",
+              "failure": null
+            },
+            {
+              "name": "apartmentPrefixAndEmptyApartmentIncludeHouseholdAndHead",
+              "failure": null
+            },
+            {
+              "name": "realUiEnterSearchEmptyMessageAndDetailNavigation",
+              "failure": null
+            }
+          ]
+        },
+        {
+          "suite": "com.bluemoon.dao.BillingMySqlIT",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            {
+              "name": "closedPeriodNeverChangesWhenInputsChangeLater",
+              "failure": null
+            },
+            {
+              "name": "missingRateRollsBackEverythingAndReleasesTheKey",
+              "failure": null
+            },
+            {
+              "name": "ac01EndToEndOnRealMySql",
+              "failure": null
+            },
+            {
+              "name": "rateInForceAtFirstDayOfPeriodIsUsed",
+              "failure": null
+            }
+          ]
+        },
+        {
+          "suite": "com.bluemoon.dao.DebtMySqlIT",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            {
+              "name": "partialAndFullPaymentsUpdateDebtAndWholePeriodKpis",
+              "failure": null
+            },
+            {
+              "name": "floorAndStatusFilterEmptyPeriodAndHouseholdBalance",
+              "failure": null
+            }
+          ]
+        },
+        {
+          "suite": "com.bluemoon.dao.FeeRateMySqlIT",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            {
+              "name": "effectiveHistoryBackdateAndExactDecimals",
+              "failure": null
+            }
+          ]
+        },
+        {
+          "suite": "com.bluemoon.dao.FeeTypeMySqlIT",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            {
+              "name": "lifecycleDuplicateFilterAndNoHardDelete",
+              "failure": null
+            },
+            {
+              "name": "constraintsProtectDirectJdbcWritesAndRollback",
+              "failure": null
+            }
+          ]
+        },
+        {
+          "suite": "com.bluemoon.dao.HouseholdMySqlIT",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            {
+              "name": "serviceOnRealDatabaseCoversAcceptanceCriteria",
+              "failure": null
+            }
+          ]
+        },
+        {
+          "suite": "com.bluemoon.dao.ReceiptMySqlIT",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            {
+              "name": "overpaymentPersistsCreditAtomically",
+              "failure": null
+            },
+            {
+              "name": "partialThenFullAc01Ac02AndSnapshotNeverChanges",
+              "failure": null
+            },
+            {
+              "name": "concurrentFullSettlementRefusesSecondPaymentAndRbacStillApplies",
+              "failure": null
+            }
+          ]
+        },
+        {
+          "suite": "com.bluemoon.dao.ResidentMySqlIT",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            {
+              "name": "serviceOnRealDatabaseCoversTheAcceptanceCriteriaRbacAndDatabaseErrors",
+              "failure": null
+            }
+          ]
+        },
+        {
+          "suite": "com.bluemoon.services.AuthMySqlIT",
+          "tests": 2,
+          "failures": 1,
+          "errors": 0,
+          "skipped": 0,
+          "cases": [
+            {
+              "name": "jdbcLoginLockPersistsAcrossServicesAndExpiresAtDeadline",
+              "failure": null
+            },
+            {
+              "name": "schemaAndSeedCanBeReappliedAndSrsAdminCanLogin",
+              "failure": "expected: <Admin> but was: <Ban Quản Trị Hệ Thống>"
+            }
+          ]
+        }
+      ],
+      "log_sha256": "41a69b91aeabe85c9876c5e1bc8705544ceee1499713d708279ed8a22d342bb9"
+    },
+    {
+      "id": "P1",
+      "selector": "Sprint1AuditProbeTest (six methods before two additional audit methods were added)",
+      "tests": 6,
+      "passed": 6,
+      "failures": 0,
+      "suite": {
+        "suite": "com.bluemoon.services.Sprint1AuditProbeTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "cases": [
+          "receiptRoundTripKeepsPayerInvoiceHouseholdFeesDateAndAmount",
+          "deniedServiceCallsLeaveAllTablesUnchanged",
+          "missingFieldsAreRejectedWithoutDatabaseMutation",
+          "actualReceiptUiShowsMissingAmountAndDate",
+          "actualFeeAndRateUiShowMissingFields",
+          "actualHouseholdUiCreateAndInvalidFields"
+        ]
+      },
+      "log_sha256": "d73cb00e89805b4383c6e34eef8338aadd587b48b66e1c11998343719e4c0b4b"
+    },
+    {
+      "id": "P2",
+      "selector": "Sprint1AuditProbeTest#seededAdminAuthenticatesAndDashboardDisplaysStoredName",
+      "tests": 1,
+      "passed": 1,
+      "failures": 0,
+      "log_sha256": "a42a27f2dc35b0a73daab97ed4e5ef270d8d461a13a414634bb8ed6793eb43ac"
+    },
+    {
+      "id": "P3",
+      "selector": "Sprint1AuditProbeTest#actualResidentUiReportsMissingRequiredFieldsWithoutCreatingPerson",
+      "tests": 1,
+      "passed": 1,
+      "failures": 0,
+      "log_sha256": "4b600cf4ecf1657745c01b35943dd275c8a2f223d9e234295503171c4a8f21ed"
+    }
+  ],
+  "supplementary_probe": {
+    "path": "probes/Sprint1AuditProbeTest.java",
+    "sha256": "b792ce702daf2e2601ffcdf01300eb6dd83940025a1e7561b57e1d9a4f61385a",
+    "production_modified": false,
+    "existing_tracked_tests_modified": false
+  },
+  "known_failure": {
+    "test": "AuthMySqlIT.schemaAndSeedCanBeReappliedAndSrsAdminCanLogin",
+    "line": 68,
+    "expected": "Admin",
+    "actual": "Ban Quản Trị Hệ Thống",
+    "classification": "seed/test/SRS literal display-name discrepancy; successful authentication was separately verified"
+  },
+  "db_fingerprints": {
+    "missing_fields": {
+      "before": "704d9218320f121ec6e5b68a314b52d2b776591323c2841335dd54c90c01a537",
+      "after": "704d9218320f121ec6e5b68a314b52d2b776591323c2841335dd54c90c01a537"
+    },
+    "denied_services": {
+      "before": "94426478c1c6d06812e635643ca5803b8565fc5de2c85c355fb5d69ddf4c12d4",
+      "after": "94426478c1c6d06812e635643ca5803b8565fc5de2c85c355fb5d69ddf4c12d4"
+    }
+  }
+}
