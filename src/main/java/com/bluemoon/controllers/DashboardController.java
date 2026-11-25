@@ -134,7 +134,7 @@ public final class DashboardController implements AutoCloseable {
         if (!authenticated()) { logout(); return; }
         releaseModule();
         show(buildHome()); shellStatus.setText(""); refreshBusy();
-        markActive("home", salutation() + ", " + account.hoTen());
+        markActive("home", "Xin chào, " + account.hoTen());
     }
     /** One short fade answers the user's navigation; off with -Dbluemoon.reduceMotion=true. */
     private void show(Node view) {
@@ -241,10 +241,8 @@ public final class DashboardController implements AutoCloseable {
     /** Navy card for the current billing period; the button only appears when billing is permitted. */
     private VBox periodCard(ModuleRegistration billing) {
         Region moon = new Region(); moon.getStyleClass().add("bm-moon");
-        Label word = new Label("Kỳ thu"); word.getStyleClass().add("bm-h2");
-        Label period = new Label(LocalDate.now().format(DateTimeFormatter.ofPattern("MM/yyyy")));
-        period.getStyleClass().add("bm-figure");
-        HBox title = new HBox(10, word, period); title.setAlignment(Pos.BASELINE_LEFT);
+        Label title = new Label("Kỳ thu " + LocalDate.now().format(DateTimeFormatter.ofPattern("MM/yyyy")));
+        title.getStyleClass().add("bm-h2");
         Label text = new Label("Lập kỳ thu, tính phí từng căn hộ và chốt hóa đơn cho tháng này.");
         text.getStyleClass().add("bm-muted"); text.setWrapText(true);
         VBox card = new VBox(10, moon, title, text); card.getStyleClass().add("bm-card-dark");
@@ -315,10 +313,6 @@ public final class DashboardController implements AutoCloseable {
         if (parts.length == 0 || parts[0].isEmpty()) return "?";
         String first = parts[0].substring(0, 1), last = parts[parts.length - 1].substring(0, 1);
         return (parts.length == 1 ? first : first + last).toUpperCase(Locale.ROOT);
-    }
-    private String salutation() {
-        int hour = LocalTime.now().getHour();
-        return hour < 11 ? "Chào buổi sáng" : hour < 14 ? "Chào buổi trưa" : hour < 18 ? "Chào buổi chiều" : "Chào buổi tối";
     }
     private String roleName() {
         return switch (account.role()) {
