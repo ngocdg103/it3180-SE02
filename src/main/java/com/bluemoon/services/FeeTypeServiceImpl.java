@@ -71,11 +71,23 @@ public final class FeeTypeServiceImpl implements FeeTypeService {
             errors.put("so_tien_mac_dinh", "Khoản đóng góp phải có số tiền mặc định bằng 0!");
         }
         if (form.trangThai() == null) { errors.put("trang_thai", "Vui lòng chọn trạng thái!"); }
+        if (code == null && amount.signum() > 0) {
+            try { FeeRate.requireDate(form.ngayApDungBanDau()); }
+            catch (IllegalArgumentException | NullPointerException invalidDate) {
+                errors.put("ngay_ap_dung", "Ngày áp dụng không hợp lệ!");
+            }
+            if (form.trangThai() != FeeStatus.DANG_AP_DUNG) {
+                errors.put("trang_thai", "Chỉ đặt giá cho khoản thu bắt buộc đang áp dụng.");
+            }
+        } else if (code == null && form.ngayApDungBanDau() != null) {
+            errors.put("ngay_ap_dung", "Chỉ chọn ngày hiệu lực khi nhập đơn giá ban đầu lớn hơn 0.");
+        }
         if (!errors.isEmpty()) { return invalid(errors); }
         var fee = new FeeType(form.maKhoanThu(), name, form.loai(), form.hinhThuc(), amount, form.trangThai());
         try {
             if (code != null) { return found(repository.update(fee)); }
-            repository.insert(fee);
+            if (amount.signum() > 0) { authorization.requirePermission(Permission.FEE_RATE_CREATE); }
+            repository.insert(fee, form.ngayApDungBanDau());
             return FeeTypeResult.success("Tạo khoản thu " + fee.maKhoanThu() + " thành công", fee);
         } catch (SQLException failure) {
             if (code == null && failure.getErrorCode() == 1062) {

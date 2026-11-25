@@ -2,6 +2,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.TableColumn?>
@@ -60,6 +61,9 @@
                 <Label text="Trạng thái" GridPane.rowIndex="15"/>
                 <ComboBox fx:id="statusBox" maxWidth="Infinity" GridPane.rowIndex="16"/>
                 <Label fx:id="statusError" styleClass="error-text" wrapText="true" GridPane.rowIndex="17"/>
+                <Label fx:id="initialDateLabel" text="Ngày hiệu lực giá ban đầu (khi giá &gt; 0)" wrapText="true" GridPane.rowIndex="18"/>
+                <DatePicker fx:id="initialRateDate" promptText="YYYY-MM-DD" maxWidth="Infinity" GridPane.rowIndex="19"/>
+                <Label fx:id="initialDateError" styleClass="error-text" wrapText="true" GridPane.rowIndex="20"/>
             </GridPane>
             <HBox spacing="8">
                 <Button fx:id="saveButton" text="Lưu" defaultButton="true" styleClass="primary-button"/>
