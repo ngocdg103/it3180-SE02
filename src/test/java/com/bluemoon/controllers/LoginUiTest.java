@@ -285,10 +285,11 @@ class LoginUiTest {
         var root = scene.getRoot();
         root.applyCss(); root.layout();
         assertEquals(1, root.getStylesheets().size());
-        assertTrue(root.getStylesheets().get(0).endsWith("/auth.css"));
+        assertTrue(root.getStylesheets().get(0).endsWith("/bluemoon-theme.css"));
         assertTrue(scene.getStylesheets().isEmpty(), "Navigation must not append duplicate scene CSS");
-        assertEquals(javafx.scene.paint.Color.WHITE,
-                ((javafx.scene.layout.Region) root.lookup(".card")).getBackground().getFills().get(0).getFill());
+        var surface = dashboard ? root.lookup(".bm-sidebar") : root.lookup(".card");
+        assertEquals(javafx.scene.paint.Color.web(dashboard ? "#111C2E" : "#17263B"),
+                ((javafx.scene.layout.Region) surface).getBackground().getFills().get(0).getFill());
         for (String id : dashboard ? new String[]{"greeting", "role", "logoutButton"}
                 : new String[]{"username", "password", "loginButton", "status"}) {
             var node = scene.lookup("#" + id);

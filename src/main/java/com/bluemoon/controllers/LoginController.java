@@ -73,6 +73,11 @@ public final class LoginController {
                     warning.initModality(javafx.stage.Modality.WINDOW_MODAL);
                     warning.setTitle("Cảnh báo đăng nhập");
                     warning.setHeaderText(null);
+                    var theme = LoginController.class.getResource("/com/bluemoon/views/bluemoon-theme.css");
+                    if (theme != null) {
+                        warning.getDialogPane().getStylesheets().add(theme.toExternalForm());
+                        warning.getDialogPane().getStyleClass().add("bm-dark");
+                    }
                     warning.show();
                 }
                 case ACCOUNT_LOCKED -> status.setText("Tài khoản của bạn đã bị tạm khóa!");
