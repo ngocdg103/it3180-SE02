@@ -8,7 +8,9 @@
  * from .bm-module-host without editing module files. No heights or scroll policies are set,
  * so module min/pref heights (and the Billing/Household layout hotfix) keep working.
  *
- * Type: Be Vietnam Pro (OFL, bundled, registered by AuthenticationNavigator). Scale 12/14/16/20/28.
+ * Type (OFL, bundled, listed in fonts/fonts.list): titles in Cormorant Garamond, body in Plus Jakarta Sans.
+ *   Cormorant has a small x-height, so title sizes are larger than the body scale (12/14/16) to read as titles.
+ *   Small labels (table column titles, buttons, nav) stay in Plus Jakarta Sans for legibility on a projector.
  * Contrast (WCAG AA): navy on card 14.0:1; muted #5E584A on canvas 6.3:1; nav text on navy 9.5:1;
  *   navy on gold 6.2:1; input outline #8A8272 3.8:1; chip icons >= 4.8:1.
  *   Gold on the light canvas is only 2.1:1, so focus rings on light surfaces are navy; gold rings only on navy.
@@ -35,18 +37,20 @@
 
 .bm-app, .bm-login {
     -fx-background-color: #F6F1E9;
-    -fx-font-family: "Be Vietnam Pro", "Segoe UI", sans-serif;
+    -fx-font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
     -fx-font-size: 14px;
 }
 
 /* ---------- Typography ---------- */
 .bm-ui .label { -fx-text-fill: -bm-ink; }
-.bm-ui .bm-title { -fx-font-family: "Be Vietnam Pro SemiBold"; -fx-font-size: 28px; }
-.bm-ui .bm-h2 { -fx-font-family: "Be Vietnam Pro SemiBold"; -fx-font-size: 20px; }
+.bm-ui .bm-title { -fx-font-family: "Cormorant Garamond SemiBold"; -fx-font-size: 36px; }
+.bm-ui .bm-h2 { -fx-font-family: "Cormorant Garamond SemiBold"; -fx-font-size: 26px; }
+/* Figures next to serif titles: Cormorant has old-style digits (11 looks like "ıı"), so numbers use the body face. */
+.bm-ui .bm-figure { -fx-font-family: "Plus Jakarta Sans SemiBold"; -fx-font-size: 22px; }
 .bm-ui .bm-muted { -fx-text-fill: -bm-muted; }
 .bm-ui .bm-small { -fx-text-fill: -bm-muted; -fx-font-size: 12px; }
-.bm-ui .bm-strong { -fx-font-family: "Be Vietnam Pro SemiBold"; }
-.bm-ui .bm-field-label { -fx-font-family: "Be Vietnam Pro Medium"; }
+.bm-ui .bm-strong { -fx-font-family: "Plus Jakarta Sans SemiBold"; }
+.bm-ui .bm-field-label { -fx-font-family: "Plus Jakarta Sans Medium"; }
 
 /* ---------- Brand: crescent moon ---------- */
 .bm-moon {
@@ -75,7 +79,7 @@
     -fx-background-color: -bm-gold;
     -fx-background-insets: 0;
     -fx-text-fill: -bm-navy;
-    -fx-font-family: "Be Vietnam Pro SemiBold";
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
     -fx-padding: 11 20;
 }
 .bm-ui .button.bm-btn-primary:hover { -fx-background-color: #B8974D; }
@@ -116,7 +120,7 @@
 .bm-ui .bm-badge {
     -fx-background-radius: 999;
     -fx-padding: 4 12;
-    -fx-font-family: "Be Vietnam Pro Medium";
+    -fx-font-family: "Plus Jakarta Sans Medium";
     -fx-font-size: 12px;
     -fx-background-color: #F4ECD6;
     -fx-text-fill: #1F2A44;
@@ -150,7 +154,7 @@
     -fx-padding: 24 48 24 48;
 }
 .bm-login-brand { -fx-padding: 0 0 48 0; }
-.bm-ui .bm-login-brand-name { -fx-text-fill: #FFFDF9; -fx-font-family: "Be Vietnam Pro SemiBold"; -fx-font-size: 28px; }
+.bm-ui .bm-login-brand-name { -fx-text-fill: #FFFDF9; -fx-font-family: "Cormorant Garamond"; -fx-font-weight: bold; -fx-font-size: 44px; }
 .bm-ui .bm-login-brand-text { -fx-text-fill: #E8DCC8; -fx-font-size: 16px; -fx-line-spacing: 4; }
 .bm-ui .bm-login-brand-foot { -fx-text-fill: #ABA595; -fx-font-size: 12px; }
 .bm-ui .bm-login-card {
@@ -168,7 +172,7 @@
     -fx-background-radius: 24;
     -fx-padding: 24 16 20 16;
 }
-.bm-sidebar .bm-brand { -fx-text-fill: #FFFDF9; -fx-font-family: "Be Vietnam Pro SemiBold"; -fx-font-size: 22px; }
+.bm-sidebar .bm-brand { -fx-text-fill: #FFFDF9; -fx-font-family: "Cormorant Garamond"; -fx-font-weight: bold; -fx-font-size: 28px; }
 .bm-sidebar .bm-brand-sub { -fx-text-fill: #ABA595; -fx-font-size: 12px; }
 .bm-nav-scroll, .bm-nav-scroll > .viewport { -fx-background-color: transparent; -fx-background-insets: 0; -fx-padding: 0; }
 .bm-nav-scroll > .scroll-bar:vertical { -fx-background-color: transparent; -fx-pref-width: 6; }
@@ -177,7 +181,7 @@
 .bm-nav-scroll > .scroll-bar .increment-arrow, .bm-nav-scroll > .scroll-bar .decrement-arrow { -fx-shape: " "; -fx-padding: 0; }
 .bm-sidebar .bm-nav-group {
     -fx-text-fill: #ABA595;
-    -fx-font-family: "Be Vietnam Pro Medium";
+    -fx-font-family: "Plus Jakarta Sans Medium";
     -fx-font-size: 12px;
     -fx-padding: 16 14 6 14;
 }
@@ -200,7 +204,7 @@
 .bm-sidebar .button.bm-nav-item:selected {
     -fx-background-color: #C6A75E;
     -fx-text-fill: #1F2A44;
-    -fx-font-family: "Be Vietnam Pro SemiBold";
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
 }
 .bm-sidebar .button.bm-nav-item:selected .bm-icon { -fx-icon-color: #1F2A44; }
 .bm-sidebar .button.bm-nav-item:selected:focused { -fx-border-color: #FFFDF9; }
@@ -213,15 +217,15 @@
     -fx-spacing: 16;
     -fx-alignment: center-left;
 }
-.bm-ui .bm-page-title { -fx-font-family: "Be Vietnam Pro SemiBold"; -fx-font-size: 28px; }
+.bm-ui .bm-page-title { -fx-font-family: "Cormorant Garamond SemiBold"; -fx-font-size: 36px; }
 .bm-ui .bm-breadcrumb { -fx-text-fill: -bm-muted; -fx-font-size: 12px; }
 .bm-avatar {
     -fx-background-color: #F4ECD6;
     -fx-background-radius: 999;
     -fx-min-width: 42; -fx-min-height: 42; -fx-pref-width: 42; -fx-pref-height: 42; -fx-max-width: 42; -fx-max-height: 42;
 }
-.bm-ui .bm-avatar .label { -fx-text-fill: #1F2A44; -fx-font-family: "Be Vietnam Pro SemiBold"; }
-.bm-ui .bm-user-name { -fx-font-family: "Be Vietnam Pro Medium"; }
+.bm-ui .bm-avatar .label { -fx-text-fill: #1F2A44; -fx-font-family: "Plus Jakarta Sans SemiBold"; }
+.bm-ui .bm-user-name { -fx-font-family: "Plus Jakarta Sans Medium"; }
 .bm-ui .bm-user-role { -fx-text-fill: -bm-muted; -fx-font-size: 12px; }
 .bm-ui .bm-user { -fx-background-color: #FFFDF9; -fx-background-radius: 999; -fx-padding: 4 16 4 4; }
 
@@ -255,7 +259,7 @@
 .bm-ui .button.bm-step:hover, .bm-ui .button.bm-tile:hover { -fx-background-color: #E3D6BE, #FFFDF9; -fx-background-insets: 0, 1; }
 .bm-ui .button.bm-step:focused, .bm-ui .button.bm-tile:focused { -fx-background-color: -bm-navy, #FFFDF9; -fx-background-insets: 0, 2; }
 .bm-ui .button.bm-step:disabled { -fx-opacity: 0.5; }
-.bm-ui .bm-step-title, .bm-ui .bm-tile-title { -fx-font-family: "Be Vietnam Pro SemiBold"; -fx-font-size: 16px; }
+.bm-ui .bm-step-title, .bm-ui .bm-tile-title { -fx-font-family: "Cormorant Garamond SemiBold"; -fx-font-size: 22px; }
 .bm-ui .bm-step-desc, .bm-ui .bm-tile-desc { -fx-text-fill: -bm-muted; -fx-font-size: 12px; }
 .bm-ui .bm-step-num { -fx-text-fill: -bm-muted; -fx-font-size: 12px; }
 .bm-ui .bm-chevron { -fx-icon-size: 16; -fx-icon-color: #1F2A44; }
@@ -297,7 +301,7 @@
 .bm-module-host .table-view .filler { -fx-border-color: transparent; }
 .bm-module-host .table-view .column-header .label {
     -fx-text-fill: #F6F1E9;
-    -fx-font-family: "Be Vietnam Pro SemiBold";
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
     -fx-font-size: 14px;
     -fx-padding: 10 14;
     -fx-alignment: center-left;
@@ -305,7 +309,7 @@
 }
 .bm-module-host .table-view .bm-column-title {
     -fx-fill: #F6F1E9;
-    -fx-font-family: "Be Vietnam Pro SemiBold";
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
     -fx-font-size: 14px;
 }
 .bm-module-host .table-view .column-header .arrow { -fx-background-color: #C6A75E; }
@@ -333,7 +337,7 @@
 }
 .bm-module-host .table-row-cell:filled:selected .table-cell { -fx-text-fill: #1F2A44; }
 /* Cell values are drawn by TableFill as wrapping Text (see TableFill.WrappingCell). */
-.bm-module-host .table-view .bm-cell-text { -fx-fill: #1F2A44; -fx-font-family: "Be Vietnam Pro"; -fx-font-size: 14px; }
+.bm-module-host .table-view .bm-cell-text { -fx-fill: #1F2A44; -fx-font-family: "Plus Jakarta Sans"; -fx-font-size: 14px; }
 /* Compact density: TableFill adds .bm-compact only when a table cannot show every column otherwise. */
 .bm-module-host .table-view.bm-compact .table-row-cell .table-cell { -fx-padding: 9 5; }
 .bm-module-host .table-view.bm-compact .bm-cell-text { -fx-font-size: 13px; }
@@ -393,7 +397,7 @@
     -fx-background-color: #C6A75E;
     -fx-background-insets: 0;
     -fx-text-fill: #1F2A44;
-    -fx-font-family: "Be Vietnam Pro SemiBold";
+    -fx-font-family: "Plus Jakarta Sans SemiBold";
 }
 .bm-module-host .button.primary-button:hover,
 .bm-module-host .household-page #createButton:hover,
@@ -424,8 +428,12 @@
 .bm-module-host .combo-box-base > .arrow-button > .arrow { -fx-background-color: #5E584A; }
 .bm-module-host .combo-box .list-cell { -fx-background-color: transparent; -fx-text-fill: #1F2A44; }
 .bm-module-host .page-title,
-.bm-module-host .heading { -fx-text-fill: #1F2A44; -fx-font-family: "Be Vietnam Pro SemiBold"; }
-.bm-module-host .section-title { -fx-text-fill: #1F2A44; -fx-font-family: "Be Vietnam Pro SemiBold"; }
+.bm-module-host .fee-root .page-title,
+.bm-module-host .heading { -fx-text-fill: #1F2A44; -fx-font-family: "Cormorant Garamond SemiBold"; -fx-font-size: 32px; }
+/* Modules also use .section-title for figures (period "2026-11", debt totals); Cormorant's old-style
+ * digits read badly there, so section titles stay in the body face. */
+.bm-module-host .section-title,
+.bm-module-host .fee-root .section-title { -fx-text-fill: #1F2A44; -fx-font-family: "Plus Jakarta Sans SemiBold"; -fx-font-size: 16px; }
 .bm-module-host .form-panel,
 .bm-module-host .fee-root .form-panel {
     -fx-background-color: #FAF5EC;
@@ -436,5 +444,5 @@
 .bm-module-host .form-fields { -fx-background-color: transparent; }
 
 /* ---------- Dialogs ---------- */
-.dialog-pane.bm-ui { -fx-font-family: "Be Vietnam Pro", "Segoe UI", sans-serif; }
+.dialog-pane.bm-ui { -fx-font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif; }
 .dialog-pane.bm-ui > .content.label { -fx-font-size: 14px; -fx-padding: 16 20; }

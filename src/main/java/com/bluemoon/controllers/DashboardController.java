@@ -241,8 +241,10 @@ public final class DashboardController implements AutoCloseable {
     /** Navy card for the current billing period; the button only appears when billing is permitted. */
     private VBox periodCard(ModuleRegistration billing) {
         Region moon = new Region(); moon.getStyleClass().add("bm-moon");
-        Label title = new Label("Kỳ thu " + LocalDate.now().format(DateTimeFormatter.ofPattern("MM/yyyy")));
-        title.getStyleClass().add("bm-h2");
+        Label word = new Label("Kỳ thu"); word.getStyleClass().add("bm-h2");
+        Label period = new Label(LocalDate.now().format(DateTimeFormatter.ofPattern("MM/yyyy")));
+        period.getStyleClass().add("bm-figure");
+        HBox title = new HBox(10, word, period); title.setAlignment(Pos.BASELINE_LEFT);
         Label text = new Label("Lập kỳ thu, tính phí từng căn hộ và chốt hóa đơn cho tháng này.");
         text.getStyleClass().add("bm-muted"); text.setWrapText(true);
         VBox card = new VBox(10, moon, title, text); card.getStyleClass().add("bm-card-dark");
