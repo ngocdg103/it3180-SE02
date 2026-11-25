@@ -35,7 +35,9 @@ public final class ResidentPanelController implements AutoCloseable {
     public ResidentPanelController(ResidentService service, String maHo, Consumer<Boolean> busyChanged) {
         this.service=Objects.requireNonNull(service); this.maHo=Objects.requireNonNull(maHo);
         this.busyChanged=Objects.requireNonNull(busyChanged);
-        table.setId("residentTable"); table.setPrefHeight(220); table.setPlaceholder(new Label("Chưa có nhân khẩu."));
+        table.setId("residentTable"); table.setPrefHeight(220); table.setMinHeight(200);
+        root.setMinHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
+        table.setPlaceholder(new Label("Chưa có nhân khẩu."));
         column("Họ tên",Resident::hoTen); column("Ngày sinh",Resident::ngaySinh);
         column("Giới tính",Resident::gioiTinh); column("CCCD",Resident::soCccd);
         column("Quan hệ",Resident::quanHeChuHo); column("Chuyển đến",Resident::ngayChuyenDen);

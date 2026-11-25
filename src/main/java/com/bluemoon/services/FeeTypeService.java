@@ -17,7 +17,12 @@ public interface FeeTypeService {
 
     FeeTypeResult<FeeType> getFeeType(String maKhoanThu);
 
-    /** AC-01, AC-02, BR-06. Duplicate code returns DUPLICATE with fieldErrors["ma_khoan_thu"]. */
+    /**
+     * AC-01, AC-02, BR-06. Duplicate code returns DUPLICATE with fieldErrors["ma_khoan_thu"].
+     * A positive initial amount requires ngayApDungBanDau (US-006 MySQL DATE range),
+     * an active mandatory category and FEE_RATE_CREATE. Category and INITIAL history commit atomically.
+     * Zero/blank amount creates an unpriced category without a history row; no date is inferred.
+     */
     FeeTypeResult<FeeType> createFeeType(FeeTypeForm form);
 
     /** Declared for the contract; not used by the UI in Iteration 02. ma_khoan_thu is immutable. */

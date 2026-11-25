@@ -92,6 +92,30 @@ class BillingMySqlIT {
         home("P1204", "HK-1204", "80.00", "DANG_O", 4);
     }
 
+    @Test void initialCategoryRateIsUsedByPreviewAndIssuedSnapshotSurvivesRateChanges() throws Exception {
+        var types = new FeeTypeDAO(connections);
+        var auth = com.bluemoon.services.HouseholdTestAuthorization.admin();
+        var categories = new com.bluemoon.services.FeeTypeServiceImpl(types, auth);
+        assertTrue(categories.createFeeType(new com.bluemoon.models.FeeTypeForm("INITIAL_IT", "Initial fee",
+            com.bluemoon.models.FeeKind.BAT_BUOC, com.bluemoon.models.ChargeMethod.THEO_CAN_HO,
+            "7000.50", com.bluemoon.models.FeeStatus.DANG_AP_DUNG, LocalDate.of(2026,11,1))).isSuccess());
+        var rates = new FeeRateDAO(connections);
+        var rateService = new com.bluemoon.services.FeeRateServiceImpl(rates, types, auth);
+        assertTrue(rateService.createRate(new com.bluemoon.models.FeeRateForm("INITIAL_IT", "8000", LocalDate.of(2026,11,2), "After period start")).isSuccess());
+        var preview = service().previewPeriod("2026-11").data().orElseThrow();
+        var line = preview.charges().get(0).lines().stream().filter(l -> l.maKhoanThu().equals("INITIAL_IT")).findFirst().orElseThrow();
+        assertEquals(new BigDecimal("7000.50"), line.donGia());
+        assertEquals(LocalDate.of(2026,11,1), line.ngayApDungGia());
+        assertEquals(SUCCESS, service().generatePeriod("2026-11").status());
+        var issued = service().getInvoice("HD-202611-P1204").data().orElseThrow();
+        assertTrue(rateService.createRate(new com.bluemoon.models.FeeRateForm("INITIAL_IT", "9000", LocalDate.of(2026,10,1), "Backdated later")).isSuccess());
+        assertTrue(rateService.createRate(new com.bluemoon.models.FeeRateForm("INITIAL_IT", "10000", LocalDate.of(2027,1,1), "Future")).isSuccess());
+        assertEquals(issued, service().getInvoice("HD-202611-P1204").data().orElseThrow());
+        assertEquals(issued.lines(), service().previewPeriod("2026-11").data().orElseThrow().charges().get(0).lines());
+        assertEquals(4, rates.findHistory("INITIAL_IT").size());
+        assertEquals(1, rates.findHistory("INITIAL_IT").stream().filter(r -> "INITIAL".equals(r.ghiChu())).count());
+    }
+
     // ---- helpers ----
     private BillingServiceImpl service() { return service(dao); }
 

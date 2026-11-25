@@ -29,7 +29,8 @@ final class ApartmentHistoryPanel implements AutoCloseable {
     ApartmentHistoryPanel(BillingService service, String apartment, Consumer<Boolean> busy) {
         this.service=Objects.requireNonNull(service); this.apartment=Objects.requireNonNull(apartment);
         this.busy=Objects.requireNonNull(busy);
-        table.setId("apartmentHistory"); table.setPrefHeight(220);
+        table.setId("apartmentHistory"); table.setPrefHeight(220); table.setMinHeight(200);
+        root.setMinHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
         table.setPlaceholder(new Label("Chưa có hóa đơn cho căn hộ này."));
         column("Kỳ thu", MonthlyCharge::kyThu);
         column("Mã hóa đơn", MonthlyCharge::maHoaDon);

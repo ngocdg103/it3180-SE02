@@ -114,6 +114,7 @@ public final class BillingController {
     public boolean isDisposed() { return disposed; }
 
     @FXML private void initialize() {
+        lineTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         apartmentColumn.setCellValueFactory(row -> text(row.getValue().soCanHo()));
         householdColumn.setCellValueFactory(row -> text(row.getValue().maHo()));
         areaColumn.setCellValueFactory(row -> text(plain(row.getValue().dienTich())));
