@@ -4,7 +4,7 @@
 <?import javafx.scene.layout.*?>
 <VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.bluemoon.controllers.BillingController" spacing="12"
-      prefWidth="1150" prefHeight="720" styleClass="fee-root" stylesheets="@fee-category.css">
+      prefWidth="1150" prefHeight="720" minHeight="-Infinity" minWidth="-Infinity" styleClass="fee-root" stylesheets="@fee-category.css">
     <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
     <Label text="Lập kỳ thu và tính phí tự động" styleClass="page-title"/>
     <HBox spacing="10" alignment="CENTER_LEFT">
@@ -24,7 +24,7 @@
     <HBox spacing="16" VBox.vgrow="ALWAYS">
         <VBox spacing="8" HBox.hgrow="ALWAYS">
             <Label text="Hóa đơn theo căn hộ" styleClass="section-title"/>
-            <TableView fx:id="chargeTable" VBox.vgrow="ALWAYS">
+            <TableView fx:id="chargeTable" minHeight="200" VBox.vgrow="ALWAYS">
                 <columns>
                     <TableColumn fx:id="apartmentColumn" text="Căn hộ" prefWidth="80"/>
                     <TableColumn fx:id="householdColumn" text="Hộ" prefWidth="90"/>
@@ -40,7 +40,7 @@
         </VBox>
         <VBox spacing="8" prefWidth="420" minWidth="360">
             <Label text="Chi tiết các khoản phí" styleClass="section-title"/>
-            <TableView fx:id="lineTable" prefHeight="220">
+            <TableView fx:id="lineTable" prefHeight="220" minHeight="200" VBox.vgrow="ALWAYS">
                 <columns>
                     <TableColumn fx:id="lineFeeColumn" text="Khoản thu" prefWidth="130"/>
                     <TableColumn fx:id="lineQuantityColumn" text="Số lượng" prefWidth="70"/>
@@ -49,7 +49,7 @@
                 </columns>
             </TableView>
             <Label text="Cảnh báo / hộ không lập / đơn giá áp dụng" styleClass="section-title"/>
-            <ListView fx:id="issuesList" VBox.vgrow="ALWAYS"/>
+            <ListView fx:id="issuesList" prefHeight="130" minHeight="100"/>
         </VBox>
     </HBox>
     <Label fx:id="messageLabel" wrapText="true"/>
