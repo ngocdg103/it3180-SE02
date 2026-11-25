@@ -210,8 +210,8 @@
 /* ---------- Module host: one white background for every module ----------
  * Modules set their own page color (#f4f7fb) in fee-category.css / household.css.
  * Clearing it here keeps them on the shell's white without editing their files. */
-.bm-module-host > .fee-root,
-.bm-module-host > .household-page { -fx-background-color: transparent; }
+.bm-module-host .fee-root,
+.bm-module-host .household-page { -fx-background-color: transparent; }
 
 /* ---------- Dashboard home ---------- */
 .bm-home { -fx-spacing: 28; }
@@ -270,3 +270,179 @@
 /* ---------- Dialogs ---------- */
 .dialog-pane.bm-ui { -fx-font-family: "Be Vietnam Pro", "Segoe UI", sans-serif; }
 .dialog-pane.bm-ui > .content.label { -fx-font-size: 14px; -fx-padding: 16 20; }
+
+/* ---------- Module tables and lists ----------
+ * Applied from the shell to every module table/list (TableView, ListView) without editing module files.
+ * Look only: colors, spacing, type. No heights or scroll policies, so module min/pref heights
+ * (and the Billing/Household layout hotfix) keep working. Column alignment set in code is untouched.
+ * Selection: light blue row + 3px blue bar, text stays dark (7.6:1+). Row text #0F172A on white 17.9:1. */
+.bm-module-host {
+    -fx-selection-bar: #DCE7FE;
+    -fx-selection-bar-non-focused: #E8EEFB;
+    -fx-selection-bar-text: #0F172A;
+}
+.bm-module-host .table-view, .bm-module-host .list-view {
+    -fx-background-color: #E2E8F0, #FFFFFF;
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 10, 9;
+    -fx-padding: 1;
+    -fx-table-cell-border-color: transparent;
+}
+.bm-module-host .table-view:focused, .bm-module-host .list-view:focused {
+    -fx-background-color: #2563EB, #FFFFFF;
+}
+
+/* Header */
+.bm-module-host .table-view .column-header-background {
+    -fx-background-color: #E2E8F0, #F8FAFC;
+    -fx-background-insets: 0, 0 0 1 0;
+    -fx-background-radius: 9 9 0 0, 9 9 0 0;
+}
+.bm-module-host .table-view .column-header,
+.bm-module-host .table-view .filler {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent #E2E8F0 transparent transparent;
+    -fx-border-width: 0 1 0 0;
+    -fx-border-insets: 12 0 12 0;
+    -fx-size: 42;
+}
+.bm-module-host .table-view .filler { -fx-border-color: transparent; }
+.bm-module-host .table-view .column-header .label {
+    -fx-text-fill: #475569;
+    -fx-font-family: "Be Vietnam Pro Medium";
+    -fx-font-size: 12px;
+    -fx-padding: 0 12;
+    -fx-alignment: center-left;
+}
+.bm-module-host .table-view .column-header .arrow { -fx-background-color: #64748B; }
+.bm-module-host .table-view .column-drag-header { -fx-background-color: rgba(37, 99, 235, 0.15); }
+.bm-module-host .table-view .column-overlay { -fx-background-color: rgba(37, 99, 235, 0.08); }
+.bm-module-host .table-view .column-resize-line { -fx-background-color: #2563EB; }
+
+/* Rows: hairline between rows, faint zebra, blue hover/selection */
+.bm-module-host .table-row-cell {
+    -fx-background-color: #EEF2F7, #FFFFFF;
+    -fx-background-insets: 0, 0 0 1 0;
+    -fx-cell-size: 42;
+    -fx-text-fill: #0F172A;
+}
+.bm-module-host .table-row-cell:odd { -fx-background-color: #EEF2F7, #FAFBFD; }
+.bm-module-host .table-row-cell:empty { -fx-background-color: #FFFFFF; }
+.bm-module-host .table-row-cell:filled:hover { -fx-background-color: #EEF2F7, #F1F5FE; }
+.bm-module-host .table-row-cell:filled:selected,
+.bm-module-host .table-view:focused .table-row-cell:filled:focused:selected {
+    -fx-background-color: #EEF2F7, #1D4ED8, #DCE7FE;
+    -fx-background-insets: 0, 0 0 1 0, 0 0 1 3;
+}
+.bm-module-host .table-row-cell .table-cell {
+    -fx-cell-size: 42;
+    -fx-padding: 0 12;
+    -fx-alignment: center-left;  /* column alignment set in code (inline style) still wins */
+    -fx-text-fill: #0F172A;
+    -fx-border-color: transparent;
+}
+.bm-module-host .table-row-cell:filled:selected .table-cell { -fx-text-fill: #0F172A; }
+.bm-module-host .table-view .placeholder .label { -fx-text-fill: #64748B; -fx-font-size: 14px; }
+.bm-module-host .table-view .corner { -fx-background-color: #FFFFFF; }
+
+/* Lists use the same row language */
+.bm-module-host .list-view .list-cell {
+    -fx-background-color: #EEF2F7, #FFFFFF;
+    -fx-background-insets: 0, 0 0 1 0;
+    -fx-padding: 10 12;
+    -fx-text-fill: #0F172A;
+}
+.bm-module-host .list-view .list-cell:empty { -fx-background-color: #FFFFFF; }
+.bm-module-host .list-view .list-cell:filled:hover { -fx-background-color: #EEF2F7, #F1F5FE; }
+.bm-module-host .list-view .list-cell:filled:selected,
+.bm-module-host .list-view:focused .list-cell:filled:focused:selected {
+    -fx-background-color: #EEF2F7, #1D4ED8, #DCE7FE;
+    -fx-background-insets: 0, 0 0 1 0, 0 0 1 3;
+    -fx-text-fill: #0F172A;
+}
+
+/* Slim scrollbars inside tables and lists (arrows hidden; track click and drag still work) */
+.bm-module-host .table-view .scroll-bar,
+.bm-module-host .list-view .scroll-bar { -fx-background-color: transparent; }
+.bm-module-host .table-view .scroll-bar .track,
+.bm-module-host .list-view .scroll-bar .track { -fx-background-color: transparent; -fx-border-color: transparent; }
+.bm-module-host .table-view .scroll-bar .thumb,
+.bm-module-host .list-view .scroll-bar .thumb { -fx-background-color: #CBD5E1; -fx-background-insets: 3; -fx-background-radius: 6; }
+.bm-module-host .table-view .scroll-bar .thumb:hover,
+.bm-module-host .list-view .scroll-bar .thumb:hover { -fx-background-color: #94A3B8; }
+.bm-module-host .table-view .scroll-bar .increment-button,
+.bm-module-host .table-view .scroll-bar .decrement-button,
+.bm-module-host .list-view .scroll-bar .increment-button,
+.bm-module-host .list-view .scroll-bar .decrement-button { -fx-padding: 0 3 0 3; -fx-background-color: transparent; }
+.bm-module-host .table-view .scroll-bar .increment-arrow,
+.bm-module-host .table-view .scroll-bar .decrement-arrow,
+.bm-module-host .list-view .scroll-bar .increment-arrow,
+.bm-module-host .list-view .scroll-bar .decrement-arrow { -fx-shape: " "; -fx-padding: 0; }
+
+/* ---------- Module controls around the tables ----------
+ * Same flat language as the tables. Borders are drawn with background layers (insets), so control
+ * sizes do not change and module layouts stay as their owners built them.
+ * Contrast: control outline #7D8DA3 3.4:1 on white; focus #2563EB 5.2:1. */
+.bm-module-host .button {
+    -fx-background-color: #CBD5E1, #FFFFFF;
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 8, 7;
+    -fx-text-fill: #0F172A;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+}
+.bm-module-host .button:hover { -fx-background-color: #94A3B8, #F6F8FC; }
+.bm-module-host .button:pressed { -fx-background-color: #94A3B8, #EAEFF7; }
+.bm-module-host .button:focused { -fx-background-color: #2563EB, #FFFFFF; -fx-background-insets: 0, 2; }
+.bm-module-host .button:disabled { -fx-opacity: 0.5; }
+
+/* Primary actions: fee modules mark them .primary-button; household forms use create/save ids. */
+.bm-module-host .button.primary-button,
+.bm-module-host .household-page #createButton,
+.bm-module-host .household-page #saveButton {
+    -fx-background-color: #1D4ED8;
+    -fx-background-insets: 0;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-family: "Be Vietnam Pro SemiBold";
+}
+.bm-module-host .button.primary-button:hover,
+.bm-module-host .household-page #createButton:hover,
+.bm-module-host .household-page #saveButton:hover { -fx-background-color: #1E40AF; }
+.bm-module-host .button.primary-button:focused,
+.bm-module-host .household-page #createButton:focused,
+.bm-module-host .household-page #saveButton:focused { -fx-background-color: #93C5FD, #1D4ED8; -fx-background-insets: 0, 2; }
+.bm-module-host .button.primary-button:disabled { -fx-opacity: 0.45; }
+
+.bm-module-host .text-field,
+.bm-module-host .text-area,
+.bm-module-host .combo-box-base {
+    -fx-background-color: #7D8DA3, #FFFFFF;
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 8, 7;
+    -fx-text-fill: #0F172A;
+    -fx-prompt-text-fill: #64748B;
+}
+.bm-module-host .text-field:focused,
+.bm-module-host .text-area:focused,
+.bm-module-host .combo-box-base:focused,
+.bm-module-host .combo-box-base:showing { -fx-background-color: #2563EB, #FFFFFF; -fx-background-insets: 0, 2; }
+.bm-module-host .text-field:disabled,
+.bm-module-host .text-area:disabled,
+.bm-module-host .combo-box-base:disabled { -fx-opacity: 0.55; }
+.bm-module-host .text-area .content { -fx-background-color: transparent; }
+.bm-module-host .date-picker > .text-field { -fx-background-color: transparent; }
+.bm-module-host .combo-box-base > .arrow-button { -fx-background-color: transparent; }
+.bm-module-host .combo-box-base > .arrow-button > .arrow { -fx-background-color: #475569; }
+.bm-module-host .combo-box .list-cell { -fx-background-color: transparent; -fx-text-fill: #0F172A; }
+
+/* Module headings and panels in the shell's type and line colors */
+.bm-module-host .page-title,
+.bm-module-host .heading { -fx-text-fill: #0F172A; -fx-font-family: "Be Vietnam Pro SemiBold"; }
+.bm-module-host .section-title { -fx-text-fill: #0F172A; -fx-font-family: "Be Vietnam Pro SemiBold"; }
+.bm-module-host .form-panel {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E2E8F0;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+}
+.bm-module-host .form-fields { -fx-background-color: transparent; }
