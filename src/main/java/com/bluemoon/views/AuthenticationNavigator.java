@@ -55,7 +55,19 @@ public final class AuthenticationNavigator {
             new RoleBasedAuthorizationService(null), modules);
         show("DashboardView.fxml", dashboard);
     }
+    private static boolean fontsLoaded;
+    /** Bundled Be Vietnam Pro faces (OFL); a missing face falls back to the CSS font list. */
+    private static void loadFonts() {
+        if (fontsLoaded) return;
+        fontsLoaded = true;
+        for (String face : new String[]{"Regular", "Medium", "SemiBold", "Bold"}) {
+            try (var in = AuthenticationNavigator.class.getResourceAsStream("/com/bluemoon/views/fonts/BeVietnamPro-" + face + ".ttf")) {
+                if (in != null) javafx.scene.text.Font.loadFont(in, 14);
+            } catch (IOException ignored) { }
+        }
+    }
     private void show(String name, Object controller) {
+        loadFonts();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/bluemoon/views/" + name));
             loader.setControllerFactory(type -> controller);

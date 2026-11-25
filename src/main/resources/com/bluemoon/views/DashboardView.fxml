@@ -4,18 +4,19 @@
 <BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bluemoon.controllers.DashboardController"
             stylesheets="@bluemoon-theme.css" styleClass="bm-app">
     <left><VBox fx:id="sidebar" styleClass="bm-sidebar, bm-dark" prefWidth="272" minWidth="220">
-        <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 4 8 0 8;">
-            <StackPane styleClass="bm-logo, small"><Label text="B"/></StackPane>
+        <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 4 8 18 8;">
+            <Region styleClass="bm-moon, small"/>
             <VBox>
                 <Label text="BlueMoon" styleClass="bm-brand"/>
-                <Label text="Quản lý chung cư" styleClass="bm-muted" style="-fx-font-size: 12px;"/>
+                <Label text="Quản lý chung cư" styleClass="bm-brand-sub"/>
             </VBox>
         </HBox>
-        <Label text="ĐIỀU HƯỚNG" styleClass="bm-nav-section"/>
-        <!-- Module buttons are appended to moduleMenu by DashboardController (RBAC-filtered). -->
-        <VBox fx:id="moduleMenu" spacing="4">
-            <Button fx:id="homeButton" text="Tổng quan" maxWidth="Infinity" onAction="#showHome" styleClass="bm-nav-item"/>
-        </VBox>
+        <!-- Group headers and module buttons are appended by DashboardController (RBAC-filtered). -->
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS" styleClass="bm-nav-scroll">
+            <content><VBox fx:id="moduleMenu" spacing="4">
+                <Button fx:id="homeButton" text="Tổng quan" maxWidth="Infinity" onAction="#showHome" styleClass="bm-nav-item"/>
+            </VBox></content>
+        </ScrollPane>
     </VBox></left>
     <center><BorderPane>
         <top><HBox styleClass="bm-topbar, bm-dark">

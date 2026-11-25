@@ -7,7 +7,14 @@
  * To migrate a module later: add styleClass "bm-dark" to its root and drop its light stylesheet.
  *
  * Tables: no fixed heights here; min/pref heights and scrolling stay with each module's FXML.
+ *
+ * Type: Be Vietnam Pro (OFL, bundled in fonts/), designed for Vietnamese diacritics.
+ *   Scale 12 / 14 / 16 / 20 / 28. Regular for body, Medium for labels, SemiBold for headings.
+ *   JavaFX exposes the Medium and SemiBold faces as their own families.
+ * Contrast (WCAG AA): text >= 4.5:1, control borders and focus rings >= 3:1 on their background.
  */
+
+/* Fonts are registered by AuthenticationNavigator (Font.loadFont): CSS @font-face fails on paths with spaces. */
 
 /* ---------- Tokens + Modena palette (scoped) ---------- */
 .bm-dark {
@@ -16,16 +23,14 @@
     -bm-surface: #17263B;
     -bm-surface-hover: #1D2F48;
     -bm-input: #0F1A2B;
-    -bm-border: #243650;
-    -bm-border-strong: #33496A;
+    -bm-line: #2C4263;          /* card/divider lines */
+    -bm-control-line: #557299;  /* input borders, 3.5:1 on -bm-input */
     -bm-accent: #22D3EE;
     -bm-accent-2: #2DD4BF;
     -bm-text: #E8F1F8;
     -bm-muted: #94A3B8;
-    -bm-subtle: #64748B;
+    -bm-quiet: #8193AA;         /* small secondary labels, >= 5.4:1 */
     -bm-danger: #F87171;
-    -bm-warning: #FBBF24;
-    -bm-success: #34D399;
 
     -fx-base: #17263B;
     -fx-background: #0B1220;
@@ -46,22 +51,33 @@
 
 .bm-app, .bm-login {
     -fx-background-color: #0B1220;
-    -fx-font-family: "Segoe UI", "Inter", sans-serif;
+    -fx-font-family: "Be Vietnam Pro", "Segoe UI", sans-serif;
     -fx-font-size: 14px;
 }
 
 /* ---------- Typography ---------- */
 .bm-dark .label { -fx-text-fill: -bm-text; }
-.bm-dark .bm-title { -fx-font-size: 24px; -fx-font-weight: bold; }
-.bm-dark .bm-h2 { -fx-font-size: 16px; -fx-font-weight: bold; }
+.bm-dark .bm-display { -fx-font-family: "Be Vietnam Pro SemiBold"; -fx-font-size: 28px; }
+.bm-dark .bm-title { -fx-font-family: "Be Vietnam Pro SemiBold"; -fx-font-size: 28px; }
+.bm-dark .bm-h2 { -fx-font-family: "Be Vietnam Pro SemiBold"; -fx-font-size: 16px; }
 .bm-dark .bm-muted { -fx-text-fill: -bm-muted; }
-.bm-dark .bm-caption { -fx-text-fill: -bm-muted; -fx-font-size: 12px; -fx-font-weight: bold; }
+.bm-dark .bm-field-label { -fx-font-family: "Be Vietnam Pro Medium"; -fx-text-fill: #CBD5E1; -fx-font-size: 14px; }
 .bm-dark .bm-error { -fx-text-fill: -bm-danger; }
+
+/* ---------- Brand: crescent moon ---------- */
+.bm-moon {
+    -fx-shape: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z";
+    -fx-background-color: linear-gradient(to bottom right, #22D3EE, #2DD4BF);
+    -fx-min-width: 38; -fx-min-height: 38; -fx-pref-width: 38; -fx-pref-height: 38; -fx-max-width: 38; -fx-max-height: 38;
+}
+.bm-moon.small { -fx-min-width: 28; -fx-min-height: 28; -fx-pref-width: 28; -fx-pref-height: 28; -fx-max-width: 28; -fx-max-height: 28; }
+.bm-dark .bm-brand { -fx-font-family: "Be Vietnam Pro SemiBold"; -fx-font-size: 20px; }
+.bm-dark .bm-brand-sub { -fx-text-fill: -bm-quiet; -fx-font-size: 12px; }
 
 /* ---------- Buttons ---------- */
 .bm-dark .button {
     -fx-background-color: -bm-surface-hover;
-    -fx-border-color: -bm-border-strong;
+    -fx-border-color: -bm-control-line;
     -fx-border-width: 1;
     -fx-background-radius: 8;
     -fx-border-radius: 8;
@@ -78,50 +94,56 @@
     -fx-background-color: -bm-accent;
     -fx-border-color: transparent;
     -fx-text-fill: #04131D;
-    -fx-font-weight: bold;
+    -fx-font-family: "Be Vietnam Pro SemiBold";
+    -fx-padding: 11 16;
 }
 .bm-dark .button.bm-btn-primary:hover { -fx-background-color: #67E8F9; }
 .bm-dark .button.bm-btn-primary:pressed { -fx-background-color: #06B6D4; }
-.bm-dark .button.bm-btn-primary:focused { -fx-border-color: #E8F1F8; }
+.bm-dark .button.bm-btn-primary:focused { -fx-border-color: #E8F1F8; -fx-border-width: 2; }
 
-.bm-dark .button.bm-btn-ghost { -fx-background-color: transparent; -fx-text-fill: -bm-muted; }
-.bm-dark .button.bm-btn-ghost:hover { -fx-background-color: rgba(248, 113, 113, 0.10); -fx-border-color: #7F3A44; -fx-text-fill: #FCA5A5; }
+.bm-dark .button.bm-btn-ghost { -fx-background-color: transparent; -fx-text-fill: #CBD5E1; -fx-border-color: -bm-line; -fx-graphic-text-gap: 8; }
+.bm-dark .button.bm-btn-ghost:hover { -fx-background-color: rgba(248, 113, 113, 0.10); -fx-border-color: #9B4A55; -fx-text-fill: #FCA5A5; }
 .bm-dark .button.bm-btn-ghost:focused { -fx-border-color: -bm-accent; }
 
 /* ---------- Inputs ---------- */
 .bm-dark .text-field, .bm-dark .password-field, .bm-dark .combo-box, .bm-dark .date-picker > .text-field {
     -fx-background-color: -bm-input;
-    -fx-border-color: -bm-border-strong;
+    -fx-border-color: -bm-control-line;
     -fx-border-width: 1;
     -fx-background-radius: 8;
     -fx-border-radius: 8;
     -fx-text-fill: -bm-text;
     -fx-prompt-text-fill: #7C8BA1;
-    -fx-padding: 9 12;
+    -fx-padding: 10 12;
 }
-.bm-dark .text-field:hover, .bm-dark .password-field:hover, .bm-dark .combo-box:hover { -fx-border-color: #46618A; }
-.bm-dark .text-field:focused, .bm-dark .password-field:focused, .bm-dark .combo-box:focused { -fx-border-color: -bm-accent; }
+.bm-dark .text-field:hover, .bm-dark .password-field:hover, .bm-dark .combo-box:hover { -fx-border-color: #6A88B0; }
+.bm-dark .text-field:focused, .bm-dark .password-field:focused, .bm-dark .combo-box:focused { -fx-border-color: -bm-accent; -fx-border-width: 2; -fx-padding: 9 11; }
 .bm-dark .text-field:disabled, .bm-dark .password-field:disabled, .bm-dark .combo-box:disabled { -fx-opacity: 0.55; }
 
-/* ---------- Cards, KPI, badges ---------- */
+/* ---------- Cards, chips, badges ---------- */
 .bm-dark .bm-card {
     -fx-background-color: -bm-surface;
-    -fx-border-color: -bm-border;
+    -fx-border-color: -bm-line;
     -fx-border-width: 1;
     -fx-background-radius: 12;
     -fx-border-radius: 12;
     -fx-padding: 20;
 }
-.bm-dark .bm-kpi { -fx-padding: 18 20; -fx-spacing: 6; }
-.bm-dark .bm-kpi-value { -fx-font-size: 26px; -fx-font-weight: bold; }
-.bm-dark .bm-kpi-accent { -fx-background-color: -bm-accent; -fx-background-radius: 2; -fx-min-height: 3; -fx-pref-height: 3; -fx-max-height: 3; -fx-pref-width: 28; -fx-max-width: 28; }
-.bm-dark .bm-kpi-accent.teal { -fx-background-color: -bm-accent-2; }
-
+.bm-dark .bm-chip {
+    -fx-background-color: #132137;
+    -fx-border-color: -bm-line;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    -fx-padding: 5 12;
+    -fx-font-family: "Be Vietnam Pro Medium";
+    -fx-font-size: 12px;
+    -fx-text-fill: #CBD5E1;
+}
 .bm-dark .bm-badge {
     -fx-background-radius: 999;
     -fx-padding: 2 10;
+    -fx-font-family: "Be Vietnam Pro Medium";
     -fx-font-size: 12px;
-    -fx-font-weight: bold;
     -fx-background-color: rgba(34, 211, 238, 0.14);
     -fx-text-fill: #67E8F9;
 }
@@ -140,35 +162,32 @@
 }
 .bm-login .bm-login-card {
     -fx-background-color: -bm-surface;
-    -fx-border-color: -bm-border;
+    -fx-border-color: -bm-line;
     -fx-background-radius: 14;
     -fx-border-radius: 14;
-    -fx-padding: 32 32 20 32;
+    -fx-padding: 32 32 12 32;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.45), 28, 0.1, 0, 8);
 }
-.bm-logo {
-    -fx-background-color: linear-gradient(to bottom right, #22D3EE, #2DD4BF);
-    -fx-background-radius: 12;
-    -fx-min-width: 44; -fx-min-height: 44; -fx-pref-width: 44; -fx-pref-height: 44; -fx-max-width: 44; -fx-max-height: 44;
-}
-.bm-logo .label { -fx-text-fill: #04131D; -fx-font-size: 22px; -fx-font-weight: bold; }
-.bm-logo.small { -fx-min-width: 36; -fx-min-height: 36; -fx-pref-width: 36; -fx-pref-height: 36; -fx-max-width: 36; -fx-max-height: 36; -fx-background-radius: 10; }
-.bm-logo.small .label { -fx-font-size: 18px; }
-.bm-dark .bm-brand { -fx-font-size: 22px; -fx-font-weight: bold; }
-.bm-login .bm-login-status { -fx-text-fill: -bm-danger; -fx-font-size: 13px; }
-.bm-login .bm-footer { -fx-text-fill: #64748B; -fx-font-size: 12px; }
+.bm-login .bm-login-status { -fx-text-fill: -bm-danger; -fx-font-size: 14px; }
 
 /* ---------- Shell: sidebar ---------- */
 .bm-sidebar {
     -fx-background-color: -bm-sidebar;
     -fx-border-color: transparent #1E2D44 transparent transparent;
     -fx-border-width: 0 1 0 0;
-    -fx-padding: 20 14 16 14;
-    -fx-spacing: 6;
+    -fx-padding: 22 14 16 14;
 }
-.bm-sidebar .bm-brand { -fx-font-size: 18px; }
-.bm-sidebar .bm-nav-section { -fx-text-fill: #64748B; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 18 12 6 12; }
-
+.bm-nav-scroll, .bm-nav-scroll > .viewport { -fx-background-color: transparent; -fx-background-insets: 0; -fx-padding: 0; }
+.bm-nav-scroll > .scroll-bar:vertical { -fx-background-color: transparent; -fx-pref-width: 6; }
+.bm-nav-scroll > .scroll-bar .thumb { -fx-background-color: #2E4566; -fx-background-radius: 3; }
+.bm-nav-scroll > .scroll-bar .increment-button, .bm-nav-scroll > .scroll-bar .decrement-button { -fx-padding: 0; }
+.bm-nav-scroll > .scroll-bar .increment-arrow, .bm-nav-scroll > .scroll-bar .decrement-arrow { -fx-shape: " "; -fx-padding: 0; }
+.bm-sidebar .bm-nav-group {
+    -fx-text-fill: -bm-quiet;
+    -fx-font-family: "Be Vietnam Pro Medium";
+    -fx-font-size: 12px;
+    -fx-padding: 16 12 4 12;
+}
 .bm-sidebar .button.bm-nav-item {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
@@ -176,17 +195,17 @@
     -fx-border-radius: 8;
     -fx-alignment: center-left;
     -fx-text-fill: #A9B6C8;
-    -fx-padding: 10 12;
+    -fx-padding: 9 12;
     -fx-graphic-text-gap: 12;
     -fx-font-size: 14px;
 }
 .bm-sidebar .button.bm-nav-item:hover { -fx-background-color: #17263B; -fx-text-fill: -bm-text; }
-.bm-sidebar .button.bm-nav-item:focused { -fx-border-color: rgba(34, 211, 238, 0.35); }
+.bm-sidebar .button.bm-nav-item:focused { -fx-border-color: rgba(34, 211, 238, 0.6); }
 .bm-sidebar .button.bm-nav-item:selected {
     -fx-background-color: -bm-accent, #133247;
     -fx-background-insets: 0, 0 0 0 3;
     -fx-text-fill: -bm-text;
-    -fx-font-weight: bold;
+    -fx-font-family: "Be Vietnam Pro Medium";
 }
 .bm-sidebar .button.bm-nav-item:selected .bm-icon,
 .bm-sidebar .button.bm-nav-item:hover .bm-icon { -fx-icon-color: #22D3EE; }
@@ -201,15 +220,17 @@
     -fx-spacing: 16;
     -fx-alignment: center-left;
 }
-.bm-topbar .bm-page-title { -fx-font-size: 18px; -fx-font-weight: bold; }
-.bm-topbar .bm-breadcrumb { -fx-text-fill: #64748B; -fx-font-size: 12px; }
+.bm-topbar .bm-page-title { -fx-font-family: "Be Vietnam Pro SemiBold"; -fx-font-size: 20px; }
+.bm-topbar .bm-breadcrumb { -fx-text-fill: -bm-quiet; -fx-font-size: 12px; }
 .bm-avatar {
-    -fx-background-color: linear-gradient(to bottom right, #22D3EE, #2DD4BF);
+    -fx-background-color: #133247;
+    -fx-border-color: #2E6F86;
     -fx-background-radius: 999;
+    -fx-border-radius: 999;
     -fx-min-width: 36; -fx-min-height: 36; -fx-pref-width: 36; -fx-pref-height: 36; -fx-max-width: 36; -fx-max-height: 36;
 }
-.bm-avatar .label { -fx-text-fill: #04131D; -fx-font-weight: bold; -fx-font-size: 13px; }
-.bm-topbar .bm-user-name { -fx-font-size: 13px; -fx-font-weight: bold; }
+.bm-dark .bm-avatar .label { -fx-text-fill: #22D3EE; -fx-font-family: "Be Vietnam Pro SemiBold"; -fx-font-size: 12px; }
+.bm-topbar .bm-user-name { -fx-font-family: "Be Vietnam Pro Medium"; -fx-font-size: 14px; }
 .bm-topbar .bm-user-role { -fx-text-fill: -bm-muted; -fx-font-size: 12px; }
 
 .bm-content-scroll, .bm-content-scroll > .viewport { -fx-background-color: transparent; -fx-background-insets: 0; -fx-padding: 0; }
@@ -220,7 +241,7 @@
 .bm-content-scroll > .scroll-bar .increment-arrow,
 .bm-content-scroll > .scroll-bar .decrement-arrow { -fx-shape: " "; -fx-padding: 0; }
 .bm-content-scroll > .corner { -fx-background-color: #0E1727; }
-.bm-module-host { -fx-padding: 20 24; }
+.bm-module-host { -fx-padding: 24 28; }
 
 .bm-statusbar {
     -fx-background-color: #0E1727;
@@ -233,20 +254,48 @@
 }
 
 /* ---------- Dashboard home ---------- */
-.bm-home { -fx-spacing: 20; }
+.bm-home { -fx-spacing: 28; }
+
+/* Fee cycle: numbered steps on a track; open layout (no card fill) so it reads as a sequence. */
+.bm-dark .button.bm-step {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-padding: 12 14 14 0;
+    -fx-alignment: top-left;
+    -fx-content-display: graphic-only;
+}
+.bm-dark .button.bm-step:hover { -fx-background-color: #132137; }
+.bm-dark .button.bm-step:focused { -fx-border-color: rgba(34, 211, 238, 0.6); }
+.bm-dark .button.bm-step:disabled { -fx-opacity: 0.45; }
+.bm-dark .bm-step-num {
+    -fx-background-color: #0B1220;
+    -fx-border-color: -bm-accent;
+    -fx-border-width: 1.5;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    -fx-text-fill: -bm-accent;
+    -fx-font-family: "Be Vietnam Pro SemiBold";
+    -fx-font-size: 14px;
+}
+.bm-dark .button.bm-step:hover .bm-step-num { -fx-background-color: -bm-accent; -fx-text-fill: #04131D; }
+.bm-dark .bm-step-track { -fx-background-color: -bm-line; -fx-min-height: 2; -fx-pref-height: 2; -fx-max-height: 2; }
+.bm-dark .bm-step-title { -fx-font-family: "Be Vietnam Pro SemiBold"; -fx-font-size: 16px; }
+.bm-dark .bm-step-desc { -fx-text-fill: -bm-muted; -fx-font-size: 12px; }
+
 .bm-dark .bm-tile {
     -fx-background-color: -bm-surface;
-    -fx-border-color: -bm-border;
+    -fx-border-color: -bm-line;
     -fx-background-radius: 12;
     -fx-border-radius: 12;
-    -fx-padding: 16 18;
+    -fx-padding: 14 18;
     -fx-alignment: center-left;
-    -fx-graphic-text-gap: 14;
-    -fx-content-display: left;
+    -fx-content-display: graphic-only;
 }
-.bm-dark .bm-tile:hover { -fx-background-color: -bm-surface-hover; -fx-border-color: #2E6F86; }
+.bm-dark .bm-tile:hover { -fx-background-color: -bm-surface-hover; -fx-border-color: #3A7E96; }
 .bm-dark .bm-tile:focused { -fx-border-color: -bm-accent; }
-.bm-dark .bm-tile .bm-tile-title { -fx-font-size: 14px; -fx-font-weight: bold; }
+.bm-dark .bm-tile .bm-tile-title { -fx-font-family: "Be Vietnam Pro SemiBold"; -fx-font-size: 14px; }
 .bm-dark .bm-tile .bm-tile-desc { -fx-text-fill: -bm-muted; -fx-font-size: 12px; }
 .bm-dark .bm-icon-chip {
     -fx-background-color: rgba(34, 211, 238, 0.12);
@@ -254,13 +303,13 @@
     -fx-min-width: 40; -fx-min-height: 40; -fx-pref-width: 40; -fx-pref-height: 40; -fx-max-width: 40; -fx-max-height: 40;
 }
 .bm-dark .bm-icon-chip .bm-icon { -fx-icon-color: #22D3EE; -fx-icon-size: 19; }
-.bm-dark .bm-btn-ghost .bm-icon { -fx-icon-size: 15; }
+.bm-dark .bm-btn-ghost .bm-icon { -fx-icon-size: 15; -fx-icon-color: #CBD5E1; }
 .bm-dark .bm-btn-ghost:hover .bm-icon { -fx-icon-color: #FCA5A5; }
 
 /* ---------- Tables (for modules migrated later; heights left to each module) ---------- */
 .bm-dark .table-view {
     -fx-background-color: -bm-surface;
-    -fx-border-color: -bm-border;
+    -fx-border-color: -bm-line;
     -fx-border-width: 1;
     -fx-background-radius: 10;
     -fx-border-radius: 10;
@@ -274,7 +323,7 @@
     -fx-border-width: 0 0 1 0;
     -fx-size: 40;
 }
-.bm-dark .table-view .column-header .label { -fx-text-fill: -bm-muted; -fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 0 10; }
+.bm-dark .table-view .column-header .label { -fx-text-fill: -bm-muted; -fx-font-family: "Be Vietnam Pro Medium"; -fx-font-size: 12px; -fx-padding: 0 10; }
 .bm-dark .table-row-cell { -fx-background-color: -bm-surface; -fx-cell-size: 40; }
 .bm-dark .table-row-cell:odd { -fx-background-color: #152238; }
 .bm-dark .table-row-cell:hover { -fx-background-color: #1D2F48; }
@@ -283,6 +332,6 @@
 .bm-dark .table-view .placeholder .label { -fx-text-fill: -bm-muted; }
 
 /* ---------- Dialogs ---------- */
-.dialog-pane.bm-dark { -fx-background-color: #17263B; -fx-padding: 8; }
+.dialog-pane.bm-dark { -fx-background-color: #17263B; -fx-padding: 8; -fx-font-family: "Be Vietnam Pro", "Segoe UI", sans-serif; }
 .dialog-pane.bm-dark > .content.label { -fx-text-fill: #E8F1F8; -fx-font-size: 14px; -fx-padding: 16 20; }
 .dialog-pane.bm-dark > .button-bar > .container { -fx-padding: 8 12 12 12; }

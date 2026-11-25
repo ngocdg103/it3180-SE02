@@ -5,24 +5,23 @@
       alignment="CENTER" spacing="20" stylesheets="@bluemoon-theme.css" styleClass="bm-login, bm-dark">
     <VBox alignment="CENTER_LEFT" spacing="10" maxWidth="380" styleClass="card, bm-login-card">
         <HBox alignment="CENTER_LEFT" spacing="12">
-            <StackPane styleClass="bm-logo"><Label text="B"/></StackPane>
+            <Region styleClass="bm-moon"/>
             <VBox spacing="0">
                 <Label text="BlueMoon" styleClass="bm-brand"/>
-                <Label text="Hệ thống quản lý chung cư" styleClass="bm-muted"/>
+                <Label text="Quản lý chung cư" styleClass="bm-muted"/>
             </VBox>
         </HBox>
-        <Region minHeight="10"/>
+        <Region minHeight="14"/>
         <Label text="Đăng nhập" styleClass="bm-title"/>
-        <Label text="Sử dụng tài khoản do Ban quản lý cấp." styleClass="bm-muted"/>
-        <Region minHeight="4"/>
-        <Label text="Tên đăng nhập" labelFor="$username" styleClass="bm-caption"/>
-        <TextField fx:id="username" promptText="Nhập tên đăng nhập" onAction="#login"/>
-        <Label text="Mật khẩu" labelFor="$password" styleClass="bm-caption"/>
+        <Label text="Dùng tài khoản do Ban quản lý cấp." styleClass="bm-muted"/>
+        <Region minHeight="6"/>
+        <Label text="Tên đăng nhập" labelFor="$username" styleClass="bm-field-label"/>
+        <TextField fx:id="username" promptText="Ví dụ: ketoan01" onAction="#login"/>
+        <Label text="Mật khẩu" labelFor="$password" styleClass="bm-field-label"/>
         <PasswordField fx:id="password" promptText="Nhập mật khẩu" onAction="#login"/>
-        <Region minHeight="4"/>
+        <Region minHeight="6"/>
         <Button fx:id="loginButton" text="Đăng nhập" onAction="#login" defaultButton="true" maxWidth="Infinity"
                 styleClass="bm-btn-primary"/>
         <Label fx:id="status" wrapText="true" minHeight="52" maxWidth="316" styleClass="status, bm-login-status"/>
     </VBox>
-    <Label text="BlueMoon · IT3180 SE_02" styleClass="bm-footer"/>
 </VBox>

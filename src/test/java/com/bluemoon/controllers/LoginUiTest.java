@@ -140,8 +140,8 @@ class LoginUiTest {
         auth.result = AuthResult.success(ACCOUNT);
         fx(this::submit); settled();
         fx(() -> {
-            assertEquals("Xin chào: Nguyễn An", control("greeting", Label.class).getText());
-            assertEquals("Vai trò: RESIDENT", control("role", Label.class).getText());
+            assertEquals("Nguyễn An", control("greeting", Label.class).getText());
+            assertEquals("Cư dân", control("role", Label.class).getText());
             control("logoutButton", Button.class).fire();
             assertTrue(auth.currentUser().isEmpty());
             assertEquals("", control("password", PasswordField.class).getText());
