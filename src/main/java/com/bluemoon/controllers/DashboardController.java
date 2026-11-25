@@ -138,6 +138,7 @@ public final class DashboardController implements AutoCloseable {
     /** One short fade answers the user's navigation; off with -Dbluemoon.reduceMotion=true. */
     private void show(Node view) {
         moduleContent.getChildren().setAll(view);
+        TableFill.watch(view); // module tables fill their width (presentation only)
         if (REDUCE_MOTION) return;
         FadeTransition fade = new FadeTransition(Duration.millis(140), view);
         fade.setFromValue(0.0); fade.setToValue(1.0); fade.play();

@@ -270,24 +270,30 @@
     -fx-table-cell-border-color: transparent;
 }
 .bm-module-host .table-view:focused, .bm-module-host .list-view:focused { -fx-background-color: #1F2A44, #FFFDF9; }
+/* Header: navy bar with warm-beige SemiBold labels so titles clearly stand above the rows
+ * (#F6F1E9 on #1F2A44 = 12.7:1). Faint separators keep column edges readable. */
 .bm-module-host .table-view .column-header-background {
-    -fx-background-color: #FAF5EC;
+    -fx-background-color: #1F2A44;
     -fx-background-radius: 15 15 0 0;
 }
 .bm-module-host .table-view .column-header,
 .bm-module-host .table-view .filler {
     -fx-background-color: transparent;
-    -fx-border-color: transparent;
-    -fx-size: 44;
+    -fx-border-color: transparent rgba(246, 241, 233, 0.16) transparent transparent;
+    -fx-border-width: 0 1 0 0;
+    -fx-border-insets: 12 0 12 0;
+    -fx-size: 46;
 }
+.bm-module-host .table-view .filler { -fx-border-color: transparent; }
 .bm-module-host .table-view .column-header .label {
-    -fx-text-fill: #5E584A;
-    -fx-font-family: "Be Vietnam Pro Medium";
-    -fx-font-size: 12px;
+    -fx-text-fill: #F6F1E9;
+    -fx-font-family: "Be Vietnam Pro SemiBold";
+    -fx-font-size: 14px;
     -fx-padding: 0 14;
     -fx-alignment: center-left;
 }
-.bm-module-host .table-view .column-header .arrow { -fx-background-color: #5E584A; }
+.bm-module-host .table-view .column-header .arrow { -fx-background-color: #C6A75E; }
+.bm-module-host .table-view .column-header:hover { -fx-background-color: rgba(246, 241, 233, 0.06); }
 .bm-module-host .table-view .column-drag-header { -fx-background-color: rgba(31, 42, 68, 0.12); }
 .bm-module-host .table-view .column-overlay { -fx-background-color: rgba(31, 42, 68, 0.06); }
 .bm-module-host .table-view .column-resize-line { -fx-background-color: #1F2A44; }
