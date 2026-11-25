@@ -3,7 +3,7 @@
 <?import javafx.scene.layout.*?>
 <BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bluemoon.controllers.DashboardController"
             stylesheets="@bluemoon-theme.css" styleClass="bm-app">
-    <left><VBox fx:id="sidebar" styleClass="bm-sidebar, bm-ui" prefWidth="256" minWidth="210">
+    <left><VBox fx:id="sidebar" styleClass="bm-sidebar, bm-ui" prefWidth="236" minWidth="200">
         <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 0 8 20 8;">
             <Region styleClass="bm-moon"/>
             <VBox>

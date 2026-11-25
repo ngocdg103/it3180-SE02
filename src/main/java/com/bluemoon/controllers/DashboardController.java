@@ -74,9 +74,10 @@ public final class DashboardController implements AutoCloseable {
         greeting.setText(account.hoTen());
         role.setText(roleName());
         avatar.setText(initials(account.hoTen()));
-        if (sidebar.getParent() instanceof Region shell) { // narrow window: keep topbar readable
-            sidebar.prefWidthProperty().bind(javafx.beans.binding.Bindings.when(shell.widthProperty().lessThan(960))
-                .then(210.0).otherwise(256.0));
+        if (sidebar.getParent() instanceof Region shell) { // narrow window: sidebar drops to its FXML minWidth
+            double wide = sidebar.getPrefWidth(), narrow = sidebar.getMinWidth();
+            sidebar.prefWidthProperty().bind(javafx.beans.binding.Bindings
+                .when(shell.widthProperty().lessThan(wide * 4)).then(narrow).otherwise(wide));
         }
         // Status bar takes space only while it has something to say.
         shellStatus.managedProperty().bind(shellStatus.textProperty().isNotEmpty());
