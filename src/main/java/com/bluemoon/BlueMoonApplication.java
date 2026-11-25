@@ -20,6 +20,8 @@ public final class BlueMoonApplication extends Application {
         stage.setMinHeight(600);
         stage.setScene(new Scene(new StackPane(status), 720, 600));
         stage.show();
+        // Dev only: live-reload CSS from src/main/resources while styling (mvn javafx:run -Dbluemoon.cssfx=true).
+        if (Boolean.getBoolean("bluemoon.cssfx")) fr.brouillard.oss.cssfx.CSSFX.start(stage);
         // Configuration and AuthService's BCrypt initialization run away from the FX thread.
         Task<Startup> setup = new Task<>() {
             @Override protected Startup call() throws Exception {

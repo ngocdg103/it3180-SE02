@@ -140,8 +140,8 @@ class LoginUiTest {
         auth.result = AuthResult.success(ACCOUNT);
         fx(this::submit); settled();
         fx(() -> {
-            assertEquals("Xin chào: Nguyễn An", control("greeting", Label.class).getText());
-            assertEquals("Vai trò: RESIDENT", control("role", Label.class).getText());
+            assertEquals("Nguyễn An", control("greeting", Label.class).getText());
+            assertEquals("Cư dân", control("role", Label.class).getText());
             control("logoutButton", Button.class).fire();
             assertTrue(auth.currentUser().isEmpty());
             assertEquals("", control("password", PasswordField.class).getText());
@@ -285,10 +285,11 @@ class LoginUiTest {
         var root = scene.getRoot();
         root.applyCss(); root.layout();
         assertEquals(1, root.getStylesheets().size());
-        assertTrue(root.getStylesheets().get(0).endsWith("/auth.css"));
+        assertTrue(root.getStylesheets().get(0).endsWith("/bluemoon-theme.css"));
         assertTrue(scene.getStylesheets().isEmpty(), "Navigation must not append duplicate scene CSS");
-        assertEquals(javafx.scene.paint.Color.WHITE,
-                ((javafx.scene.layout.Region) root.lookup(".card")).getBackground().getFills().get(0).getFill());
+        var surface = dashboard ? root.lookup(".bm-sidebar") : root.lookup(".card");
+        assertEquals(javafx.scene.paint.Color.web(dashboard ? "#1F2A44" : "#FFFDF9"),
+                ((javafx.scene.layout.Region) surface).getBackground().getFills().get(0).getFill());
         for (String id : dashboard ? new String[]{"greeting", "role", "logoutButton"}
                 : new String[]{"username", "password", "loginButton", "status"}) {
             var node = scene.lookup("#" + id);

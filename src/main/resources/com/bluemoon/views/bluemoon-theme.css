@@ -1,0 +1,441 @@
+/*
+ * BlueMoon theme (showcase). Layout language from the team's dashboard reference (UI_ref):
+ * light canvas, borderless rounded cards, floating sidebar with an accent pill, round icon chips,
+ * pill buttons. Colors from the team's palette (UI_ref/pantone.png):
+ *   Navy #1F2A44 (sidebar, ink), Warm Beige #E8DCC8 (canvas tint, chips), Soft Gold #C6A75E (accent).
+ *
+ * Scoping: palette and control overrides live under .bm-ui; module tables/controls are styled
+ * from .bm-module-host without editing module files. No heights or scroll policies are set,
+ * so module min/pref heights (and the Billing/Household layout hotfix) keep working.
+ *
+ * Type (OFL, bundled, listed in fonts/fonts.list): Be Vietnam Pro, scale 12/14/16/20/28.
+ *   The "BlueMoon" wordmark alone uses Cormorant Garamond Bold (larger: small x-height).
+ * Contrast (WCAG AA): navy on card 14.0:1; muted #5E584A on canvas 6.3:1; nav text on navy 9.5:1;
+ *   navy on gold 6.2:1; input outline #8A8272 3.8:1; chip icons >= 4.8:1.
+ *   Gold on the light canvas is only 2.1:1, so focus rings on light surfaces are navy; gold rings only on navy.
+ */
+
+/* ---------- Tokens ---------- */
+.bm-ui {
+    -bm-canvas: #F6F1E9;
+    -bm-card: #FFFDF9;
+    -bm-navy: #1F2A44;
+    -bm-gold: #C6A75E;
+    -bm-ink: #1F2A44;
+    -bm-muted: #5E584A;
+    -bm-soft: #FAF5EC;
+    -bm-line: #EBE2D2;
+    -bm-control-line: #8A8272;
+    -bm-danger: #B42318;
+
+    -fx-accent: #1F2A44;
+    -fx-focus-color: #1F2A44;
+    -fx-faint-focus-color: transparent;
+    -fx-prompt-text-fill: #6B6455;
+}
+
+.bm-app, .bm-login {
+    -fx-background-color: #F6F1E9;
+    -fx-font-family: "Be Vietnam Pro", "Segoe UI", sans-serif;
+    -fx-font-size: 14px;
+}
+
+/* ---------- Typography ---------- */
+.bm-ui .label { -fx-text-fill: -bm-ink; }
+.bm-ui .bm-title { -fx-font-family: "Be Vietnam Pro SemiBold"; -fx-font-size: 28px; }
+.bm-ui .bm-h2 { -fx-font-family: "Be Vietnam Pro SemiBold"; -fx-font-size: 20px; }
+.bm-ui .bm-muted { -fx-text-fill: -bm-muted; }
+.bm-ui .bm-small { -fx-text-fill: -bm-muted; -fx-font-size: 12px; }
+.bm-ui .bm-strong { -fx-font-family: "Be Vietnam Pro SemiBold"; }
+.bm-ui .bm-field-label { -fx-font-family: "Be Vietnam Pro Medium"; }
+
+/* ---------- Brand: crescent moon ---------- */
+.bm-moon {
+    -fx-shape: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z";
+    -fx-background-color: #C6A75E;
+    -fx-min-width: 28; -fx-min-height: 28; -fx-pref-width: 28; -fx-pref-height: 28; -fx-max-width: 28; -fx-max-height: 28;
+}
+.bm-moon.large { -fx-min-width: 52; -fx-min-height: 52; -fx-pref-width: 52; -fx-pref-height: 52; -fx-max-width: 52; -fx-max-height: 52; }
+
+/* ---------- Buttons (pills) ---------- */
+.bm-ui .button {
+    -fx-background-color: #E3D9C6, #FFFDF9;
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 999, 999;
+    -fx-border-color: transparent;
+    -fx-text-fill: -bm-ink;
+    -fx-padding: 9 18;
+    -fx-cursor: hand;
+}
+.bm-ui .button:hover { -fx-background-color: #CFC2A9, -bm-soft; }
+.bm-ui .button:pressed { -fx-background-color: #CFC2A9, #F1E9DA; }
+.bm-ui .button:focused { -fx-background-color: -bm-navy, #FFFDF9; -fx-background-insets: 0, 2; }
+.bm-ui .button:disabled { -fx-opacity: 0.45; }
+
+.bm-ui .button.bm-btn-primary {
+    -fx-background-color: -bm-gold;
+    -fx-background-insets: 0;
+    -fx-text-fill: -bm-navy;
+    -fx-font-family: "Be Vietnam Pro SemiBold";
+    -fx-padding: 11 20;
+}
+.bm-ui .button.bm-btn-primary:hover { -fx-background-color: #B8974D; }
+.bm-ui .button.bm-btn-primary:pressed { -fx-background-color: #A88A43; }
+.bm-ui .button.bm-btn-primary:focused { -fx-background-color: -bm-navy, -bm-gold; -fx-background-insets: 0, 2; }
+
+.bm-ui .button.bm-btn-ghost { -fx-graphic-text-gap: 8; }
+.bm-ui .button.bm-btn-ghost:hover { -fx-background-color: #FCA5A5, #FEF2F2; -fx-text-fill: -bm-danger; }
+
+/* ---------- Inputs ---------- */
+.bm-ui .text-field, .bm-ui .password-field {
+    -fx-background-color: -bm-control-line, #FFFDF9;
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 12, 11;
+    -fx-border-color: transparent;
+    -fx-text-fill: -bm-ink;
+    -fx-prompt-text-fill: #6B6455;
+    -fx-padding: 11 14;
+}
+.bm-ui .text-field:hover, .bm-ui .password-field:hover { -fx-background-color: #5E584A, #FFFDF9; }
+.bm-ui .text-field:focused, .bm-ui .password-field:focused { -fx-background-color: -bm-navy, #FFFDF9; -fx-background-insets: 0, 2; }
+.bm-ui .text-field:disabled, .bm-ui .password-field:disabled { -fx-opacity: 0.55; }
+
+/* ---------- Cards, chips, badges ---------- */
+.bm-ui .bm-card {
+    -fx-background-color: #FFFDF9;
+    -fx-background-radius: 20;
+    -fx-padding: 20;
+}
+.bm-ui .bm-card-dark {
+    -fx-background-color: -bm-navy;
+    -fx-background-radius: 20;
+    -fx-padding: 22;
+}
+.bm-ui .bm-card-dark .label { -fx-text-fill: #FFFDF9; }
+.bm-ui .bm-card-dark .bm-muted { -fx-text-fill: #D9D2C3; }
+
+.bm-ui .bm-badge {
+    -fx-background-radius: 999;
+    -fx-padding: 4 12;
+    -fx-font-family: "Be Vietnam Pro Medium";
+    -fx-font-size: 12px;
+    -fx-background-color: #F4ECD6;
+    -fx-text-fill: #1F2A44;
+}
+.bm-ui .bm-badge.navy { -fx-background-color: #E3E6EE; }
+.bm-ui .bm-badge.beige { -fx-background-color: #EFE6D6; }
+
+/* Icon chips: three tints of the palette (navy, beige, gold), rotated per function */
+.bm-ui .bm-icon-chip {
+    -fx-background-radius: 999;
+    -fx-min-width: 42; -fx-min-height: 42; -fx-pref-width: 42; -fx-pref-height: 42; -fx-max-width: 42; -fx-max-height: 42;
+    -fx-background-color: #E3E6EE;
+}
+.bm-ui .bm-icon-chip .bm-icon { -fx-icon-size: 18; -fx-icon-color: #1F2A44; }
+.bm-ui .bm-icon-chip.navy { -fx-background-color: #E3E6EE; }  .bm-ui .bm-icon-chip.navy .bm-icon { -fx-icon-color: #1F2A44; }
+.bm-ui .bm-icon-chip.beige { -fx-background-color: #EFE6D6; } .bm-ui .bm-icon-chip.beige .bm-icon { -fx-icon-color: #7A5F22; }
+.bm-ui .bm-icon-chip.gold { -fx-background-color: #F4ECD6; }  .bm-ui .bm-icon-chip.gold .bm-icon { -fx-icon-color: #7A5F22; }
+
+/* ---------- Icons (Ikonli Feather) ---------- */
+.bm-icon { -fx-icon-size: 17; -fx-icon-color: #5E584A; }
+
+/* ---------- Login ---------- */
+/* Night sky (navy into the image's sky tone) with the city skyline along the bottom edge.
+ * The skyline asset's top fades out, so it blends into this gradient at any window size. */
+.bm-login {
+    -fx-background-color: linear-gradient(to bottom, #1F2A44 0%, #233656 55%, #29536F 100%);
+    -fx-background-image: url("images/login-skyline.png");
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: center bottom;
+    -fx-background-size: 100% auto;
+    -fx-padding: 24 48 24 48;
+}
+.bm-login-brand { -fx-padding: 0 0 48 0; }
+.bm-ui .bm-login-brand-name { -fx-text-fill: #FFFDF9; -fx-font-family: "Cormorant Garamond"; -fx-font-weight: bold; -fx-font-size: 44px; }
+.bm-ui .bm-login-brand-text { -fx-text-fill: #E8DCC8; -fx-font-size: 16px; -fx-line-spacing: 4; }
+.bm-ui .bm-login-brand-foot { -fx-text-fill: #ABA595; -fx-font-size: 12px; }
+.bm-ui .bm-login-card {
+    -fx-background-color: #FFFDF9;
+    -fx-background-radius: 24;
+    -fx-padding: 36 36 16 36;
+    -fx-effect: dropshadow(gaussian, rgba(10, 16, 30, 0.45), 32, 0.15, 0, 12);
+}
+.bm-ui .bm-login-status { -fx-text-fill: -bm-danger; }
+
+/* ---------- Shell: floating sidebar ---------- */
+.bm-app { -fx-padding: 16; }
+.bm-sidebar {
+    -fx-background-color: #1F2A44;
+    -fx-background-radius: 24;
+    -fx-padding: 24 16 20 16;
+}
+.bm-sidebar .bm-brand { -fx-text-fill: #FFFDF9; -fx-font-family: "Cormorant Garamond"; -fx-font-weight: bold; -fx-font-size: 28px; }
+.bm-sidebar .bm-brand-sub { -fx-text-fill: #ABA595; -fx-font-size: 12px; }
+.bm-nav-scroll, .bm-nav-scroll > .viewport { -fx-background-color: transparent; -fx-background-insets: 0; -fx-padding: 0; }
+.bm-nav-scroll > .scroll-bar:vertical { -fx-background-color: transparent; -fx-pref-width: 6; }
+.bm-nav-scroll > .scroll-bar .thumb { -fx-background-color: rgba(255, 255, 255, 0.25); -fx-background-radius: 3; }
+.bm-nav-scroll > .scroll-bar .increment-button, .bm-nav-scroll > .scroll-bar .decrement-button { -fx-padding: 0; }
+.bm-nav-scroll > .scroll-bar .increment-arrow, .bm-nav-scroll > .scroll-bar .decrement-arrow { -fx-shape: " "; -fx-padding: 0; }
+.bm-sidebar .bm-nav-group {
+    -fx-text-fill: #ABA595;
+    -fx-font-family: "Be Vietnam Pro Medium";
+    -fx-font-size: 12px;
+    -fx-padding: 16 14 6 14;
+}
+.bm-sidebar .button.bm-nav-item {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-background-radius: 999;
+    -fx-border-color: transparent;
+    -fx-border-width: 2;
+    -fx-border-radius: 999;
+    -fx-alignment: center-left;
+    -fx-text-fill: #D9D2C3;
+    -fx-padding: 9 14;
+    -fx-graphic-text-gap: 12;
+}
+.bm-sidebar .button.bm-nav-item .bm-icon { -fx-icon-color: #D9D2C3; }
+.bm-sidebar .button.bm-nav-item:hover { -fx-background-color: rgba(255, 255, 255, 0.08); -fx-text-fill: #FFFDF9; }
+.bm-sidebar .button.bm-nav-item:hover .bm-icon { -fx-icon-color: #FFFDF9; }
+.bm-sidebar .button.bm-nav-item:focused { -fx-border-color: #C6A75E; }
+.bm-sidebar .button.bm-nav-item:selected {
+    -fx-background-color: #C6A75E;
+    -fx-text-fill: #1F2A44;
+    -fx-font-family: "Be Vietnam Pro SemiBold";
+}
+.bm-sidebar .button.bm-nav-item:selected .bm-icon { -fx-icon-color: #1F2A44; }
+.bm-sidebar .button.bm-nav-item:selected:focused { -fx-border-color: #FFFDF9; }
+.bm-sidebar .button.bm-nav-item:disabled { -fx-opacity: 0.5; }
+
+/* ---------- Shell: header row, content ---------- */
+.bm-topbar {
+    -fx-background-color: transparent;
+    -fx-padding: 8 8 16 20;
+    -fx-spacing: 16;
+    -fx-alignment: center-left;
+}
+.bm-ui .bm-page-title { -fx-font-family: "Be Vietnam Pro SemiBold"; -fx-font-size: 28px; }
+.bm-ui .bm-breadcrumb { -fx-text-fill: -bm-muted; -fx-font-size: 12px; }
+.bm-avatar {
+    -fx-background-color: #F4ECD6;
+    -fx-background-radius: 999;
+    -fx-min-width: 42; -fx-min-height: 42; -fx-pref-width: 42; -fx-pref-height: 42; -fx-max-width: 42; -fx-max-height: 42;
+}
+.bm-ui .bm-avatar .label { -fx-text-fill: #1F2A44; -fx-font-family: "Be Vietnam Pro SemiBold"; }
+.bm-ui .bm-user-name { -fx-font-family: "Be Vietnam Pro Medium"; }
+.bm-ui .bm-user-role { -fx-text-fill: -bm-muted; -fx-font-size: 12px; }
+.bm-ui .bm-user { -fx-background-color: #FFFDF9; -fx-background-radius: 999; -fx-padding: 4 16 4 4; }
+
+.bm-content-scroll, .bm-content-scroll > .viewport { -fx-background-color: transparent; -fx-background-insets: 0; -fx-padding: 0; }
+.bm-content-scroll > .scroll-bar { -fx-background-color: transparent; }
+.bm-content-scroll > .scroll-bar .thumb { -fx-background-color: #E3D9C6; -fx-background-radius: 6; -fx-background-insets: 2; }
+.bm-content-scroll > .scroll-bar .increment-button, .bm-content-scroll > .scroll-bar .decrement-button { -fx-padding: 0 2 0 2; }
+.bm-content-scroll > .scroll-bar .increment-arrow, .bm-content-scroll > .scroll-bar .decrement-arrow { -fx-shape: " "; -fx-padding: 0; }
+.bm-content-scroll > .corner { -fx-background-color: transparent; }
+/* Home sits directly on the canvas; a module sits in one large white card. */
+.bm-module-host { -fx-padding: 0 0 0 20; -fx-background-color: transparent; }
+.bm-module-host.bm-in-module { -fx-background-color: #FFFDF9; -fx-background-radius: 24; -fx-background-insets: 0 0 0 20; -fx-padding: 20 20 20 40; }
+
+.bm-statusbar {
+    -fx-background-color: transparent;
+    -fx-padding: 8 0 0 20;
+    -fx-text-fill: #5E584A;
+    -fx-font-size: 12px;
+}
+
+/* ---------- Dashboard home ---------- */
+.bm-home { -fx-spacing: 24; }
+.bm-ui .button.bm-step, .bm-ui .button.bm-tile {
+    -fx-background-color: #FFFDF9;
+    -fx-background-insets: 0;
+    -fx-background-radius: 20;
+    -fx-padding: 18;
+    -fx-alignment: top-left;
+    -fx-content-display: graphic-only;
+}
+.bm-ui .button.bm-step:hover, .bm-ui .button.bm-tile:hover { -fx-background-color: #E3D6BE, #FFFDF9; -fx-background-insets: 0, 1; }
+.bm-ui .button.bm-step:focused, .bm-ui .button.bm-tile:focused { -fx-background-color: -bm-navy, #FFFDF9; -fx-background-insets: 0, 2; }
+.bm-ui .button.bm-step:disabled { -fx-opacity: 0.5; }
+.bm-ui .bm-step-title, .bm-ui .bm-tile-title { -fx-font-family: "Be Vietnam Pro SemiBold"; -fx-font-size: 16px; }
+.bm-ui .bm-step-desc, .bm-ui .bm-tile-desc { -fx-text-fill: -bm-muted; -fx-font-size: 12px; }
+.bm-ui .bm-step-num { -fx-text-fill: -bm-muted; -fx-font-size: 12px; }
+.bm-ui .bm-chevron { -fx-icon-size: 16; -fx-icon-color: #1F2A44; }
+.bm-ui .bm-chevron-box { -fx-background-color: #F6F1E9; -fx-background-radius: 999; -fx-min-width: 30; -fx-min-height: 30; -fx-max-width: 30; -fx-max-height: 30; }
+
+/* Right column: session rows */
+.bm-ui .bm-row { -fx-background-color: #FFFDF9; -fx-background-radius: 16; -fx-padding: 12 14; -fx-spacing: 12; -fx-alignment: center-left; }
+
+/* ---------- Module tables and lists (from the shell; module files untouched) ---------- */
+.bm-module-host {
+    -fx-selection-bar: #F4ECD6;
+    -fx-selection-bar-non-focused: #F8F2E3;
+    -fx-selection-bar-text: #1F2A44;
+}
+.bm-module-host .fee-root,
+.bm-module-host .household-page { -fx-background-color: transparent; }
+.bm-module-host .table-view, .bm-module-host .list-view {
+    -fx-background-color: #EBE2D2, #FFFDF9;
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 16, 15;
+    -fx-padding: 1;
+    -fx-table-cell-border-color: transparent;
+}
+.bm-module-host .table-view:focused, .bm-module-host .list-view:focused { -fx-background-color: #1F2A44, #FFFDF9; }
+/* Header: navy bar with warm-beige SemiBold labels so titles clearly stand above the rows
+ * (#F6F1E9 on #1F2A44 = 12.7:1). Faint separators keep column edges readable. */
+.bm-module-host .table-view .column-header-background {
+    -fx-background-color: #1F2A44;
+    -fx-background-radius: 15 15 0 0;
+}
+.bm-module-host .table-view .column-header,
+.bm-module-host .table-view .filler {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent rgba(246, 241, 233, 0.16) transparent transparent;
+    -fx-border-width: 0 1 0 0;
+    -fx-border-insets: 12 0 12 0;
+    -fx-size: 46;
+}
+.bm-module-host .table-view .filler { -fx-border-color: transparent; }
+.bm-module-host .table-view .column-header .label {
+    -fx-text-fill: #F6F1E9;
+    -fx-font-family: "Be Vietnam Pro SemiBold";
+    -fx-font-size: 14px;
+    -fx-padding: 10 14;
+    -fx-alignment: center-left;
+    -fx-content-display: graphic-only;   /* TableFill shows the title as a wrapping Text graphic */
+}
+.bm-module-host .table-view .bm-column-title {
+    -fx-fill: #F6F1E9;
+    -fx-font-family: "Be Vietnam Pro SemiBold";
+    -fx-font-size: 14px;
+}
+.bm-module-host .table-view .column-header .arrow { -fx-background-color: #C6A75E; }
+.bm-module-host .table-view .column-header:hover { -fx-background-color: rgba(246, 241, 233, 0.06); }
+.bm-module-host .table-view .column-drag-header { -fx-background-color: rgba(31, 42, 68, 0.12); }
+.bm-module-host .table-view .column-overlay { -fx-background-color: rgba(31, 42, 68, 0.06); }
+.bm-module-host .table-view .column-resize-line { -fx-background-color: #1F2A44; }
+.bm-module-host .table-row-cell {
+    -fx-background-color: #F1EADF, #FFFDF9;
+    -fx-background-insets: 0, 0 0 1 0;
+    -fx-text-fill: #1F2A44;
+}
+.bm-module-host .table-row-cell:empty { -fx-background-color: #FFFDF9; }
+.bm-module-host .table-row-cell:filled:hover { -fx-background-color: #F1EADF, #FBF7F0; }
+.bm-module-host .table-row-cell:filled:selected,
+.bm-module-host .table-view:focused .table-row-cell:filled:focused:selected {
+    -fx-background-color: #F1EADF, #1F2A44, #F4ECD6;
+    -fx-background-insets: 0, 0 0 1 0, 0 0 1 3;
+}
+.bm-module-host .table-row-cell .table-cell {
+    -fx-padding: 12 14;
+    -fx-text-fill: #1F2A44;
+    -fx-border-color: transparent;
+    -fx-alignment: center-left;  /* column alignment set in code (inline style) still wins */
+}
+.bm-module-host .table-row-cell:filled:selected .table-cell { -fx-text-fill: #1F2A44; }
+/* Cell values are drawn by TableFill as wrapping Text (see TableFill.WrappingCell). */
+.bm-module-host .table-view .bm-cell-text { -fx-fill: #1F2A44; -fx-font-family: "Be Vietnam Pro"; -fx-font-size: 14px; }
+/* Compact density: TableFill adds .bm-compact only when a table cannot show every column otherwise. */
+.bm-module-host .table-view.bm-compact .table-row-cell .table-cell { -fx-padding: 9 5; }
+.bm-module-host .table-view.bm-compact .bm-cell-text { -fx-font-size: 13px; }
+.bm-module-host .table-view.bm-compact .column-header .label { -fx-padding: 8 5; }
+.bm-module-host .table-view.bm-compact .bm-column-title { -fx-font-size: 13px; }
+.bm-module-host .table-view .placeholder .label { -fx-text-fill: #5E584A; -fx-font-size: 14px; }
+.bm-module-host .table-view .corner { -fx-background-color: #FFFDF9; }
+.bm-module-host .list-view .list-cell {
+    -fx-background-color: #F1EADF, #FFFDF9;
+    -fx-background-insets: 0, 0 0 1 0;
+    -fx-padding: 11 14;
+    -fx-wrap-text: true;   /* long list entries wrap inside the list width instead of being cut */
+    -fx-pref-width: 0;     /* lets the list size cells to its own width so wrapping can happen */
+    -fx-text-fill: #1F2A44;
+}
+.bm-module-host .list-view .list-cell:empty { -fx-background-color: #FFFDF9; }
+.bm-module-host .list-view .list-cell:filled:hover { -fx-background-color: #F1EADF, #FBF7F0; }
+.bm-module-host .list-view .list-cell:filled:selected,
+.bm-module-host .list-view:focused .list-cell:filled:focused:selected {
+    -fx-background-color: #F1EADF, #1F2A44, #F4ECD6;
+    -fx-background-insets: 0, 0 0 1 0, 0 0 1 3;
+    -fx-text-fill: #1F2A44;
+}
+.bm-module-host .table-view .scroll-bar,
+.bm-module-host .list-view .scroll-bar { -fx-background-color: transparent; }
+.bm-module-host .table-view .scroll-bar .track,
+.bm-module-host .list-view .scroll-bar .track { -fx-background-color: transparent; -fx-border-color: transparent; }
+.bm-module-host .table-view .scroll-bar .thumb,
+.bm-module-host .list-view .scroll-bar .thumb { -fx-background-color: #E3D9C6; -fx-background-insets: 3; -fx-background-radius: 6; }
+.bm-module-host .table-view .scroll-bar .thumb:hover,
+.bm-module-host .list-view .scroll-bar .thumb:hover { -fx-background-color: #ABA595; }
+.bm-module-host .table-view .scroll-bar .increment-button,
+.bm-module-host .table-view .scroll-bar .decrement-button,
+.bm-module-host .list-view .scroll-bar .increment-button,
+.bm-module-host .list-view .scroll-bar .decrement-button { -fx-padding: 0 3 0 3; -fx-background-color: transparent; }
+.bm-module-host .table-view .scroll-bar .increment-arrow,
+.bm-module-host .table-view .scroll-bar .decrement-arrow,
+.bm-module-host .list-view .scroll-bar .increment-arrow,
+.bm-module-host .list-view .scroll-bar .decrement-arrow { -fx-shape: " "; -fx-padding: 0; }
+
+/* ---------- Module controls (pills; borders are background layers, sizes unchanged) ---------- */
+.bm-module-host .button {
+    -fx-background-color: #E3D9C6, #FFFDF9;
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 999, 999;
+    -fx-text-fill: #1F2A44;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+}
+.bm-module-host .button:hover { -fx-background-color: #CFC2A9, #FAF5EC; }
+.bm-module-host .button:pressed { -fx-background-color: #CFC2A9, #F1E9DA; }
+.bm-module-host .button:focused { -fx-background-color: #1F2A44, #FFFDF9; -fx-background-insets: 0, 2; }
+.bm-module-host .button:disabled { -fx-opacity: 0.5; }
+.bm-module-host .button.primary-button,
+.bm-module-host .household-page #createButton,
+.bm-module-host .household-page #saveButton {
+    -fx-background-color: #C6A75E;
+    -fx-background-insets: 0;
+    -fx-text-fill: #1F2A44;
+    -fx-font-family: "Be Vietnam Pro SemiBold";
+}
+.bm-module-host .button.primary-button:hover,
+.bm-module-host .household-page #createButton:hover,
+.bm-module-host .household-page #saveButton:hover { -fx-background-color: #B8974D; }
+.bm-module-host .button.primary-button:focused,
+.bm-module-host .household-page #createButton:focused,
+.bm-module-host .household-page #saveButton:focused { -fx-background-color: #1F2A44, #C6A75E; -fx-background-insets: 0, 2; }
+.bm-module-host .button.primary-button:disabled { -fx-opacity: 0.45; }
+.bm-module-host .text-field,
+.bm-module-host .text-area,
+.bm-module-host .combo-box-base {
+    -fx-background-color: #8A8272, #FFFDF9;
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 12, 11;
+    -fx-text-fill: #1F2A44;
+    -fx-prompt-text-fill: #6B6455;
+}
+.bm-module-host .text-field:focused,
+.bm-module-host .text-area:focused,
+.bm-module-host .combo-box-base:focused,
+.bm-module-host .combo-box-base:showing { -fx-background-color: #1F2A44, #FFFDF9; -fx-background-insets: 0, 2; }
+.bm-module-host .text-field:disabled,
+.bm-module-host .text-area:disabled,
+.bm-module-host .combo-box-base:disabled { -fx-opacity: 0.55; }
+.bm-module-host .text-area .content { -fx-background-color: transparent; }
+.bm-module-host .date-picker > .text-field { -fx-background-color: transparent; }
+.bm-module-host .combo-box-base > .arrow-button { -fx-background-color: transparent; }
+.bm-module-host .combo-box-base > .arrow-button > .arrow { -fx-background-color: #5E584A; }
+.bm-module-host .combo-box .list-cell { -fx-background-color: transparent; -fx-text-fill: #1F2A44; }
+.bm-module-host .page-title,
+.bm-module-host .heading { -fx-text-fill: #1F2A44; -fx-font-family: "Be Vietnam Pro SemiBold"; }
+.bm-module-host .section-title { -fx-text-fill: #1F2A44; -fx-font-family: "Be Vietnam Pro SemiBold"; }
+.bm-module-host .form-panel,
+.bm-module-host .fee-root .form-panel {
+    -fx-background-color: #FAF5EC;
+    -fx-border-color: transparent;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+}
+.bm-module-host .form-fields { -fx-background-color: transparent; }
+
+/* ---------- Dialogs ---------- */
+.dialog-pane.bm-ui { -fx-font-family: "Be Vietnam Pro", "Segoe UI", sans-serif; }
+.dialog-pane.bm-ui > .content.label { -fx-font-size: 14px; -fx-padding: 16 20; }

@@ -1,0 +1,8 @@
+# Bundled font files registered at startup (one per line, relative to this folder).
+# Body and titles: Be Vietnam Pro (OFL-BeVietnamPro.txt).
+# Brand wordmark "BlueMoon" only: Cormorant Garamond Bold (OFL-CormorantGaramond.txt).
+BeVietnamPro-Regular.ttf
+BeVietnamPro-Medium.ttf
+BeVietnamPro-SemiBold.ttf
+BeVietnamPro-Bold.ttf
+CormorantGaramond-Bold.ttf
