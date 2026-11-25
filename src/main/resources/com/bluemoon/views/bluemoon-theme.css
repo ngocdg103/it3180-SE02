@@ -139,16 +139,26 @@
 .bm-icon { -fx-icon-size: 17; -fx-icon-color: #5E584A; }
 
 /* ---------- Login ---------- */
-.bm-login { -fx-padding: 16; -fx-spacing: 16; }
-.bm-login-brand {
-    -fx-background-color: #1F2A44;
-    -fx-background-radius: 24;
-    -fx-padding: 44 36 32 36;
+/* Night sky (navy into the image's sky tone) with the city skyline along the bottom edge.
+ * The skyline asset's top fades out, so it blends into this gradient at any window size. */
+.bm-login {
+    -fx-background-color: linear-gradient(to bottom, #1F2A44 0%, #233656 55%, #29536F 100%);
+    -fx-background-image: url("images/login-skyline.png");
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: center bottom;
+    -fx-background-size: 100% auto;
+    -fx-padding: 24 48 24 48;
 }
+.bm-login-brand { -fx-padding: 0 0 48 0; }
 .bm-ui .bm-login-brand-name { -fx-text-fill: #FFFDF9; -fx-font-family: "Be Vietnam Pro SemiBold"; -fx-font-size: 28px; }
-.bm-ui .bm-login-brand-text { -fx-text-fill: #D9D2C3; -fx-font-size: 16px; -fx-line-spacing: 4; }
+.bm-ui .bm-login-brand-text { -fx-text-fill: #E8DCC8; -fx-font-size: 16px; -fx-line-spacing: 4; }
 .bm-ui .bm-login-brand-foot { -fx-text-fill: #ABA595; -fx-font-size: 12px; }
-.bm-ui .bm-login-card { -fx-background-color: #FFFDF9; -fx-background-radius: 24; -fx-padding: 36 36 16 36; }
+.bm-ui .bm-login-card {
+    -fx-background-color: #FFFDF9;
+    -fx-background-radius: 24;
+    -fx-padding: 36 36 16 36;
+    -fx-effect: dropshadow(gaussian, rgba(10, 16, 30, 0.45), 32, 0.15, 0, 12);
+}
 .bm-ui .bm-login-status { -fx-text-fill: -bm-danger; }
 
 /* ---------- Shell: floating sidebar ---------- */
