@@ -155,7 +155,7 @@ public final class DashboardController implements AutoCloseable {
             chip(allowed.size() + "/" + modules.size() + " chức năng được cấp"));
         VBox header = new VBox(4, hello, date);
         VBox home = new VBox(header, context);
-        home.getStyleClass().addAll("bm-home", "bm-dark");
+        home.getStyleClass().addAll("bm-home", "bm-ui");
 
         if (allowed.isEmpty()) {
             Label empty = new Label("Tài khoản này chưa được cấp chức năng quản lý nào. Liên hệ Ban quản lý để được phân quyền.");

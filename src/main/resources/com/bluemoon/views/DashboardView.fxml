@@ -3,7 +3,7 @@
 <?import javafx.scene.layout.*?>
 <BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bluemoon.controllers.DashboardController"
             stylesheets="@bluemoon-theme.css" styleClass="bm-app">
-    <left><VBox fx:id="sidebar" styleClass="bm-sidebar, bm-dark" prefWidth="272" minWidth="220">
+    <left><VBox fx:id="sidebar" styleClass="bm-sidebar, bm-ui" prefWidth="272" minWidth="220">
         <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 4 8 18 8;">
             <Region styleClass="bm-moon, small"/>
             <VBox>
@@ -19,7 +19,7 @@
         </ScrollPane>
     </VBox></left>
     <center><BorderPane>
-        <top><HBox styleClass="bm-topbar, bm-dark">
+        <top><HBox styleClass="bm-topbar, bm-ui">
             <VBox spacing="1" HBox.hgrow="ALWAYS" minWidth="0">
                 <Label text="BlueMoon / Bảng điều khiển" styleClass="bm-breadcrumb"/>
                 <Label fx:id="pageTitle" text="Tổng quan" styleClass="bm-page-title"/>

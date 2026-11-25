@@ -1,27 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<VBox xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bluemoon.controllers.LoginController"
-      alignment="CENTER" spacing="20" stylesheets="@bluemoon-theme.css" styleClass="bm-login, bm-dark">
-    <VBox alignment="CENTER_LEFT" spacing="10" maxWidth="380" styleClass="card, bm-login-card">
-        <HBox alignment="CENTER_LEFT" spacing="12">
-            <Region styleClass="bm-moon"/>
-            <VBox spacing="0">
-                <Label text="BlueMoon" styleClass="bm-brand"/>
-                <Label text="Quản lý chung cư" styleClass="bm-muted"/>
-            </VBox>
-        </HBox>
-        <Region minHeight="14"/>
-        <Label text="Đăng nhập" styleClass="bm-title"/>
-        <Label text="Dùng tài khoản do Ban quản lý cấp." styleClass="bm-muted"/>
-        <Region minHeight="6"/>
-        <Label text="Tên đăng nhập" labelFor="$username" styleClass="bm-field-label"/>
-        <TextField fx:id="username" promptText="Ví dụ: ketoan01" onAction="#login"/>
-        <Label text="Mật khẩu" labelFor="$password" styleClass="bm-field-label"/>
-        <PasswordField fx:id="password" promptText="Nhập mật khẩu" onAction="#login"/>
-        <Region minHeight="6"/>
-        <Button fx:id="loginButton" text="Đăng nhập" onAction="#login" defaultButton="true" maxWidth="Infinity"
-                styleClass="bm-btn-primary"/>
-        <Label fx:id="status" wrapText="true" minHeight="52" maxWidth="316" styleClass="status, bm-login-status"/>
+<HBox xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bluemoon.controllers.LoginController"
+      stylesheets="@bluemoon-theme.css" styleClass="bm-login, bm-ui">
+    <!-- Blue brand panel mirrors the dashboard sidebar; the form sits on the shared white background. -->
+    <VBox styleClass="bm-login-brand" prefWidth="320" minWidth="240" spacing="14">
+        <Region styleClass="bm-moon, large"/>
+        <Label text="BlueMoon" styleClass="bm-login-brand-name"/>
+        <Label text="Quản lý hồ sơ cư dân và thu phí cho chung cư BlueMoon." wrapText="true" styleClass="bm-login-brand-text"/>
+        <Region VBox.vgrow="ALWAYS"/>
+        <Label text="Ban quản lý chung cư BlueMoon" styleClass="bm-login-brand-foot"/>
     </VBox>
-</VBox>
+    <StackPane HBox.hgrow="ALWAYS" styleClass="bm-login-main">
+        <VBox alignment="CENTER_LEFT" spacing="10" maxWidth="380" maxHeight="-Infinity" styleClass="card, bm-login-card">
+            <Label text="Đăng nhập" styleClass="bm-title"/>
+            <Label text="Dùng tài khoản do Ban quản lý cấp." styleClass="bm-muted"/>
+            <Region minHeight="10"/>
+            <Label text="Tên đăng nhập" labelFor="$username" styleClass="bm-field-label"/>
+            <TextField fx:id="username" promptText="Ví dụ: ketoan01" onAction="#login"/>
+            <Label text="Mật khẩu" labelFor="$password" styleClass="bm-field-label"/>
+            <PasswordField fx:id="password" promptText="Nhập mật khẩu" onAction="#login"/>
+            <Region minHeight="6"/>
+            <Button fx:id="loginButton" text="Đăng nhập" onAction="#login" defaultButton="true" maxWidth="Infinity"
+                    styleClass="bm-btn-primary"/>
+            <Label fx:id="status" wrapText="true" minHeight="52" maxWidth="316" styleClass="status, bm-login-status"/>
+        </VBox>
+    </StackPane>
+</HBox>

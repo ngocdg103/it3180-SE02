@@ -76,7 +76,7 @@ public final class LoginController {
                     var theme = LoginController.class.getResource("/com/bluemoon/views/bluemoon-theme.css");
                     if (theme != null) {
                         warning.getDialogPane().getStylesheets().add(theme.toExternalForm());
-                        warning.getDialogPane().getStyleClass().add("bm-dark");
+                        warning.getDialogPane().getStyleClass().add("bm-ui");
                     }
                     warning.show();
                 }
