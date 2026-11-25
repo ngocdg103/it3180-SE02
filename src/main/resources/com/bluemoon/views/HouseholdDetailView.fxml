@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<VBox xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bluemoon.controllers.HouseholdDetailController" spacing="20" stylesheets="@household.css" styleClass="household-page">
+<VBox xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bluemoon.controllers.HouseholdDetailController" spacing="20" minHeight="-Infinity" minWidth="-Infinity" stylesheets="@household.css" styleClass="household-page">
  <Label fx:id="title" text="Chi tiết hồ sơ hộ/căn hộ" styleClass="heading"/>
- <GridPane hgap="32" vgap="22" VBox.vgrow="ALWAYS">
+ <GridPane hgap="32" vgap="22">
  <columnConstraints><ColumnConstraints minWidth="155"/><ColumnConstraints hgrow="ALWAYS"/></columnConstraints>
 <Label text="Số căn hộ" GridPane.rowIndex="0"/><Label fx:id="soCanHo" wrapText="true" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
 <Label text="Mã hộ" GridPane.rowIndex="1"/><Label fx:id="householdCode" wrapText="true" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
@@ -12,8 +12,8 @@
 <Label text="Ngày nhận nhà" GridPane.rowIndex="4"/><Label fx:id="ngayNhanNha" wrapText="true" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
 <Label text="Trạng thái" GridPane.rowIndex="5"/><Label fx:id="trangThai" wrapText="true" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
  </GridPane>
- <VBox fx:id="residentContent" spacing="10"/>
- <VBox fx:id="historyContent" spacing="10"/>
+ <VBox fx:id="residentContent" spacing="10" minHeight="-Infinity"/>
+ <VBox fx:id="historyContent" spacing="10" minHeight="-Infinity"/>
  <HBox spacing="12"><ProgressIndicator fx:id="progress" visible="false" managed="false" prefWidth="24" prefHeight="24"/><Label fx:id="message" wrapText="true"/></HBox>
  <HBox spacing="12"><Button fx:id="editButton" text="Cập nhật" onAction="#edit" disable="true"/><Button fx:id="backButton" text="Quay lại" onAction="#back"/></HBox>
 </VBox>
