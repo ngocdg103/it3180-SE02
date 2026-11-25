@@ -106,6 +106,8 @@ public final class FeeCategoryController {
     @FXML private ComboBox<FeeKind> kindBox;
     @FXML private ComboBox<ChargeMethod> methodBox;
     @FXML private TextField amountField;
+    @FXML private javafx.scene.control.DatePicker initialRateDate;
+    @FXML private Label initialDateLabel, initialDateError;
     @FXML private ComboBox<FeeStatus> statusBox;
     @FXML private Label codeError;
     @FXML private Label nameError;
@@ -196,6 +198,7 @@ public final class FeeCategoryController {
         editFeeButton.setOnAction(event -> editSelected());
         deactivateFeeButton.setOnAction(event -> deactivateSelected());
         feeTable.getSelectionModel().selectedItemProperty().addListener((o,old,value) -> updateActions());
+        initialRateDate.setEditable(false);
         resetForm();
         reload();
     }
@@ -246,11 +249,13 @@ public final class FeeCategoryController {
         if (contribution) {
             methodBox.getSelectionModel().select(ChargeMethod.TU_NGUYEN);
             amountField.setText("0");
+            initialRateDate.setValue(null); initialRateDate.getEditor().clear();
         } else if (old == FeeKind.DONG_GOP) {
             amountField.clear();
         }
         methodBox.setDisable(contribution || denied);
         amountField.setDisable(contribution || denied);
+        initialRateDate.setDisable(contribution || denied || editingCode != null);
     }
 
     private void resetForm() {
@@ -261,6 +266,11 @@ public final class FeeCategoryController {
         methodBox.setItems(FXCollections.observableArrayList());
         methodBox.getSelectionModel().clearSelection();
         amountField.clear();
+        initialRateDate.setValue(null); initialRateDate.getEditor().clear();
+        initialRateDate.setDisable(denied);
+        initialRateDate.setVisible(true); initialRateDate.setManaged(true);
+        initialDateLabel.setVisible(true); initialDateLabel.setManaged(true);
+        initialDateError.setVisible(true); initialDateError.setManaged(true);
         statusBox.getSelectionModel().select(FeeStatus.DANG_AP_DUNG); // default for a new fee type
         methodBox.setDisable(denied);
         amountField.setDisable(denied);
@@ -279,6 +289,9 @@ public final class FeeCategoryController {
         if(saving || pending>0 || disposed || !canUpdate()) return;
         var selected=feeTable.getSelectionModel().getSelectedItem(); if(selected==null)return;
         resetForm(); editingCode=selected.maKhoanThu(); editingStatus=selected.trangThai();
+        initialRateDate.setDisable(true); initialRateDate.setVisible(false); initialRateDate.setManaged(false);
+        initialDateLabel.setVisible(false); initialDateLabel.setManaged(false);
+        initialDateError.setVisible(false); initialDateError.setManaged(false);
         codeField.setText(editingCode); codeField.setEditable(false); nameField.setText(selected.tenKhoanThu());
         kindBox.setValue(selected.loai()); methodBox.setValue(selected.hinhThuc()); amountField.setText(selected.soTienMacDinh().toPlainString()); statusBox.setValue(selected.trangThai());
         formTitle.setText("Sửa khoản thu "+editingCode); saveButton.setText("Lưu thay đổi");
@@ -310,7 +323,8 @@ public final class FeeCategoryController {
         if(editingCode!=null && !canUpdate()) { showMessage(MSG_DENIED,true); return; }
         clearErrors();
         showMessage("", false);
-        FeeTypeForm form = readForm();
+        FeeTypeForm form = readForm(editingCode == null && kindBox.getValue() != FeeKind.DONG_GOP
+                ? initialRateDate.getValue() : null);
         Map<String, String> errors = validate(form);
         if (!errors.isEmpty()) { showFieldErrors(errors); return; }
         String code=editingCode;
@@ -319,12 +333,12 @@ public final class FeeCategoryController {
         else submit.run();
     }
 
-    private FeeTypeForm readForm() {
+    private FeeTypeForm readForm(java.time.LocalDate initialDate) {
         FeeKind kind = kindBox.getValue();
         String amount = kind == FeeKind.DONG_GOP ? "0" : text(amountField);
         if (kind == FeeKind.BAT_BUOC && amount.isEmpty()) { amount = "0"; } // not yet priced; US-006 sets the rate
         ChargeMethod method = kind == FeeKind.DONG_GOP ? ChargeMethod.TU_NGUYEN : methodBox.getValue();
-        return new FeeTypeForm(text(codeField), text(nameField), kind, method, amount, statusBox.getValue());
+        return new FeeTypeForm(text(codeField), text(nameField), kind, method, amount, statusBox.getValue(), initialDate);
     }
 
     /** UI-side checks only (same SRS rules); the Service validates independently. */
@@ -379,7 +393,7 @@ public final class FeeCategoryController {
     private void denyAccess() {
         denied = true;
         saveButton.setDisable(true);
-        for (var control : List.of(codeField, nameField, kindBox, methodBox, amountField, statusBox, filterBox)) {
+        for (var control : List.of(codeField, nameField, kindBox, methodBox, amountField, initialRateDate, statusBox, filterBox)) {
             control.setDisable(true);
         }
         feeTable.getItems().clear();
@@ -404,6 +418,7 @@ public final class FeeCategoryController {
                 case "hinh_thuc_thu" -> methodError;
                 case "so_tien_mac_dinh" -> amountError;
                 case "trang_thai" -> statusError;
+                case "ngay_ap_dung" -> initialDateError;
                 default -> null;
             };
             if (label != null) { label.setText(message); }
@@ -411,7 +426,7 @@ public final class FeeCategoryController {
     }
 
     private void clearErrors() {
-        for (Label label : List.of(codeError, nameError, kindError, methodError, amountError, statusError)) {
+        for (Label label : List.of(codeError, nameError, kindError, methodError, amountError, statusError, initialDateError)) {
             label.setText("");
         }
     }

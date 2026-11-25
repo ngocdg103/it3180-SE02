@@ -40,6 +40,24 @@ public final class FeeTypeDAO implements FeeTypeRepository {
         });
     }
 
+    @Override public void insert(FeeType fee, java.time.LocalDate initialDate) throws SQLException {
+        if (fee.soTienMacDinh().signum() <= 0) {
+            if (initialDate != null) { throw new IllegalArgumentException("Unpriced category cannot have an initial rate date"); }
+            insert(fee);
+            return;
+        }
+        // Validate before any write. The same US-006 row-lock/eligibility rules still apply.
+        var initial = new FeeRate(null, fee.maKhoanThu(), fee.soTienMacDinh(), initialDate, "INITIAL");
+        transaction(c -> {
+            try (var s = c.prepareStatement("INSERT INTO fee_types (ten_loai_thu, loai_thu, phuong_thuc_tinh, so_tien_mac_dinh, trang_thai, ma_loai_thu) VALUES (?, ?, ?, ?, ?, ?)")) {
+                bind(s, fee);
+                if (s.executeUpdate() != 1) { throw new SQLException("Expected one inserted fee type"); }
+            }
+            FeeRateDAO.insert(c, initial);
+            return Optional.empty();
+        });
+    }
+
     @Override public Optional<FeeType> update(FeeType fee) throws SQLException {
         return transaction(c -> {
             try (var s = c.prepareStatement("UPDATE fee_types SET ten_loai_thu = ?, loai_thu = ?, phuong_thuc_tinh = ?, so_tien_mac_dinh = ?, trang_thai = ? WHERE ma_loai_thu = ?")) {

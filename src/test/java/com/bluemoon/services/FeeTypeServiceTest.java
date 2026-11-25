@@ -20,7 +20,9 @@ class FeeTypeServiceTest {
     }
     private static FeeTypeForm form(String code, String amount) {
         return new FeeTypeForm(code, " Phí quản lý chung cư ", FeeKind.BAT_BUOC,
-                ChargeMethod.THEO_DIEN_TICH, amount, FeeStatus.DANG_AP_DUNG);
+                ChargeMethod.THEO_DIEN_TICH, amount, FeeStatus.DANG_AP_DUNG,
+                amount != null && amount.matches("[0-9]+(\\.[0-9]+)?") && new java.math.BigDecimal(amount).signum() > 0
+                    ? java.time.LocalDate.of(2026, 11, 1) : null);
     }
 
     @Test void lifecycleAndBothAcceptanceCriteria() {
@@ -56,6 +58,7 @@ class FeeTypeServiceTest {
             assertThrows(AccessDeniedException.class, () -> s.listFeeTypes(null));
             assertThrows(AccessDeniedException.class, () -> s.getFeeType(null));
             assertThrows(AccessDeniedException.class, () -> s.createFeeType(null));
+            assertThrows(AccessDeniedException.class, () -> s.createFeeType(form("PHI", "7000")));
             assertThrows(AccessDeniedException.class, () -> s.updateFeeType(null, null));
             assertThrows(AccessDeniedException.class, () -> s.deactivateFeeType(null));
         }
@@ -119,6 +122,28 @@ class FeeTypeServiceTest {
         assertFalse(repository.rows.containsKey("OTHER"));
     }
 
+    @Test void initialPriceRequiresExplicitValidDateAndEligibleStatus() {
+        var svc = service(Role.ADMIN);
+        for (var date : new java.time.LocalDate[]{null, java.time.LocalDate.of(999, 12, 31), java.time.LocalDate.of(10000, 1, 1)}) {
+            var result = svc.createFeeType(new FeeTypeForm("PHI", "Valid", FeeKind.BAT_BUOC,
+                ChargeMethod.THEO_CAN_HO, "1", FeeStatus.DANG_AP_DUNG, date));
+            assertEquals(VALIDATION_ERROR, result.status());
+            assertTrue(result.fieldErrors().containsKey("ngay_ap_dung"));
+        }
+        assertEquals(VALIDATION_ERROR, svc.createFeeType(new FeeTypeForm("PHI", "Valid", FeeKind.BAT_BUOC,
+            ChargeMethod.THEO_CAN_HO, "1", FeeStatus.NGUNG_AP_DUNG, java.time.LocalDate.of(2026,11,1))).status());
+        assertEquals(0, repository.calls);
+    }
+
+    @Test void initialDateIsPassedOnceAndUpdateDoesNotInsertAnotherRate() {
+        var svc = service(Role.ADMIN);
+        assertTrue(svc.createFeeType(form("PHI", "7000.50")).isSuccess());
+        assertEquals(java.time.LocalDate.of(2026,11,1), repository.initialDate);
+        assertEquals(1, repository.initialInserts);
+        assertTrue(svc.updateFeeType("PHI", form("PHI", "8000")).isSuccess());
+        assertEquals(1, repository.initialInserts);
+    }
+
     @Test void databaseFailuresAreGenericForAllOperations() {
         repository.failure = true;
         var s = service(Role.ADMIN);
@@ -132,6 +157,8 @@ class FeeTypeServiceTest {
 
     private static final class Memory implements FeeTypeRepository {
         final Map<String, FeeType> rows = new TreeMap<>();
+        java.time.LocalDate initialDate;
+        int initialInserts;
         boolean failure;
         int calls;
         void check() throws SQLException { calls++; if (failure) { throw new SQLException("secret connection details"); } }
@@ -139,6 +166,10 @@ class FeeTypeServiceTest {
             check(); return rows.values().stream().filter(f -> filter == null || f.trangThai() == filter).toList();
         }
         public Optional<FeeType> findByCode(String code) throws SQLException { check(); return Optional.ofNullable(rows.get(code)); }
+        public void insert(FeeType fee, java.time.LocalDate date) throws SQLException {
+            insert(fee);
+            if (date != null) { initialDate = date; initialInserts++; }
+        }
         public void insert(FeeType fee) throws SQLException {
             check(); if (rows.containsKey(fee.maKhoanThu())) { throw new SQLException("duplicate", "23000", 1062); }
             rows.put(fee.maKhoanThu(), fee);

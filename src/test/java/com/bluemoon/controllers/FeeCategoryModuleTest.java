@@ -51,6 +51,8 @@ class FeeCategoryModuleTest {
             ((ComboBox<FeeKind>) this.<ComboBox<FeeKind>>node("kindBox")).setValue(FeeKind.BAT_BUOC);
             this.<ComboBox<ChargeMethod>>node("methodBox").setValue(ChargeMethod.THEO_CAN_HO);
             this.<TextField>node("amountField").setText(amount);
+            this.<DatePicker>node("initialRateDate").setValue(new java.math.BigDecimal(amount).signum() > 0
+                ? java.time.LocalDate.of(2026,11,1) : null);
             this.<Button>node("saveButton").fire();
             return null;
         });
@@ -136,6 +138,7 @@ class FeeCategoryModuleTest {
         }
         public List<FeeType> findAll(FeeStatus filter) throws SQLException { check(); lists++; return List.copyOf(rows.values()); }
         public Optional<FeeType> findByCode(String code) throws SQLException { check(); return Optional.ofNullable(rows.get(code)); }
+        public void insert(FeeType fee, java.time.LocalDate date) throws SQLException { insert(fee); }
         public void insert(FeeType fee) throws SQLException {
             check(); entered.countDown();
             try {

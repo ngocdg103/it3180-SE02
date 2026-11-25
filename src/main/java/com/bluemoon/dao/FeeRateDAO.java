@@ -21,32 +21,7 @@ public final class FeeRateDAO implements FeeRateRepository {
         try (var c = connections.open()) {
             c.setAutoCommit(false);
             try {
-                // US-005 update/deactivate acquire this same PK row lock first.
-                try (var s = c.prepareStatement("SELECT loai_thu, trang_thai FROM fee_types WHERE ma_loai_thu = ? FOR UPDATE")) {
-                    s.setString(1, rate.maLoaiThu());
-                    try (var rows = s.executeQuery()) {
-                        if (!rows.next()) { throw new SQLException("Fee type not found", "02000"); }
-                        if (!"BAT_BUOC".equals(rows.getString("loai_thu"))
-                                || !"DANG_AP_DUNG".equals(rows.getString("trang_thai"))) {
-                            throw new SQLException("Fee type is not eligible for a unit price", "45000");
-                        }
-                    }
-                }
-                FeeRate stored;
-                try (var s = c.prepareStatement("INSERT INTO fee_rates (ma_loai_thu, don_gia, ngay_ap_dung, ghi_chu) VALUES (?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
-                    s.setString(1, rate.maLoaiThu());
-                    s.setBigDecimal(2, rate.donGia());
-                    s.setDate(3, java.sql.Date.valueOf(rate.ngayApDung()));
-                    if (rate.ghiChu() == null) { s.setNull(4, Types.VARCHAR); }
-                    else { s.setString(4, rate.ghiChu()); }
-                    if (s.executeUpdate() != 1) { throw new SQLException("Expected one inserted rate"); }
-                    try (var keys = s.getGeneratedKeys()) {
-                        if (!keys.next()) { throw new SQLException("Missing generated rate id"); }
-                        long id = keys.getLong(1);
-                        if (keys.wasNull() || id <= 0) { throw new SQLException("Invalid generated rate id"); }
-                        stored = new FeeRate(id, rate.maLoaiThu(), rate.donGia(), rate.ngayApDung(), rate.ghiChu());
-                    }
-                }
+                FeeRate stored = insert(c, rate);
                 c.commit();
                 return stored;
             } catch (SQLException | RuntimeException failure) {
@@ -54,6 +29,37 @@ public final class FeeRateDAO implements FeeRateRepository {
                 throw failure;
             }
         }
+    }
+
+    /** Uses the caller's transaction; does not open, commit or close its connection. */
+    static FeeRate insert(Connection c, FeeRate rate) throws SQLException {
+        // US-005 update/deactivate acquire this same PK row lock first.
+        try (var s = c.prepareStatement("SELECT loai_thu, trang_thai FROM fee_types WHERE ma_loai_thu = ? FOR UPDATE")) {
+            s.setString(1, rate.maLoaiThu());
+            try (var rows = s.executeQuery()) {
+                if (!rows.next()) { throw new SQLException("Fee type not found", "02000"); }
+                if (!"BAT_BUOC".equals(rows.getString("loai_thu"))
+                        || !"DANG_AP_DUNG".equals(rows.getString("trang_thai"))) {
+                    throw new SQLException("Fee type is not eligible for a unit price", "45000");
+                }
+            }
+        }
+        FeeRate stored;
+        try (var s = c.prepareStatement("INSERT INTO fee_rates (ma_loai_thu, don_gia, ngay_ap_dung, ghi_chu) VALUES (?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
+            s.setString(1, rate.maLoaiThu());
+            s.setBigDecimal(2, rate.donGia());
+            s.setDate(3, java.sql.Date.valueOf(rate.ngayApDung()));
+            if (rate.ghiChu() == null) { s.setNull(4, Types.VARCHAR); }
+            else { s.setString(4, rate.ghiChu()); }
+            if (s.executeUpdate() != 1) { throw new SQLException("Expected one inserted rate"); }
+            try (var keys = s.getGeneratedKeys()) {
+                if (!keys.next()) { throw new SQLException("Missing generated rate id"); }
+                long id = keys.getLong(1);
+                if (keys.wasNull() || id <= 0) { throw new SQLException("Invalid generated rate id"); }
+                stored = new FeeRate(id, rate.maLoaiThu(), rate.donGia(), rate.ngayApDung(), rate.ghiChu());
+            }
+        }
+        return stored;
     }
 
     @Override public List<FeeRate> findHistory(String code) throws SQLException {
