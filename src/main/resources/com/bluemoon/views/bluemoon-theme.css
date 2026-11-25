@@ -130,12 +130,8 @@
 .bm-dark .bm-badge.danger  { -fx-background-color: rgba(248, 113, 113, 0.14); -fx-text-fill: #FCA5A5; }
 .bm-dark .bm-badge.neutral { -fx-background-color: rgba(148, 163, 184, 0.14); -fx-text-fill: #CBD5E1; }
 
-/* ---------- Icons (Windows Segoe icon fonts; app targets Windows laptops) ---------- */
-.bm-icon, .bm-dark .label.bm-icon {
-    -fx-font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets";
-    -fx-font-size: 16px;
-    -fx-text-fill: #94A3B8;
-}
+/* ---------- Icons (Ikonli Feather, bundled; FontIcon uses -fx-icon-*) ---------- */
+.bm-icon { -fx-icon-size: 17; -fx-icon-color: #94A3B8; }
 
 /* ---------- Login ---------- */
 .bm-login {
@@ -193,7 +189,7 @@
     -fx-font-weight: bold;
 }
 .bm-sidebar .button.bm-nav-item:selected .bm-icon,
-.bm-sidebar .button.bm-nav-item:hover .bm-icon { -fx-text-fill: -bm-accent; }
+.bm-sidebar .button.bm-nav-item:hover .bm-icon { -fx-icon-color: #22D3EE; }
 .bm-sidebar .button.bm-nav-item:disabled { -fx-opacity: 0.5; }
 
 /* ---------- Shell: topbar, content, status ---------- */
@@ -257,7 +253,9 @@
     -fx-background-radius: 10;
     -fx-min-width: 40; -fx-min-height: 40; -fx-pref-width: 40; -fx-pref-height: 40; -fx-max-width: 40; -fx-max-height: 40;
 }
-.bm-dark .bm-icon-chip .bm-icon { -fx-text-fill: -bm-accent; -fx-font-size: 18px; }
+.bm-dark .bm-icon-chip .bm-icon { -fx-icon-color: #22D3EE; -fx-icon-size: 19; }
+.bm-dark .bm-btn-ghost .bm-icon { -fx-icon-size: 15; }
+.bm-dark .bm-btn-ghost:hover .bm-icon { -fx-icon-color: #FCA5A5; }
 
 /* ---------- Tables (for modules migrated later; heights left to each module) ---------- */
 .bm-dark .table-view {

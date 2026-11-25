@@ -10,6 +10,8 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import org.kordamp.ikonli.feather.Feather;
+import org.kordamp.ikonli.javafx.FontIcon;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -27,10 +29,10 @@ public final class DashboardController implements AutoCloseable {
     private boolean opening, closed;
     private final ChangeListener<Boolean> busyListener = (o, old, value) -> refreshBusy();
     private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
-    /** Segoe Fluent/MDL2 glyphs and one-line descriptions; presentation only. */
-    private static final Map<String, String> ICONS = Map.of("home", "", "households", "",
-        "feeCategories", "", "feeRates", "", "billing", "", "notices", "",
-        "receipts", "", "debt", "");
+    /** Feather icons (Ikonli, bundled in the jar) and one-line descriptions; presentation only. */
+    private static final Map<String, Feather> ICONS = Map.of("home", Feather.HOME, "households", Feather.USERS,
+        "feeCategories", Feather.LIST, "feeRates", Feather.TAG, "billing", Feather.CALENDAR, "notices", Feather.MAIL,
+        "receipts", Feather.CREDIT_CARD, "debt", Feather.BAR_CHART_2);
     private static final Map<String, String> DESCRIPTIONS = Map.of(
         "households", "Hồ sơ căn hộ, hộ gia đình và nhân khẩu",
         "feeCategories", "Khoản thu bắt buộc và tự nguyện",
@@ -67,6 +69,7 @@ public final class DashboardController implements AutoCloseable {
                 .then(220.0).otherwise(272.0));
         }
         homeButton.setGraphic(icon("home"));
+        FontIcon exit = new FontIcon(Feather.LOG_OUT); exit.getStyleClass().add("bm-icon"); logoutButton.setGraphic(exit);
         for (var registration : modules) {
             Button button = new Button(registration.title());
             button.setId(registration.id() + "Button"); button.setMaxWidth(Double.MAX_VALUE);
@@ -170,9 +173,8 @@ public final class DashboardController implements AutoCloseable {
         tile.setMaxWidth(Double.MAX_VALUE); tile.setOnAction(e -> openModule(registration.id()));
         return tile;
     }
-    private static Label icon(String id) {
-        Label glyph = new Label(ICONS.getOrDefault(id, "")); glyph.getStyleClass().add("bm-icon");
-        glyph.setMinWidth(20); glyph.setAlignment(Pos.CENTER);
+    private static FontIcon icon(String id) {
+        FontIcon glyph = new FontIcon(ICONS.getOrDefault(id, Feather.GRID)); glyph.getStyleClass().add("bm-icon");
         return glyph;
     }
     private static String initials(String name) {
