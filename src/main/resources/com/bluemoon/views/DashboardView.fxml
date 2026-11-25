@@ -3,9 +3,9 @@
 <?import javafx.scene.layout.*?>
 <BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.bluemoon.controllers.DashboardController"
             stylesheets="@bluemoon-theme.css" styleClass="bm-app">
-    <left><VBox fx:id="sidebar" styleClass="bm-sidebar, bm-ui" prefWidth="272" minWidth="220">
-        <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 4 8 18 8;">
-            <Region styleClass="bm-moon, small"/>
+    <left><VBox fx:id="sidebar" styleClass="bm-sidebar, bm-ui" prefWidth="256" minWidth="210">
+        <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 0 8 20 8;">
+            <Region styleClass="bm-moon"/>
             <VBox>
                 <Label text="BlueMoon" styleClass="bm-brand"/>
                 <Label text="Quản lý chung cư" styleClass="bm-brand-sub"/>
@@ -20,11 +20,11 @@
     </VBox></left>
     <center><BorderPane>
         <top><HBox styleClass="bm-topbar, bm-ui">
-            <VBox spacing="1" HBox.hgrow="ALWAYS" minWidth="0">
+            <VBox spacing="2" HBox.hgrow="ALWAYS" minWidth="0">
                 <Label text="BlueMoon / Bảng điều khiển" styleClass="bm-breadcrumb"/>
                 <Label fx:id="pageTitle" text="Tổng quan" styleClass="bm-page-title"/>
             </VBox>
-            <HBox spacing="10" alignment="CENTER_LEFT" minWidth="0">
+            <HBox spacing="10" alignment="CENTER_LEFT" minWidth="-Infinity" maxHeight="-Infinity" styleClass="bm-user">
                 <StackPane styleClass="bm-avatar"><Label fx:id="avatar"/></StackPane>
                 <VBox spacing="0" minWidth="0">
                     <Label fx:id="greeting" styleClass="bm-user-name"/>

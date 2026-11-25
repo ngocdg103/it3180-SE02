@@ -40,6 +40,8 @@ public final class DashboardController implements AutoCloseable {
     private static final Map<String, String> GROUPS = Map.of("households", "Cư dân",
         "feeCategories", "Thu phí", "feeRates", "Thu phí", "billing", "Thu phí", "notices", "Thu phí", "receipts", "Thu phí",
         "debt", "Báo cáo");
+    private static final Map<String, String> CHIP_TINTS = Map.of("feeCategories", "navy", "feeRates", "beige",
+        "billing", "gold", "notices", "navy", "receipts", "beige", "debt", "gold", "households", "gold");
     /** The monthly fee cycle, in the order the work is actually done. */
     private static final List<String[]> FEE_CYCLE = List.of(
         new String[]{"feeCategories", "Danh mục khoản thu", "Khai báo khoản phí bắt buộc và tự nguyện"},
@@ -74,7 +76,7 @@ public final class DashboardController implements AutoCloseable {
         avatar.setText(initials(account.hoTen()));
         if (sidebar.getParent() instanceof Region shell) { // narrow window: keep topbar readable
             sidebar.prefWidthProperty().bind(javafx.beans.binding.Bindings.when(shell.widthProperty().lessThan(960))
-                .then(220.0).otherwise(272.0));
+                .then(210.0).otherwise(256.0));
         }
         // Status bar takes space only while it has something to say.
         shellStatus.managedProperty().bind(shellStatus.textProperty().isNotEmpty());
@@ -131,7 +133,7 @@ public final class DashboardController implements AutoCloseable {
         if (!authenticated()) { logout(); return; }
         releaseModule();
         show(buildHome()); shellStatus.setText(""); refreshBusy();
-        markActive("home", "Tổng quan");
+        markActive("home", salutation() + ", " + account.hoTen());
     }
     /** One short fade answers the user's navigation; off with -Dbluemoon.reduceMotion=true. */
     private void show(Node view) {
@@ -141,22 +143,14 @@ public final class DashboardController implements AutoCloseable {
         fade.setFromValue(0.0); fade.setToValue(1.0); fade.play();
     }
 
-    /** Home: who/when context, then the fee cycle as numbered steps. Session facts only, no business KPIs. */
+    /**
+     * Home (dashboard-reference layout): fee cycle as step cards and resident records on the left;
+     * a navy "current period" card and session facts on the right. Session facts only, no business KPIs.
+     */
     private VBox buildHome() {
         var allowed = modules.stream().filter(m -> authorization.canAccess(m.permission())).toList();
-        Label hello = new Label(salutation() + ", " + account.hoTen()); hello.getStyleClass().add("bm-display");
-        hello.setWrapText(true);
-        Label date = new Label(LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, 'ngày' d 'tháng' M 'năm' yyyy",
-            new Locale("vi", "VN")))); // e.g. "Thứ Tư, ngày 25 tháng 11 năm 2026"
-        date.getStyleClass().add("bm-muted");
-        FlowPane context = new FlowPane(8, 8,
-            chip(roleName()), chip("Kỳ thu " + LocalDate.now().format(DateTimeFormatter.ofPattern("MM/yyyy"))),
-            chip("Đăng nhập lúc " + sessionStart.format(DateTimeFormatter.ofPattern("HH:mm"))),
-            chip(allowed.size() + "/" + modules.size() + " chức năng được cấp"));
-        VBox header = new VBox(4, hello, date);
-        VBox home = new VBox(header, context);
+        VBox home = new VBox();
         home.getStyleClass().addAll("bm-home", "bm-ui");
-
         if (allowed.isEmpty()) {
             Label empty = new Label("Tài khoản này chưa được cấp chức năng quản lý nào. Liên hệ Ban quản lý để được phân quyền.");
             empty.setWrapText(true); empty.getStyleClass().add("bm-muted");
@@ -166,59 +160,117 @@ public final class DashboardController implements AutoCloseable {
         }
         var byId = new HashMap<String, ModuleRegistration>();
         modules.forEach(m -> byId.put(m.id(), m));
+
+        VBox main = new VBox(24);
         if (FEE_CYCLE.stream().anyMatch(s -> byId.containsKey(s[0]))) {
-            TilePane steps = responsiveTiles(150, 0);
+            TilePane steps = responsiveTiles(205, 16);
             int number = 1;
             for (String[] step : FEE_CYCLE) {
                 var registration = byId.get(step[0]);
                 if (registration == null) continue;
                 steps.getChildren().add(step(number++, step[1], step[2], registration,
-                    authorization.canAccess(registration.permission()), number > countPresent(byId)));
+                    authorization.canAccess(registration.permission())));
             }
-            home.getChildren().add(section("Quy trình thu phí tháng",
-                "Làm lần lượt từ bước 1 đến bước " + (number - 1) + " cho mỗi kỳ thu.", steps));
+            main.getChildren().add(section("Quy trình thu phí tháng",
+                "Làm lần lượt từ bước 1 đến bước " + (number - 1) + " cho mỗi kỳ thu", steps));
         }
         var others = allowed.stream().filter(m -> FEE_CYCLE.stream().noneMatch(s -> s[0].equals(m.id()))).toList();
         if (!others.isEmpty()) {
-            TilePane tiles = responsiveTiles(290, 16);
-            others.forEach(m -> tiles.getChildren().add(tile(m)));
+            VBox rows = new VBox(12);
+            others.forEach(m -> rows.getChildren().add(tile(m)));
             boolean onlyResidents = others.stream().allMatch(m -> "households".equals(m.id()));
-            home.getChildren().add(section(onlyResidents ? "Hồ sơ cư dân" : "Chức năng khác", null, tiles));
+            main.getChildren().add(section(onlyResidents ? "Hồ sơ cư dân" : "Chức năng khác", null, rows));
         }
+
+        VBox side = new VBox(16, periodCard(byId.get("billing")), sessionList(allowed.size()));
+        side.setMinWidth(260); side.setPrefWidth(300); side.setMaxWidth(320);
+        HBox.setHgrow(main, Priority.ALWAYS); main.setMinWidth(0);
+        // Two columns on a laptop; the side column drops below the main one in a narrow window.
+        HBox wide = new HBox(24);
+        VBox narrow = new VBox(24);
+        home.widthProperty().addListener((o, old, w) -> {
+            boolean twoColumns = w.doubleValue() >= 900;
+            if (twoColumns && wide.getChildren().isEmpty()) {
+                narrow.getChildren().clear(); wide.getChildren().setAll(main, side); home.getChildren().setAll(wide);
+            }
+            if (!twoColumns && narrow.getChildren().isEmpty()) {
+                wide.getChildren().clear(); narrow.getChildren().setAll(main, side); home.getChildren().setAll(narrow);
+            }
+        });
+        wide.getChildren().setAll(main, side); home.getChildren().setAll(wide);
         return home;
     }
-    private static long countPresent(Map<String, ModuleRegistration> byId) {
-        return FEE_CYCLE.stream().filter(s -> byId.containsKey(s[0])).count();
+    private static HBox sectionHeader(String title, String note) {
+        Label heading = new Label(title); heading.getStyleClass().add("bm-h2");
+        Region gap = new Region(); HBox.setHgrow(gap, Priority.ALWAYS);
+        HBox header = new HBox(12, heading, gap); header.setAlignment(Pos.BASELINE_LEFT);
+        if (note != null) { Label n = new Label(note); n.getStyleClass().add("bm-small"); header.getChildren().add(n); }
+        return header;
     }
     private static VBox section(String title, String note, Node body) {
-        Label heading = new Label(title); heading.getStyleClass().add("bm-h2");
-        VBox box = new VBox(4, heading);
-        if (note != null) { Label n = new Label(note); n.getStyleClass().add("bm-muted"); box.getChildren().add(n); }
-        VBox.setMargin(body, new javafx.geometry.Insets(10, 0, 0, 0));
-        box.getChildren().add(body);
-        return box;
+        return new VBox(14, sectionHeader(title, note), body);
     }
-    private static Label chip(String text) {
-        Label chip = new Label(text); chip.getStyleClass().add("bm-chip");
+    private static StackPane iconChip(String id) {
+        StackPane chip = new StackPane(icon(id));
+        chip.getStyleClass().addAll("bm-icon-chip", CHIP_TINTS.getOrDefault(id, "navy"));
         return chip;
     }
-    /** A numbered step: number on a track line (hidden on the last step), then name and what it is for. */
-    private Button step(int number, String name, String purpose, ModuleRegistration registration, boolean allowed, boolean last) {
-        Label num = new Label(String.valueOf(number)); num.getStyleClass().add("bm-step-num");
-        num.setMinSize(30, 30); num.setPrefSize(30, 30); num.setAlignment(Pos.CENTER);
-        Region track = new Region(); track.getStyleClass().add("bm-step-track"); track.setVisible(!last);
-        HBox.setHgrow(track, Priority.ALWAYS);
-        HBox top = new HBox(10, num, track); top.setAlignment(Pos.CENTER_LEFT);
+    private static StackPane chevron() {
+        FontIcon arrow = new FontIcon(Feather.CHEVRON_RIGHT); arrow.getStyleClass().add("bm-chevron");
+        StackPane box = new StackPane(arrow); box.getStyleClass().add("bm-chevron-box");
+        return box;
+    }
+    /** A fee-cycle step card: tinted icon, step number, name, purpose, and a chevron to open it. */
+    private Button step(int number, String name, String purpose, ModuleRegistration registration, boolean allowed) {
         Label title = new Label(name); title.getStyleClass().add("bm-step-title"); title.setWrapText(true);
+        Label num = new Label("Bước " + number); num.getStyleClass().add("bm-step-num");
+        VBox heading = new VBox(2, title, num); HBox.setHgrow(heading, Priority.ALWAYS); heading.setMinWidth(0);
+        HBox top = new HBox(12, iconChip(registration.id()), heading, chevron()); top.setAlignment(Pos.CENTER_LEFT);
         Label desc = new Label(allowed ? purpose : "Ngoài phạm vi quyền của bạn");
         desc.getStyleClass().add("bm-step-desc"); desc.setWrapText(true);
-        VBox content = new VBox(8, top, title, desc);
+        VBox content = new VBox(14, top, desc);
         Button button = new Button(null, content); button.getStyleClass().add("bm-step");
         button.setMaxWidth(Double.MAX_VALUE); button.setMaxHeight(Double.MAX_VALUE);
         button.setAccessibleText("Bước " + number + ": " + name + ". " + desc.getText());
         button.setDisable(!allowed);
         button.setOnAction(e -> openModule(registration.id()));
         return button;
+    }
+    /** Navy card for the current billing period; the button only appears when billing is permitted. */
+    private VBox periodCard(ModuleRegistration billing) {
+        Region moon = new Region(); moon.getStyleClass().add("bm-moon");
+        Label title = new Label("Kỳ thu " + LocalDate.now().format(DateTimeFormatter.ofPattern("MM/yyyy")));
+        title.getStyleClass().add("bm-h2");
+        Label text = new Label("Lập kỳ thu, tính phí từng căn hộ và chốt hóa đơn cho tháng này.");
+        text.getStyleClass().add("bm-muted"); text.setWrapText(true);
+        VBox card = new VBox(10, moon, title, text); card.getStyleClass().add("bm-card-dark");
+        if (billing != null && authorization.canAccess(billing.permission())) {
+            Button open = new Button("Mở Lập kỳ thu"); open.getStyleClass().add("bm-btn-primary");
+            open.setOnAction(e -> openModule(billing.id()));
+            VBox.setMargin(open, new javafx.geometry.Insets(8, 0, 0, 0));
+            card.getChildren().add(open);
+        }
+        return card;
+    }
+    /** Session facts as rows: role, login time and date, granted functions. */
+    private VBox sessionList(int granted) {
+        String date = LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, dd/MM/yyyy", new Locale("vi", "VN")));
+        boolean all = granted == modules.size();
+        return new VBox(12, sectionHeader("Phiên làm việc", null),
+            infoRow(Feather.USER, "navy", roleName(), "Vai trò của tài khoản", null, null),
+            infoRow(Feather.CLOCK, "beige", "Đăng nhập lúc " + sessionStart.format(DateTimeFormatter.ofPattern("HH:mm")), date, null, null),
+            infoRow(Feather.GRID, "gold", granted + "/" + modules.size() + " chức năng", "Theo quyền được cấp",
+                all ? "Đầy đủ" : "Giới hạn", all ? "gold" : "beige"));
+    }
+    private static HBox infoRow(Feather glyph, String tint, String title, String sub, String badge, String badgeTint) {
+        FontIcon i = new FontIcon(glyph); i.getStyleClass().add("bm-icon");
+        StackPane chip = new StackPane(i); chip.getStyleClass().addAll("bm-icon-chip", tint);
+        Label t = new Label(title); t.getStyleClass().add("bm-strong");
+        Label s = new Label(sub); s.getStyleClass().add("bm-small"); s.setWrapText(true);
+        VBox text = new VBox(2, t, s); HBox.setHgrow(text, Priority.ALWAYS); text.setMinWidth(0);
+        HBox row = new HBox(12, chip, text); row.getStyleClass().add("bm-row");
+        if (badge != null) { Label b = new Label(badge); b.getStyleClass().addAll("bm-badge", badgeTint); row.getChildren().add(b); }
+        return row;
     }
     /** Equal-width columns that fill the row and wrap below minTile (laptop, projector, small window). */
     private static TilePane responsiveTiles(double minTile, double gap) {
@@ -235,16 +287,19 @@ public final class DashboardController implements AutoCloseable {
         });
         return pane;
     }
+    /** A list-row card (reference "course" rows): tinted icon, name, description, chevron. */
     private Button tile(ModuleRegistration registration) {
         Label name = new Label(registration.title()); name.getStyleClass().add("bm-tile-title");
         String about = "households".equals(registration.id()) ? "Căn hộ, hộ gia đình và nhân khẩu" : "";
         Label desc = new Label(about); desc.getStyleClass().add("bm-tile-desc");
         desc.setVisible(!about.isEmpty()); desc.setManaged(!about.isEmpty());
-        StackPane chip = new StackPane(icon(registration.id())); chip.getStyleClass().add("bm-icon-chip");
-        HBox content = new HBox(14, chip, new VBox(2, name, desc)); content.setAlignment(Pos.CENTER_LEFT);
+        VBox text = new VBox(2, name, desc); HBox.setHgrow(text, Priority.ALWAYS);
+        HBox content = new HBox(14, iconChip(registration.id()), text, chevron()); content.setAlignment(Pos.CENTER_LEFT);
         Button tile = new Button(null, content); tile.getStyleClass().add("bm-tile");
         tile.setMaxWidth(Double.MAX_VALUE); tile.setOnAction(e -> openModule(registration.id()));
         tile.setAccessibleText(about.isEmpty() ? registration.title() : registration.title() + ". " + about);
+        // Let the row content span the button width so the chevron sits at the right edge.
+        content.prefWidthProperty().bind(tile.widthProperty().subtract(36));
         return tile;
     }
     private static FontIcon icon(String id) {
@@ -272,6 +327,8 @@ public final class DashboardController implements AutoCloseable {
         homeButton.pseudoClassStateChanged(SELECTED, "home".equals(id));
         buttons.forEach((key, button) -> button.pseudoClassStateChanged(SELECTED, key.equals(id)));
         pageTitle.setText(title);
+        moduleContent.getStyleClass().remove("bm-in-module");
+        if (!"home".equals(id)) moduleContent.getStyleClass().add("bm-in-module");
     }
     @FXML private void logout() {
         if (closed || isBusy()) return;
